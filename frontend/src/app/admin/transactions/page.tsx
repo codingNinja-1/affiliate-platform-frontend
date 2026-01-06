@@ -3,12 +3,12 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { useAdminUsers, type AdminUser } from '@/hooks/useAdmin';
+import { useAdminTransactions, type AdminTransaction } from '@/hooks/useAdmin';
 import AdminSidebar from '@/app/components/AdminSidebar';
 
-export default function AdminUsersPage() {
+export default function AdminTransactionsPage() {
   const { user } = useAuth();
-  const { data: users, isLoading, error } = useAdminUsers();
+  const { data: transactions, isLoading, error } = useAdminTransactions();
 
   useEffect(() => {
     if (user && user.user_type?.toLowerCase() !== 'admin' && user.user_type?.toLowerCase() !== 'superadmin') {
@@ -29,8 +29,8 @@ export default function AdminUsersPage() {
           <Link href="/admin" className="text-sm text-blue-400 hover:text-blue-300">
             ← Back to admin dashboard
           </Link>
-          <h1 className="mt-2 text-4xl font-bold">Users Management</h1>
-          <p className="text-slate-400">Manage all platform users</p>
+          <h1 className="mt-2 text-4xl font-bold">Transactions Management</h1>
+          <p className="text-slate-400">View all platform transactions</p>
         </div>
 
         {error && (
@@ -46,48 +46,47 @@ export default function AdminUsersPage() {
                 <div key={i} className="h-12 animate-pulse rounded-lg bg-slate-800" />
               ))}
             </div>
-          ) : users.length === 0 ? (
+          ) : transactions.length === 0 ? (
             <div className="py-12 text-center text-slate-400">
-              <p>No users found</p>
+              <p>No transactions found</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="border-b border-slate-800">
                   <tr className="text-left text-slate-400">
-                    <th className="pb-3 px-4">Email</th>
-                    <th className="pb-3 px-4">Name</th>
+                    <th className="pb-3 px-4">Transaction ID</th>
+                    <th className="pb-3 px-4">Amount</th>
                     <th className="pb-3 px-4">Type</th>
                     <th className="pb-3 px-4">Status</th>
-                    <th className="pb-3 px-4">Joined</th>
+                    <th className="pb-3 px-4">Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((u: AdminUser) => (
-                    <tr key={u.id} className="border-b border-slate-800/50 hover:bg-slate-800/30">
-                      <td className="py-3 px-4">{u.email}</td>
-                      <td className="py-3 px-4">
-                        {u.first_name || u.last_name ? `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() : '-'}
-                      </td>
+                  {transactions.map((t: AdminTransaction) => (
+                    <tr key={t.id} className="border-b border-slate-800/50 hover:bg-slate-800/30">
+                      <td className="py-3 px-4 font-mono text-xs">{t.transaction_id}</td>
+                      <td className="py-3 px-4">₦{t.amount.toLocaleString()}</td>
                       <td className="py-3 px-4">
                         <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          u.user_type === 'admin' ? 'bg-red-500/20 text-red-300' :
-                          u.user_type === 'vendor' ? 'bg-blue-500/20 text-blue-300' :
-                          u.user_type === 'affiliate' ? 'bg-green-500/20 text-green-300' :
+                          t.type === 'sale' ? 'bg-blue-500/20 text-blue-300' :
+                          t.type === 'commission' ? 'bg-green-500/20 text-green-300' :
                           'bg-slate-500/20 text-slate-300'
                         }`}>
-                          {u.user_type}
+                          {t.type}
                         </span>
                       </td>
                       <td className="py-3 px-4">
                         <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          u.status === 'active' ? 'bg-green-500/20 text-green-300' : 'bg-slate-500/20 text-slate-300'
+                          t.status === 'completed' ? 'bg-green-500/20 text-green-300' :
+                          t.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300' :
+                          'bg-red-500/20 text-red-300'
                         }`}>
-                          {u.status}
+                          {t.status}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-slate-400">
-                        {new Date(u.created_at).toLocaleDateString()}
+                        {new Date(t.created_at).toLocaleDateString()}
                       </td>
                     </tr>
                   ))}

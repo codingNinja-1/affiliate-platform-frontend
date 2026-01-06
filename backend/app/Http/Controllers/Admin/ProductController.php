@@ -4,45 +4,98 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with('vendor:id,user_id');
+        $user = Auth::user();
 
-        // Filter by approval status if provided
-        if ($request->has('status')) {
-            $query->where('approval_status', $request->status);
+        if (!$user || !in_array($user->user_type, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
         }
 
-        $products = $query->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'vendor' => $product->vendor?->user_id ?? 'N/A',
-                    'price' => $product->price,
-                    'commission_rate' => $product->commission_rate,
-                    'approval_status' => $product->approval_status,
-                    'rejection_reason' => $product->rejection_reason,
-                    'created_at' => $product->created_at,
-                ];
-            });
+        $status = $request->query('status');
+        $search = $request->query('search');
+        $page = $request->query('page', 1);
+        $perPage = $request->query('per_page', 50);
+
+        $query = Product::query();
+
+        if ($status) {
+            $query->where('approval_status', $status);
+        }
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('product_id', 'like', "%{$search}%");
+        }
+
+        $products = $query->with(['vendor' => function ($q) {
+            $q->select('id');
+        }])->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,
-            'data' => $products,
+            'data' => $products->items(),
+            'pagination' => [
+                'total' => $products->total(),
+                'per_page' => $products->perPage(),
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+            ],
+        ]);
+    }
+
+    public function show($id)
+    {
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->user_type, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
+
+        $product = Product::with('vendor')->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $product,
         ]);
     }
 
     public function approve(Request $request, $productId)
     {
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->user_type, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
+
         $product = Product::findOrFail($productId);
-        $userId = optional($request->user())->id ?? 1;
-        $product->approve($userId);
+
+        if ($product->approval_status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only pending products can be approved.',
+            ], 400);
+        }
+
+        $product->update([
+            'approval_status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $user->id,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -53,12 +106,32 @@ class ProductController extends Controller
 
     public function reject(Request $request, $productId)
     {
-        $request->validate([
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->user_type, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
             'reason' => 'required|string|max:500',
         ]);
 
         $product = Product::findOrFail($productId);
-        $product->reject($request->reason);
+
+        if ($product->approval_status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only pending products can be rejected.',
+            ], 400);
+        }
+
+        $product->update([
+            'approval_status' => 'rejected',
+            'rejection_reason' => $validated['reason'],
+        ]);
 
         return response()->json([
             'success' => true,

@@ -3,11 +3,75 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Transaction;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(['success' => true, 'data' => []]);
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->user_type, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
+
+        $type = $request->query('type');
+        $status = $request->query('status');
+        $search = $request->query('search');
+        $page = $request->query('page', 1);
+        $perPage = $request->query('per_page', 50);
+
+        $query = Transaction::query();
+
+        if ($type) {
+            $query->where('type', $type);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($search) {
+            $query->where('transaction_id', 'like', "%{$search}%");
+        }
+
+        $transactions = $query->with(['user', 'product', 'vendor'])
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'success' => true,
+            'data' => $transactions->items(),
+            'pagination' => [
+                'total' => $transactions->total(),
+                'per_page' => $transactions->perPage(),
+                'current_page' => $transactions->currentPage(),
+                'last_page' => $transactions->lastPage(),
+            ],
+        ]);
+    }
+
+    public function show($id)
+    {
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->user_type, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
+
+        $transaction = Transaction::with(['user', 'product', 'vendor'])->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $transaction,
+        ]);
     }
 }

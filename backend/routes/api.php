@@ -39,10 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index']);
         Route::get('/reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index']);
-        Route::apiResource('users', \App\Http\Controllers\Admin\UserController::class);
-        // Placeholder resources for future expansion; implement as needed
-        Route::apiResource('products', \App\Http\Controllers\Admin\ProductController::class)->only(['index']);
-        Route::apiResource('transactions', \App\Http\Controllers\Admin\TransactionController::class)->only(['index']);
+        Route::apiResource('users', \App\Http\Controllers\Admin\UserController::class)->only(['index', 'show', 'update']);
+        Route::apiResource('products', \App\Http\Controllers\Admin\ProductController::class)->only(['index', 'show']);
+        Route::apiResource('transactions', \App\Http\Controllers\Admin\TransactionController::class)->only(['index', 'show']);
         Route::apiResource('withdrawals', \App\Http\Controllers\Admin\WithdrawalController::class)->only(['index']);
         Route::post('/products/{product}/approve', [\App\Http\Controllers\Admin\ProductController::class, 'approve'])->name('admin.products.approve');
         Route::post('/products/{product}/reject', [\App\Http\Controllers\Admin\ProductController::class, 'reject'])->name('admin.products.reject');

@@ -28,6 +28,8 @@ class Withdrawal extends Model
         'rejection_reason',
         'approved_at',
         'approved_by',
+        'rejected_at',
+        'rejected_by',
         'paid_at',
         'payment_reference',
         'payment_meta',
@@ -38,6 +40,7 @@ class Withdrawal extends Model
         'amount' => 'decimal:2',
         'payment_meta' => 'array',
         'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'paid_at' => 'datetime',
     ];
 

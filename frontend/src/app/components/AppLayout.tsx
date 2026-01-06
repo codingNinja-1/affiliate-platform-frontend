@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
+import AdminSidebar from './AdminSidebar';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -30,8 +31,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
       }
     }
 
-    // This pattern is safe - we're only updating state once on mount after hydration
-    // eslint-disable-next-line
     setUserType(type);
     setIsAuthenticated(authenticated);
     setHasMounted(true);
@@ -46,6 +45,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
     return <main className="w-full">{children}</main>;
   }
 
+  // Admin users get admin sidebar
+  if (userType?.toLowerCase() === 'admin' || userType?.toLowerCase() === 'superadmin') {
+    return (
+      <div className="flex min-h-screen">
+        <AdminSidebar userType={userType} />
+        <main className="ml-64 flex-1">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
+  // Regular users get regular sidebar
   return (
     <div className="flex min-h-screen">
       <Sidebar userType={userType} />
