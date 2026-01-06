@@ -19,7 +19,7 @@ export default function AdminReportsPage() {
   const [period, setPeriod] = useState('30d');
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     if (!token || !['admin', 'superadmin'].includes(user.user_type)) {
@@ -29,7 +29,8 @@ export default function AdminReportsPage() {
 
     const loadReports = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/admin/reports?period=${period}`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+        const res = await fetch(`${apiUrl}/api/admin/reports?period=${period}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
