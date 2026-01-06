@@ -55,6 +55,13 @@ class ProductController extends Controller
             'commission_rate' => 'required|numeric|min:0|max:100',
             'stock_quantity' => 'nullable|integer|min:0',
             'status' => 'nullable|string|in:active,inactive,draft',
+            'sales_page_url' => 'nullable|url',
+            'delivery_link' => 'nullable|url',
+            'buy_now_config' => 'nullable|array',
+            'buy_now_config.button_text' => 'nullable|string|max:100',
+            'buy_now_config.button_color' => 'nullable|string|max:20',
+            'buy_now_config.redirect_url' => 'nullable|url',
+            'buy_now_config.open_in_new_tab' => 'nullable|boolean',
         ]);
 
         $user = Auth::user();
@@ -76,6 +83,9 @@ class ProductController extends Controller
             'stock_quantity' => $validated['stock_quantity'] ?? 0,
             'approval_status' => 'pending',
             'is_active' => $validated['status'] === 'active',
+            'sales_page_url' => $validated['sales_page_url'] ?? null,
+            'delivery_link' => $validated['delivery_link'] ?? null,
+            'buy_now_config' => $validated['buy_now_config'] ?? null,
         ]);
 
         return response()->json([
@@ -132,6 +142,13 @@ class ProductController extends Controller
             'commission_rate' => 'sometimes|numeric|min:0|max:100',
             'stock_quantity' => 'nullable|integer|min:0',
             'status' => 'nullable|string|in:active,inactive,draft',
+            'sales_page_url' => 'nullable|url',
+            'delivery_link' => 'nullable|url',
+            'buy_now_config' => 'nullable|array',
+            'buy_now_config.button_text' => 'nullable|string|max:100',
+            'buy_now_config.button_color' => 'nullable|string|max:20',
+            'buy_now_config.redirect_url' => 'nullable|url',
+            'buy_now_config.open_in_new_tab' => 'nullable|boolean',
         ]);
 
         $product->update($validated);
