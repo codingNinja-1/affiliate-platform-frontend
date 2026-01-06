@@ -49,7 +49,11 @@ export default function AdminWithdrawalsPage() {
       }
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const res = await fetch(`${apiUrl}/api/admin/withdrawals/${withdrawalId}/approve`, {
+      const url = `${apiUrl}/api/admin/withdrawals/${withdrawalId}/approve`;
+      
+      console.log('Attempting to approve withdrawal:', { url, withdrawalId, hasToken: !!token });
+      
+      const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -58,18 +62,21 @@ export default function AdminWithdrawalsPage() {
         },
       });
 
+      console.log('Response status:', res.status);
+
       if (res.ok) {
         const data = await res.json();
+        console.log('Success response:', data);
         alert(data.message || 'Withdrawal approved successfully');
         refetch();
       } else {
         const data = await res.json().catch(() => ({ message: 'Unknown error' }));
-        console.error('Approval error:', data);
+        console.error('Error response:', { status: res.status, data });
         alert(data.message || `Failed to approve withdrawal (${res.status})`);
       }
     } catch (error) {
-      console.error('Network error:', error);
-      alert(`Error approving withdrawal: ${error instanceof Error ? error.message : 'Network error'}`);
+      console.error('Fetch error:', error);
+      alert(`Error approving withdrawal: ${error instanceof Error ? error.message : 'Network error'}. Make sure the backend server is running at http://127.0.0.1:8000`);
     } finally {
       setApproving(null);
     }
