@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Sidebar from './Sidebar';
 import AdminSidebar from './AdminSidebar';
 
@@ -9,15 +9,14 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const [hasMounted, setHasMounted] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userType, setUserType] = useState('customer');
+  const [authState] = useState(() => {
+    if (typeof window === 'undefined') {
+      return { isAuthenticated: false, userType: 'customer', isClient: false };
+    }
 
-  useEffect(() => {
-    // Read from localStorage and update state in callback
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
-
+    
     let authenticated = false;
     let type = 'customer';
 
@@ -31,25 +30,23 @@ export default function AppLayout({ children }: AppLayoutProps) {
       }
     }
 
-    setUserType(type);
-    setIsAuthenticated(authenticated);
-    setHasMounted(true);
-  }, []);
+    return { isAuthenticated: authenticated, userType: type, isClient: true };
+  });
 
   // Prevent rendering sidebar on server; only show after hydration
-  if (!hasMounted) {
+  if (!authState.isClient) {
     return <main className="w-full">{children}</main>;
   }
 
-  if (!isAuthenticated) {
+  if (!authState.isAuthenticated) {
     return <main className="w-full">{children}</main>;
   }
 
   // Admin users get admin sidebar
-  if (userType?.toLowerCase() === 'admin' || userType?.toLowerCase() === 'superadmin') {
+  if (authState.userType?.toLowerCase() === 'admin' || authState.userType?.toLowerCase() === 'superadmin') {
     return (
       <div className="flex min-h-screen">
-        <AdminSidebar userType={userType} />
+        <AdminSidebar userType={authState.userType} />
         <main className="ml-64 flex-1">
           {children}
         </main>
@@ -60,7 +57,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Regular users get regular sidebar
   return (
     <div className="flex min-h-screen">
-      <Sidebar userType={userType} />
+      <Sidebar userType={authState.userType} />
       <main className="ml-64 flex-1">
         {children}
       </main>
