@@ -10,6 +10,14 @@ export type Product = {
   stock_quantity?: number | null;
   status: string;
   slug?: string;
+  sales_page_url?: string;
+  delivery_link?: string;
+  buy_now_config?: {
+    button_text?: string;
+    button_color?: string;
+    redirect_url?: string;
+    open_in_new_tab?: boolean;
+  } | null;
 };
 
 export type CreateProductPayload = {
@@ -19,6 +27,14 @@ export type CreateProductPayload = {
   commission_rate: number;
   stock_quantity?: number | null;
   status?: string;
+  sales_page_url?: string;
+  delivery_link?: string;
+  buy_now_config?: {
+    button_text?: string;
+    button_color?: string;
+    redirect_url?: string;
+    open_in_new_tab?: boolean;
+  } | null;
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';

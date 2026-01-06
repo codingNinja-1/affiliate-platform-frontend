@@ -19,6 +19,14 @@ export default function ProductsPage() {
     commission_rate: '',
     stock_quantity: '',
     status: 'draft',
+    sales_page_url: '',
+    delivery_link: '',
+    buy_now_config: {
+      button_text: 'Buy Now',
+      button_color: 'blue',
+      redirect_url: '',
+      open_in_new_tab: true,
+    },
   });
 
   const isAffiliate = user?.user_type === 'affiliate';
@@ -36,6 +44,9 @@ export default function ProductsPage() {
         commission_rate: parseFloat(formData.commission_rate),
         stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0,
         status: formData.status,
+        sales_page_url: formData.sales_page_url || undefined,
+        delivery_link: formData.delivery_link || undefined,
+        buy_now_config: formData.buy_now_config.redirect_url ? formData.buy_now_config : null,
       });
 
       setFormData({
@@ -45,6 +56,14 @@ export default function ProductsPage() {
         commission_rate: '',
         stock_quantity: '',
         status: 'draft',
+        sales_page_url: '',
+        delivery_link: '',
+        buy_now_config: {
+          button_text: 'Buy Now',
+          button_color: 'blue',
+          redirect_url: '',
+          open_in_new_tab: true,
+        },
       });
       setShowForm(false);
     } catch (err) {
@@ -169,6 +188,106 @@ export default function ProductsPage() {
               </div>
             </div>
 
+            <hr className="my-4 border-slate-700" />
+
+            <h3 className="mb-4 text-lg font-medium text-slate-200">Sales & Delivery Configuration</h3>
+
+            <div>
+              <label className="mb-2 block text-sm text-slate-300">Sales page URL</label>
+              <input
+                type="url"
+                value={formData.sales_page_url}
+                onChange={(e) => setFormData({ ...formData, sales_page_url: e.target.value })}
+                disabled={createProduct.isPending}
+                className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
+                placeholder="https://example.com/sales"
+              />
+              <p className="mt-1 text-xs text-slate-400">URL where customers view the product details</p>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm text-slate-300">Delivery/Download link</label>
+              <input
+                type="url"
+                value={formData.delivery_link}
+                onChange={(e) => setFormData({ ...formData, delivery_link: e.target.value })}
+                disabled={createProduct.isPending}
+                className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
+                placeholder="https://example.com/download"
+              />
+              <p className="mt-1 text-xs text-slate-400">URL for product delivery or download (sent after purchase)</p>
+            </div>
+
+            <hr className="my-4 border-slate-700" />
+
+            <h3 className="mb-4 text-lg font-medium text-slate-200">Buy Now Button Configuration</h3>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm text-slate-300">Button text</label>
+                <input
+                  type="text"
+                  value={formData.buy_now_config.button_text}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    buy_now_config: { ...formData.buy_now_config, button_text: e.target.value }
+                  })}
+                  disabled={createProduct.isPending}
+                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
+                  placeholder="Buy Now"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm text-slate-300">Button color</label>
+                <select
+                  value={formData.buy_now_config.button_color}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    buy_now_config: { ...formData.buy_now_config, button_color: e.target.value }
+                  })}
+                  disabled={createProduct.isPending}
+                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
+                >
+                  <option value="blue">Blue</option>
+                  <option value="green">Green</option>
+                  <option value="red">Red</option>
+                  <option value="purple">Purple</option>
+                  <option value="slate">Slate</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm text-slate-300">Button redirect URL</label>
+              <input
+                type="url"
+                value={formData.buy_now_config.redirect_url}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  buy_now_config: { ...formData.buy_now_config, redirect_url: e.target.value }
+                })}
+                disabled={createProduct.isPending}
+                className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
+                placeholder="https://example.com/checkout"
+              />
+              <p className="mt-1 text-xs text-slate-400">URL that the button will direct customers to when clicked</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="open_in_new_tab"
+                checked={formData.buy_now_config.open_in_new_tab}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  buy_now_config: { ...formData.buy_now_config, open_in_new_tab: e.target.checked }
+                })}
+                disabled={createProduct.isPending}
+                className="rounded border-slate-700 text-blue-600 disabled:opacity-50"
+              />
+              <label htmlFor="open_in_new_tab" className="text-sm text-slate-300">Open link in new tab</label>
+            </div>
+
             <button
               type="submit"
               disabled={createProduct.isPending}
@@ -204,6 +323,7 @@ export default function ProductsPage() {
                   <th className="pb-3">Commission</th>
                   <th className="pb-3">Status</th>
                   <th className="pb-3">Stock</th>
+                  <th className="pb-3">Config</th>
                 </tr>
               </thead>
               <tbody>
@@ -224,6 +344,16 @@ export default function ProductsPage() {
                       </span>
                     </td>
                     <td className="py-4">{product.stock_quantity ?? 'N/A'}</td>
+                    <td className="py-4">
+                      <div className="flex flex-col gap-1 text-xs text-slate-400">
+                        {product.sales_page_url && <span>📄 Sales page</span>}
+                        {product.delivery_link && <span>📦 Delivery</span>}
+                        {product.buy_now_config?.redirect_url && <span>🛒 Buy button</span>}
+                        {!product.sales_page_url && !product.delivery_link && !product.buy_now_config?.redirect_url && (
+                          <span className="text-slate-600">-</span>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
