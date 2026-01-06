@@ -35,7 +35,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
 
     if (!storedUser || !token) {
       window.location.href = '/login';
@@ -99,7 +99,7 @@ export default function DashboardPage() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
     window.location.href = '/login';
   };
