@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import Sidebar from './Sidebar';
 import AdminSidebar from './AdminSidebar';
 
@@ -8,35 +8,68 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AppLayout({ children }: AppLayoutProps) {
-  const [authState] = useState(() => {
-    if (typeof window === 'undefined') {
-      return { isAuthenticated: false, userType: 'customer', isClient: false };
-    }
+interface AuthData {
+  isAuthenticated: boolean;
+  userType: string;
+}
 
-    const token = localStorage.getItem('auth_token');
-    const userStr = localStorage.getItem('user');
-    
-    let authenticated = false;
-    let type = 'customer';
+// Cache snapshots to avoid infinite loop
+const serverSnapshot: AuthData = { isAuthenticated: false, userType: 'customer' };
+let cachedSnapshot: AuthData = serverSnapshot;
+let cachedToken: string | null = null;
+let cachedUserStr: string | null = null;
 
-    if (token && userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        type = user.user_type || 'customer';
-        authenticated = true;
-      } catch (err) {
-        console.error('Failed to parse user', err);
-      }
-    }
-
-    return { isAuthenticated: authenticated, userType: type, isClient: true };
-  });
-
-  // Prevent rendering sidebar on server; only show after hydration
-  if (!authState.isClient) {
-    return <main className="w-full">{children}</main>;
+function getAuthSnapshot(): AuthData {
+  if (typeof window === 'undefined') {
+    return serverSnapshot;
   }
+
+  const token = localStorage.getItem('auth_token');
+  const userStr = localStorage.getItem('user');
+  
+  // Return cached snapshot if data hasn't changed
+  if (token === cachedToken && userStr === cachedUserStr) {
+    return cachedSnapshot;
+  }
+
+  // Update cache
+  cachedToken = token;
+  cachedUserStr = userStr;
+  
+  if (!token || !userStr) {
+    cachedSnapshot = serverSnapshot;
+    return cachedSnapshot;
+  }
+
+  try {
+    const user = JSON.parse(userStr);
+    cachedSnapshot = {
+      isAuthenticated: true,
+      userType: user.user_type || 'customer'
+    };
+    return cachedSnapshot;
+  } catch (err) {
+    console.error('Failed to parse user', err);
+    cachedSnapshot = serverSnapshot;
+    return cachedSnapshot;
+  }
+}
+
+function getServerSnapshot(): AuthData {
+  return serverSnapshot;
+}
+
+function subscribe(callback: () => void) {
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
+}
+
+export default function AppLayout({ children }: AppLayoutProps) {
+  const authState = useSyncExternalStore(
+    subscribe,
+    getAuthSnapshot,
+    getServerSnapshot
+  );
 
   if (!authState.isAuthenticated) {
     return <main className="w-full">{children}</main>;

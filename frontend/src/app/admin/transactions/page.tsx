@@ -67,9 +67,9 @@ export default function AdminTransactionsPage() {
               <table className="w-full text-sm">
                 <thead className="border-b border-slate-800">
                   <tr className="text-left text-slate-400">
-                    <th className="pb-3 px-4">Transaction ID</th>
+                    <th className="pb-3 px-4">Transaction Ref</th>
                     <th className="pb-3 px-4">Amount</th>
-                    <th className="pb-3 px-4">Type</th>
+                    <th className="pb-3 px-4">Payment Method</th>
                     <th className="pb-3 px-4">Status</th>
                     <th className="pb-3 px-4">Date</th>
                   </tr>
@@ -77,21 +77,24 @@ export default function AdminTransactionsPage() {
                 <tbody>
                   {transactions.map((t: AdminTransaction) => (
                     <tr key={t.id} className="border-b border-slate-800/50 hover:bg-slate-800/30">
-                      <td className="py-3 px-4 font-mono text-xs">{t.transaction_id}</td>
+                      <td className="py-3 px-4 font-mono text-xs">{t.transaction_ref}</td>
                       <td className="py-3 px-4">₦{t.amount.toLocaleString()}</td>
                       <td className="py-3 px-4">
                         <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          t.type === 'sale' ? 'bg-blue-500/20 text-blue-300' :
-                          t.type === 'commission' ? 'bg-green-500/20 text-green-300' :
+                          t.payment_method === 'bank_transfer' ? 'bg-blue-500/20 text-blue-300' :
+                          t.payment_method === 'paystack' ? 'bg-green-500/20 text-green-300' :
+                          t.payment_method === 'stripe' ? 'bg-purple-500/20 text-purple-200' :
                           'bg-slate-500/20 text-slate-300'
                         }`}>
-                          {t.type}
+                          {t.payment_method || 'n/a'}
                         </span>
                       </td>
                       <td className="py-3 px-4">
                         <span className={`rounded-full px-3 py-1 text-xs font-medium ${
                           t.status === 'completed' ? 'bg-green-500/20 text-green-300' :
                           t.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300' :
+                          t.status === 'processing' ? 'bg-blue-500/20 text-blue-300' :
+                          t.status === 'settled' ? 'bg-emerald-500/20 text-emerald-300' :
                           'bg-red-500/20 text-red-300'
                         }`}>
                           {t.status}

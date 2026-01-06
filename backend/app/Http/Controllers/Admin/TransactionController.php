@@ -40,7 +40,8 @@ class TransactionController extends Controller
             $query->where('transaction_id', 'like', "%{$search}%");
         }
 
-        $transactions = $query->with(['user', 'product', 'vendor'])
+        // Eager-load valid relationships (user -> customer)
+        $transactions = $query->with(['customer', 'product', 'vendor', 'affiliate'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage, ['*'], 'page', $page);
 
@@ -67,7 +68,7 @@ class TransactionController extends Controller
             ], 403);
         }
 
-        $transaction = Transaction::with(['user', 'product', 'vendor'])->findOrFail($id);
+        $transaction = Transaction::with(['customer', 'product', 'vendor', 'affiliate'])->findOrFail($id);
 
         return response()->json([
             'success' => true,
