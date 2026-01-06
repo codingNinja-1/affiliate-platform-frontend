@@ -1,106 +1,44 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-
-type Withdrawal = {
-  id: number;
-  amount: number;
-  status: string;
-  payment_method: string;
-  created_at: string;
-  processed_at?: string;
-};
+import { useAuth } from '@/hooks/useAuth';
+import { useWithdrawals, useCreateWithdrawal, type Withdrawal } from '@/hooks/useWithdrawals';
 
 export default function WithdrawalsPage() {
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { user } = useAuth();
+  const userType = user?.user_type || 'customer';
+  
+  const { data: withdrawals = [], isLoading, refetch } = useWithdrawals(userType);
+  const createWithdrawal = useCreateWithdrawal(userType);
+  
   const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState('');
   const [amount, setAmount] = useState('');
   const [bankName, setBankName] = useState('');
   const [accountName, setAccountName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      window.location.href = '/login';
-      return;
-    }
-
-    loadWithdrawals();
-  }, []);
-
-  const loadWithdrawals = async () => {
-    const token = localStorage.getItem('auth_token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const endpoint = user.user_type === 'vendor' 
-      ? 'http://127.0.0.1:8000/api/vendor/withdrawals'
-      : 'http://127.0.0.1:8000/api/affiliate/withdrawals';
-
-    try {
-      const res = await fetch(endpoint, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error('Failed to load withdrawals');
-
-      const data = await res.json();
-      setWithdrawals(data.data || []);
-    } catch (err) {
-      setError('Unable to load withdrawals. Endpoint may not be ready yet.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setError('');
 
-    const token = localStorage.getItem('auth_token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const endpoint = user.user_type === 'vendor'
-      ? 'http://127.0.0.1:8000/api/vendor/withdrawals'
-      : 'http://127.0.0.1:8000/api/affiliate/withdrawals';
-
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          amount: parseFloat(amount),
-          bank_name: bankName,
-          account_name: accountName,
-          account_number: accountNumber,
-        }),
+      await createWithdrawal.mutateAsync({
+        amount: parseFloat(amount),
+        bank_name: bankName,
+        account_name: accountName,
+        account_number: accountNumber,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Withdrawal request failed');
-      }
 
       setAmount('');
       setBankName('');
       setAccountName('');
       setAccountNumber('');
       setShowForm(false);
-      loadWithdrawals();
+      refetch();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to submit withdrawal request';
-      setError(errorMessage);
-      console.error(err);
-    } finally {
-      setSubmitting(false);
+      setError(err instanceof Error ? err.message : 'Failed to submit withdrawal request');
     }
   };
 
@@ -141,7 +79,8 @@ export default function WithdrawalsPage() {
                 required
                 min="1000"
                 step="0.01"
-                className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white"
+                disabled={createWithdrawal.isPending}
+                className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
                 placeholder="Enter amount"
               />
               <p className="mt-1 text-xs text-slate-400">Minimum withdrawal: ₦1,000</p>
@@ -155,7 +94,8 @@ export default function WithdrawalsPage() {
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
                   required
-                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white"
+                  disabled={createWithdrawal.isPending}
+                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
                   placeholder="e.g., GTBank, Access Bank"
                 />
               </div>
@@ -166,7 +106,8 @@ export default function WithdrawalsPage() {
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
                   required
-                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white"
+                  disabled={createWithdrawal.isPending}
+                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
                   placeholder="Full name on account"
                 />
               </div>
@@ -179,17 +120,18 @@ export default function WithdrawalsPage() {
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
                 required
-                className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white"
+                disabled={createWithdrawal.isPending}
+                className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
                 placeholder="10-digit account number"
               />
             </div>
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={createWithdrawal.isPending}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500 disabled:opacity-50"
             >
-              {submitting ? 'Submitting...' : 'Submit request'}
+              {createWithdrawal.isPending ? 'Submitting...' : 'Submit request'}
             </button>
           </form>
         </section>
@@ -197,7 +139,7 @@ export default function WithdrawalsPage() {
 
       <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-semibold">Withdrawal history</h2>
-        {loading ? (
+        {isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-800" />
@@ -221,7 +163,7 @@ export default function WithdrawalsPage() {
                 </tr>
               </thead>
               <tbody>
-                {withdrawals.map((withdrawal) => (
+                {withdrawals.map((withdrawal: Withdrawal) => (
                   <tr key={withdrawal.id} className="border-b border-slate-800/50">
                     <td className="py-4 font-medium">₦{withdrawal.amount.toLocaleString()}</td>
                     <td className="py-4">{withdrawal.payment_method}</td>
