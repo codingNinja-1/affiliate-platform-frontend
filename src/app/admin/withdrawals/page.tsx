@@ -58,7 +58,7 @@ export default function AdminWithdrawalsPage() {
         const data = await res.json();
         alert(data.message || 'Failed to approve withdrawal');
       }
-    } catch (err) {
+    } catch {
       alert('Error approving withdrawal');
     } finally {
       setApproving(null);
