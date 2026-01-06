@@ -27,13 +27,13 @@ class DashboardController extends Controller
         $totalTransactions = Transaction::where('status', 'completed')->count() ?? 0;
         $activeVendors = User::where('user_type', 'vendor')->where('status', 'active')->count() ?? 0;
 
-        $vendorEarnings = Transaction::where('type', 'vendor_sale')
+        $vendorEarnings = Transaction::whereNotNull('vendor_id')
             ->where('status', 'completed')
-            ->sum('amount') ?? 0;
+            ->sum('vendor_amount') ?? 0;
 
-        $affiliateEarnings = Transaction::where('type', 'commission')
+        $affiliateEarnings = Transaction::whereNotNull('affiliate_id')
             ->where('status', 'completed')
-            ->sum('amount') ?? 0;
+            ->sum('commission_amount') ?? 0;
 
         $unpaidAffiliateBalance = Withdrawal::where('status', 'pending')->sum('amount') ?? 0;
 

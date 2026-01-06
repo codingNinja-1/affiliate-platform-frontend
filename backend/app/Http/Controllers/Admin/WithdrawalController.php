@@ -54,7 +54,7 @@ class WithdrawalController extends Controller
         ]);
     }
 
-    public function approve(Request $request, $withdrawalId)
+    public function approve(Request $request, Withdrawal $withdrawal)
     {
         $user = Auth::user();
 
@@ -64,8 +64,6 @@ class WithdrawalController extends Controller
                 'message' => 'Unauthorized.',
             ], 403);
         }
-
-        $withdrawal = Withdrawal::findOrFail($withdrawalId);
 
         if ($withdrawal->status !== 'pending') {
             return response()->json([
@@ -87,7 +85,7 @@ class WithdrawalController extends Controller
         ]);
     }
 
-    public function reject(Request $request, $withdrawalId)
+    public function reject(Request $request, Withdrawal $withdrawal)
     {
         $user = Auth::user();
 
@@ -101,8 +99,6 @@ class WithdrawalController extends Controller
         $validated = $request->validate([
             'reason' => 'required|string|max:500',
         ]);
-
-        $withdrawal = Withdrawal::findOrFail($withdrawalId);
 
         if ($withdrawal->status !== 'pending') {
             return response()->json([
