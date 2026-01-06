@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import AdminSidebar from '@/components/AdminSidebar';
-import Link from 'next/link';
+import AdminSidebar from '@/app/components/AdminSidebar';
 
 interface Product {
   id: number;
