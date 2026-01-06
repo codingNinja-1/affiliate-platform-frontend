@@ -14,7 +14,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       return { isAuthenticated: false, userType: 'customer', isClient: false };
     }
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     const userStr = localStorage.getItem('user');
     
     let authenticated = false;

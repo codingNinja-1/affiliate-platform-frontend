@@ -42,7 +42,7 @@ export default function AdminWithdrawalsPage() {
   const approveWithdrawal = async (withdrawalId: number) => {
     setApproving(withdrawalId);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         alert('Authentication token not found. Please log in again.');
         return;
