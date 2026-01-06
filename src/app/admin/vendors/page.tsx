@@ -1,17 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import AdminSidebar from '@/app/components/AdminSidebar';
 
 export default function AdminVendorsPage() {
   const { user, hydrated } = useAuth();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     if (hydrated && user && user.user_type?.toLowerCase() !== 'admin' && user.user_type?.toLowerCase() !== 'superadmin') {
@@ -19,7 +14,7 @@ export default function AdminVendorsPage() {
     }
   }, [hydrated, user]);
 
-  if (!isMounted || !hydrated) {
+  if (!hydrated) {
     return (
       <div className="flex min-h-screen bg-slate-950 text-white">
         <div className="flex-1 p-8">
