@@ -78,15 +78,25 @@ export function useProducts(userType?: string) {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to load products');
+        const errorText = await res.text().catch(() => '');
+        const errorMessage = `Failed to load products (${res.status}): ${errorText}`;
+        console.error('Products API Error:', {
+          status: res.status,
+          statusText: res.statusText,
+          body: errorText,
+          endpoint,
+          hasToken: !!token,
+        });
+        throw new Error(errorMessage);
       }
 
       const json = await res.json();
       const items = Array.isArray(json?.data) ? json.data : Array.isArray(json?.products) ? json.products : [];
       setData(items.map(normalizeProduct));
     } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err : new Error('Unable to load products'));
+      const error = err instanceof Error ? err : new Error('Unable to load products');
+      console.error('Failed to load products:', error);
+      setError(error);
       setData([]);
     } finally {
       setIsLoading(false);

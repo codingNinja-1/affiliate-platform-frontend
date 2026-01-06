@@ -30,13 +30,15 @@ export type AdminUser = {
 
 export type AdminTransaction = {
   id: number;
-  transaction_id: string;
+  uuid: string;
+  transaction_ref: string;
   vendor_id: number;
+  customer_id: number;
   affiliate_id?: number;
   product_id: number;
   amount: number;
-  type: string;
   status: string;
+  payment_method?: string | null;
   created_at: string;
 };
 
@@ -150,7 +152,18 @@ export function useAdminTransactions() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) throw new Error('Failed to load transactions');
+      if (!res.ok) {
+        let apiMessage = '';
+        try {
+          const body = await res.json();
+          apiMessage = body?.message || body?.error || '';
+        } catch (err) {
+          // ignore body parse errors
+        }
+
+        const detail = apiMessage ? ` - ${apiMessage}` : '';
+        throw new Error(`Failed to load transactions (${res.status} ${res.statusText})${detail}`);
+      }
 
       const json = await res.json();
       const items = Array.isArray(json?.data) ? json.data : [];
