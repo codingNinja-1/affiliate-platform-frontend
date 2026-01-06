@@ -35,7 +35,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token');
 
     if (!storedUser || !token) {
       window.location.href = '/login';
@@ -43,7 +43,15 @@ export default function DashboardPage() {
     }
 
     try {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      
+      // Redirect admins to admin dashboard
+      const userType = parsedUser?.user_type?.toLowerCase();
+      if (userType === 'admin' || userType === 'superadmin') {
+        window.location.href = '/admin';
+        return;
+      }
     } catch (err) {
       console.error('Failed to parse stored user', err);
     }
@@ -91,7 +99,7 @@ export default function DashboardPage() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/login';
   };
