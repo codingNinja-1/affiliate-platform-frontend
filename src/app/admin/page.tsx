@@ -1,20 +1,37 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminDashboard } from '@/hooks/useAdmin';
 import AdminSidebar from '@/app/components/AdminSidebar';
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, hydrated } = useAuth();
   const { data: metrics, isLoading } = useAdminDashboard();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (user && user.user_type?.toLowerCase() !== 'admin' && user.user_type?.toLowerCase() !== 'superadmin') {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (hydrated && user && user.user_type?.toLowerCase() !== 'admin' && user.user_type?.toLowerCase() !== 'superadmin') {
       window.location.href = '/dashboard';
     }
-  }, [user]);
+  }, [hydrated, user]);
+
+  if (!isMounted || !hydrated) {
+    return (
+      <div className="flex min-h-screen bg-slate-950 text-white">
+        <div className="flex-1 p-8">
+          <div className="h-screen flex items-center justify-center">
+            <p className="text-slate-400">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user || (user.user_type?.toLowerCase() !== 'admin' && user.user_type?.toLowerCase() !== 'superadmin')) {
     return null;

@@ -7,15 +7,33 @@ import { useAdminWithdrawals, type AdminWithdrawal } from '@/hooks/useAdmin';
 import AdminSidebar from '@/app/components/AdminSidebar';
 
 export default function AdminWithdrawalsPage() {
-  const { user } = useAuth();
+  const { user, hydrated } = useAuth();
   const { data: withdrawals, isLoading, error } = useAdminWithdrawals();
   const [approving, setApproving] = useState<number | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (user && user.user_type?.toLowerCase() !== 'admin' && user.user_type?.toLowerCase() !== 'superadmin') {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (hydrated && user && user.user_type?.toLowerCase() !== 'admin' && user.user_type?.toLowerCase() !== 'superadmin') {
       window.location.href = '/dashboard';
     }
-  }, [user]);
+  }, [hydrated, user]);
+
+  // Don't render until hydrated on client
+  if (!isMounted || !hydrated) {
+    return (
+      <div className="flex min-h-screen bg-slate-950 text-white">
+        <div className="flex-1 p-8">
+          <div className="h-screen flex items-center justify-center">
+            <p className="text-slate-400">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user || (user.user_type?.toLowerCase() !== 'admin' && user.user_type?.toLowerCase() !== 'superadmin')) {
     return null;
