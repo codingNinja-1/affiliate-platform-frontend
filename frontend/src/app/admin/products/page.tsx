@@ -38,6 +38,7 @@ export default function AdminProductsPage() {
     }
 
     loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user, router, filter]);
 
   const loadProducts = async () => {
