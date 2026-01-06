@@ -24,8 +24,9 @@ export default function AdminWithdrawalsPage() {
   const approveWithdrawal = async (withdrawalId: number) => {
     setApproving(withdrawalId);
     try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch(`http://127.0.0.1:8000/api/admin/withdrawals/${withdrawalId}/approve`, {
+      const token = localStorage.getItem('token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const res = await fetch(`${apiUrl}/api/admin/withdrawals/${withdrawalId}/approve`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -36,7 +37,8 @@ export default function AdminWithdrawalsPage() {
         alert('Withdrawal approved');
         window.location.reload();
       } else {
-        alert('Failed to approve withdrawal');
+        const data = await res.json();
+        alert(data.message || 'Failed to approve withdrawal');
       }
     } catch (err) {
       alert('Error approving withdrawal');

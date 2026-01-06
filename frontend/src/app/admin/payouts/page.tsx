@@ -20,7 +20,7 @@ export default function AdminPayoutsPage() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     if (!token || !['admin', 'superadmin'].includes(user.user_type)) {
@@ -32,10 +32,11 @@ export default function AdminPayoutsPage() {
   }, []);
 
   const loadPayouts = async () => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/admin/withdrawals?status=pending', {
+      const res = await fetch(`${apiUrl}/api/admin/withdrawals?status=pending`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -52,12 +53,13 @@ export default function AdminPayoutsPage() {
   };
 
   const handleAction = async (id: number, action: 'approve' | 'reject') => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
     setMessage('');
     setError('');
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/admin/withdrawals/${id}/${action}`, {
+      const res = await fetch(`${apiUrl}/api/admin/withdrawals/${id}/${action}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
