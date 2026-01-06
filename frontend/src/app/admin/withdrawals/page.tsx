@@ -8,7 +8,7 @@ import AdminSidebar from '@/app/components/AdminSidebar';
 
 export default function AdminWithdrawalsPage() {
   const { user, hydrated } = useAuth();
-  const { data: withdrawals, isLoading, error } = useAdminWithdrawals();
+  const { data: withdrawals, isLoading, error, refetch } = useAdminWithdrawals();
   const [approving, setApproving] = useState<number | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
