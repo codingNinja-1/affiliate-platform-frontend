@@ -43,23 +43,33 @@ export default function AdminWithdrawalsPage() {
     setApproving(withdrawalId);
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Authentication token not found. Please log in again.');
+        return;
+      }
+
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
       const res = await fetch(`${apiUrl}/api/admin/withdrawals/${withdrawalId}/approve`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       });
 
       if (res.ok) {
-        alert('Withdrawal approved');
-        window.location.reload();
-      } else {
         const data = await res.json();
-        alert(data.message || 'Failed to approve withdrawal');
+        alert(data.message || 'Withdrawal approved successfully');
+        refetch();
+      } else {
+        const data = await res.json().catch(() => ({ message: 'Unknown error' }));
+        console.error('Approval error:', data);
+        alert(data.message || `Failed to approve withdrawal (${res.status})`);
       }
-    } catch {
-      alert('Error approving withdrawal');
+    } catch (error) {
+      console.error('Network error:', error);
+      alert(`Error approving withdrawal: ${error instanceof Error ? error.message : 'Network error'}`);
     } finally {
       setApproving(null);
     }
