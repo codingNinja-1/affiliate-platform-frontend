@@ -3,13 +3,49 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* App design tokens (can be updated from Figma) */
+  --primary: #3b82f6; /* Blue 500 */
+  --primary-foreground: #ffffff;
+  --secondary: #64748b; /* Slate 500 */
+  --secondary-foreground: #ffffff;
+  --accent: #a855f7; /* Purple 500 */
+  --accent-foreground: #ffffff;
+  --success: #22c55e; /* Green 500 */
+  --warning: #eab308; /* Yellow 500 */
+  --danger: #ef4444;  /* Red 500 */
+  --muted: #0f172a;   /* Slate 900 */
+  --muted-foreground: #94a3b8; /* Slate 400 */
+  --surface: #0b1220; /* Deep panel */
+  --border: #1f2937;  /* Gray 800 */
+  --ring: var(--primary);
+  /* Radii */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,3 +60,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Utility helpers */
+.card {
+  @apply rounded-[--radius-lg] border border-[--color-border] bg-[--color-surface] shadow-xl;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-[--radius-md] px-4 py-2 text-sm font-medium transition-colors;
+}
+.btn-primary { @apply bg-[--color-primary] text-[--color-primary-foreground] hover:bg-[color-mix(in oklab, var(--color-primary), black 10%)]; }
+.btn-secondary { @apply bg-[--color-secondary] text-[--color-secondary-foreground] hover:bg-[color-mix(in oklab, var(--color-secondary), black 10%)]; }
+.btn-ghost { @apply bg-transparent text-[--color-foreground] hover:bg-[--color-muted]; }
+.btn-outline { @apply border border-[--color-border] bg-transparent text-[--color-foreground] hover:bg-[--color-muted]; }
+
+.badge { @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium; }
+.badge-success { @apply bg-[color-mix(in oklab, var(--color-success), transparent 80%)] text-[--color-success]; }
+.badge-warning { @apply bg-[color-mix(in oklab, var(--color-warning), transparent 80%)] text-[--color-warning]; }
+.badge-danger { @apply bg-[color-mix(in oklab, var(--color-danger), transparent 80%)] text-[--color-danger]; }
+.badge-muted { @apply bg-[color-mix(in oklab, var(--color-muted), transparent 80%)] text-[--color-muted-foreground]; }
