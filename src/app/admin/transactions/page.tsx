@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminTransactions, type AdminTransaction } from '@/hooks/useAdmin';
 import AdminSidebar from '@/app/components/AdminSidebar';
+import { Card } from '@/app/components/ui/Card';
+import { Badge } from '@/app/components/ui/Badge';
 
 export default function AdminTransactionsPage() {
   const { user, hydrated } = useAuth();
@@ -51,7 +53,7 @@ export default function AdminTransactionsPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl">
+        <Card>
           {isLoading ? (
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
@@ -90,15 +92,13 @@ export default function AdminTransactionsPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          t.status === 'completed' ? 'bg-green-500/20 text-green-300' :
-                          t.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300' :
-                          t.status === 'processing' ? 'bg-blue-500/20 text-blue-300' :
-                          t.status === 'settled' ? 'bg-emerald-500/20 text-emerald-300' :
-                          'bg-red-500/20 text-red-300'
-                        }`}>
-                          {t.status}
-                        </span>
+                        <Badge tone={
+                          t.status === 'completed' ? 'success' :
+                          t.status === 'pending' ? 'warning' :
+                          t.status === 'processing' ? 'muted' :
+                          t.status === 'settled' ? 'success' :
+                          'danger'
+                        }>{t.status}</Badge>
                       </td>
                       <td className="py-3 px-4 text-slate-400">
                         {new Date(t.created_at).toLocaleDateString()}
@@ -109,7 +109,7 @@ export default function AdminTransactionsPage() {
               </table>
             </div>
           )}
-        </div>
+        </Card>
       </main>
     </div>
   );
