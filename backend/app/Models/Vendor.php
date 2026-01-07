@@ -94,4 +94,4 @@ class Vendor extends Model
     {
         return $this->balance >= $amount && $amount > 0;
     }
-};
+}

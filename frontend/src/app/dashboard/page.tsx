@@ -52,6 +52,24 @@ export default function DashboardPage() {
         window.location.href = '/admin';
         return;
       }
+
+      // Check if non-admin users have set up bank details
+      if (userType !== 'superadmin' && userType !== 'admin') {
+        fetch('http://127.0.0.1:8000/api/settings/check-bank-details', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.data.requires_setup) {
+              window.location.href = '/setup-bank-details';
+            }
+          })
+          .catch((err) => {
+            console.warn('Failed to check bank details', err);
+          });
+      }
     } catch (err) {
       console.error('Failed to parse stored user', err);
     }

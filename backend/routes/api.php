@@ -82,11 +82,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/profile', 'ProfileController@update');
         Route::post('/profile/avatar', 'ProfileController@updateAvatar');
     }
+
+    // Settings routes
+    Route::prefix('settings')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SettingsController::class, 'index']);
+        Route::post('/bank-details', [\App\Http\Controllers\SettingsController::class, 'updateBankDetails']);
+        Route::get('/check-bank-details', [\App\Http\Controllers\SettingsController::class, 'checkBankDetails']);
+    });
 });
 
-// Public product routes (no authentication required)
-Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index']);
-Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show']);
+// Note: Public product routes are defined inside auth:sanctum middleware
+// They work for both authenticated and unauthenticated users via optional auth
 
 // Affiliate tracking (public - no auth required)
 Route::get('/track/{referralCode}/{productId}', [\App\Http\Controllers\TrackingController::class, 'trackClick']);

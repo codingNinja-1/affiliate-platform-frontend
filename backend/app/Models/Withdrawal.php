@@ -90,4 +90,4 @@ class Withdrawal extends Model
     {
         return $query->where('status', 'paid');
     }
-};
+}

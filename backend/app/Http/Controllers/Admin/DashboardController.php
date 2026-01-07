@@ -51,7 +51,7 @@ class DashboardController extends Controller
 
         $pendingWithdrawals = Withdrawal::where('status', 'pending')->count() ?? 0;
 
-        $totalPaidOut = Withdrawal::where('status', 'completed')->sum('amount') ?? 0;
+        $totalPaidOut = Withdrawal::where('status', 'paid')->sum('amount') ?? 0;
 
         return response()->json([
             'success' => true,

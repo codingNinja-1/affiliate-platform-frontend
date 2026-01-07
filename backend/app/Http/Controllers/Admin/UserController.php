@@ -38,7 +38,8 @@ class UserController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%");
             });
         }
@@ -89,8 +90,8 @@ class UserController extends Controller
         $targetUser = User::findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'sometimes|in:active,inactive,banned,pending,suspended,rejected',
-            'user_type' => 'sometimes|in:customer,vendor,affiliate,admin,superadmin',
+            'status' => 'sometimes|in:active,inactive,pending,suspended',
+            'user_type' => 'sometimes|in:customer,vendor,affiliate,admin',
         ]);
 
         $targetUser->update($validated);

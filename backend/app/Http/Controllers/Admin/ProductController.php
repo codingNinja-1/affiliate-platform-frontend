@@ -32,8 +32,10 @@ class ProductController extends Controller
         }
 
         if ($search) {
-            $query->where('name', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('product_id', 'like', "%{$search}%");
+            });
         }
 
         $products = $query->with(['vendor' => function ($q) {

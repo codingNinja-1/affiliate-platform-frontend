@@ -41,7 +41,7 @@ export default function AdminPage() {
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-white">
-      <AdminSidebar userType={user?.user_type} />
+      <AdminSidebar />
       
       <main className="ml-64 flex-1 p-8">
         <div className="mb-8">

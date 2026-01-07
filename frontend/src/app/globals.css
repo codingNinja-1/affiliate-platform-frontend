@@ -69,13 +69,13 @@ body {
 .btn {
   @apply inline-flex items-center justify-center rounded-[--radius-md] px-4 py-2 text-sm font-medium transition-colors;
 }
-.btn-primary { @apply bg-[--color-primary] text-[--color-primary-foreground] hover:bg-[color-mix(in oklab, var(--color-primary), black 10%)]; }
-.btn-secondary { @apply bg-[--color-secondary] text-[--color-secondary-foreground] hover:bg-[color-mix(in oklab, var(--color-secondary), black 10%)]; }
+.btn-primary { @apply bg-[--color-primary] text-[--color-primary-foreground] hover:opacity-90; }
+.btn-secondary { @apply bg-[--color-secondary] text-[--color-secondary-foreground] hover:opacity-90; }
 .btn-ghost { @apply bg-transparent text-[--color-foreground] hover:bg-[--color-muted]; }
 .btn-outline { @apply border border-[--color-border] bg-transparent text-[--color-foreground] hover:bg-[--color-muted]; }
 
 .badge { @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium; }
-.badge-success { @apply bg-[color-mix(in oklab, var(--color-success), transparent 80%)] text-[--color-success]; }
-.badge-warning { @apply bg-[color-mix(in oklab, var(--color-warning), transparent 80%)] text-[--color-warning]; }
-.badge-danger { @apply bg-[color-mix(in oklab, var(--color-danger), transparent 80%)] text-[--color-danger]; }
-.badge-muted { @apply bg-[color-mix(in oklab, var(--color-muted), transparent 80%)] text-[--color-muted-foreground]; }
+.badge-success { @apply text-[--color-success]; background-color: color-mix(in srgb, var(--color-success) 20%, transparent); }
+.badge-warning { @apply text-[--color-warning]; background-color: color-mix(in srgb, var(--color-warning) 20%, transparent); }
+.badge-danger { @apply text-[--color-danger]; background-color: color-mix(in srgb, var(--color-danger) 20%, transparent); }
+.badge-muted { @apply text-[--color-muted-foreground]; background-color: color-mix(in srgb, var(--color-muted) 20%, transparent); }

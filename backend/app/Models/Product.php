@@ -160,4 +160,4 @@ class Product extends Model
     {
         return $this->sales_page_url . '?ref=' . $referralCode;
     }
-};
+}

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class WithdrawalController extends Controller
@@ -53,31 +54,54 @@ class WithdrawalController extends Controller
         }
 
         $balance = $affiliate->balance ?? 0;
-        if ($balance < $validated['amount']) {
+
+        // Check for pending withdrawals to calculate available balance
+        $pendingWithdrawals = Withdrawal::where('user_id', $user->id)
+            ->where('user_type', 'affiliate')
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        $availableBalance = $balance - $pendingWithdrawals;
+
+        if ($availableBalance < $validated['amount']) {
             return response()->json([
                 'success' => false,
-                'message' => "Insufficient balance. Available: ₦{$balance}",
+                'message' => "Insufficient balance. Available: ₦" . number_format($availableBalance, 2),
             ], 400);
         }
 
-        // Create withdrawal request
-        $withdrawal = Withdrawal::create([
-            'uuid' => Str::uuid(),
-            'user_id' => $user->id,
-            'user_type' => 'affiliate',
-            'amount' => $validated['amount'],
-            'bank_name' => $validated['bank_name'],
-            'account_name' => $validated['account_name'],
-            'account_number' => $validated['account_number'],
-            'payment_method' => $validated['payment_method'] ?? 'bank_transfer',
-            'status' => 'pending',
-        ]);
+        DB::beginTransaction();
+        try {
+            // Deduct balance immediately to prevent double-withdrawal
+            $affiliate->decrement('balance', $validated['amount']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Withdrawal request submitted successfully.',
-            'data' => $withdrawal,
-        ], 201);
+            // Create withdrawal request
+            $withdrawal = Withdrawal::create([
+                'uuid' => Str::uuid(),
+                'user_id' => $user->id,
+                'user_type' => 'affiliate',
+                'amount' => $validated['amount'],
+                'bank_name' => $validated['bank_name'],
+                'account_name' => $validated['account_name'],
+                'account_number' => $validated['account_number'],
+                'payment_method' => $validated['payment_method'] ?? 'bank_transfer',
+                'status' => 'pending',
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Withdrawal request submitted successfully.',
+                'data' => $withdrawal,
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create withdrawal request.',
+            ], 500);
+        }
     }
 
     /**
