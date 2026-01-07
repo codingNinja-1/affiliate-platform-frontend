@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { darkTokens, lightTokens, type DesignTokens } from "@/design/tokens";
+import { useEffect, useState } from "react";
+import { darkTokens as defaultDark, lightTokens as defaultLight, type DesignTokens } from "@/design/tokens";
 
 export interface ThemeProviderProps {
   tokens?: DesignTokens;
@@ -35,11 +35,35 @@ function applyTokens(tokens: DesignTokens) {
 }
 
 export function ThemeProvider({ tokens, darkTokensOverride, children }: ThemeProviderProps) {
+  const [loadedLight, setLoadedLight] = useState<DesignTokens | null>(null);
+  const [loadedDark, setLoadedDark] = useState<DesignTokens | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const res = await fetch("/design-tokens.json", { signal: controller.signal });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json?.light && json?.dark) {
+          setLoadedLight(json.light as DesignTokens);
+          setLoadedDark(json.dark as DesignTokens);
+        }
+      } catch (_) {
+        // ignore network errors; fall back to defaults
+      }
+    };
+    load();
+    return () => controller.abort();
+  }, []);
+
   useEffect(() => {
     const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const t = prefersDark ? darkTokensOverride ?? darkTokens : tokens ?? lightTokens;
+    const chosenLight = tokens ?? loadedLight ?? defaultLight;
+    const chosenDark = darkTokensOverride ?? loadedDark ?? defaultDark;
+    const t = prefersDark ? chosenDark : chosenLight;
     applyTokens(t);
-  }, [tokens, darkTokensOverride]);
+  }, [tokens, darkTokensOverride, loadedLight, loadedDark]);
 
   return children as React.ReactElement;
 }

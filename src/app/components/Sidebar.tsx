@@ -108,7 +108,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
         {/* Footer */}
         <div className="border-t border-slate-800 p-6">
           <Link
-            href="/profile"
+            href="/settings"
             className="mb-3 flex items-center gap-3 rounded-lg px-4 py-3 text-slate-300 hover:bg-slate-800"
           >
             <span>⚙️</span>

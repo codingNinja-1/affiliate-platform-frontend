@@ -84,7 +84,7 @@ export default function AdminWithdrawalsPage() {
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-white">
-      <AdminSidebar userType={user?.user_type} />
+      <AdminSidebar />
       
       <main className="ml-64 flex-1 p-8">
         <div className="mb-8">
@@ -133,7 +133,8 @@ export default function AdminWithdrawalsPage() {
                       <td className="py-3 px-4">{w.payment_method || '-'}</td>
                       <td className="py-3 px-4">
                         <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          w.status === 'completed' ? 'bg-green-500/20 text-green-300' :
+                          w.status === 'paid' ? 'bg-green-500/20 text-green-300' :
+                          w.status === 'approved' ? 'bg-blue-500/20 text-blue-300' :
                           w.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300' :
                           'bg-red-500/20 text-red-300'
                         }`}>

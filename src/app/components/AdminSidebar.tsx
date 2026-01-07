@@ -2,17 +2,8 @@
 
 import Link from 'next/link';
 
-interface SidebarProps {
-  userType?: string;
-}
-
-export default function AdminSidebar({ userType }: SidebarProps) {
-  const isAdmin = userType?.toLowerCase() === 'admin' || userType?.toLowerCase() === 'superadmin';
-
-  if (!isAdmin) {
-    return null;
-  }
-
+export default function AdminSidebar() {
+  // Don't conditionally return null - let AppLayout handle the conditional rendering
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 border-r border-slate-700 bg-slate-900 p-4 text-white">
       <div className="mb-8">

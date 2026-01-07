@@ -170,8 +170,10 @@ export default function WithdrawalsPage() {
                     <td className="py-4">
                       <span
                         className={`rounded-full px-2 py-1 text-xs ${
-                          withdrawal.status === 'completed'
+                          withdrawal.status === 'paid'
                             ? 'bg-green-500/20 text-green-300'
+                            : withdrawal.status === 'approved'
+                            ? 'bg-blue-500/20 text-blue-300'
                             : withdrawal.status === 'pending'
                             ? 'bg-amber-500/20 text-amber-300'
                             : 'bg-red-500/20 text-red-300'
