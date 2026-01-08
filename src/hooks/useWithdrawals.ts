@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './useAuth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api').replace(/\/$/, '');
 
 export type Withdrawal = {
   id: number | string;
@@ -39,12 +39,13 @@ export function useWithdrawals(userType?: string) {
   const [error, setError] = useState<Error | null>(null);
 
   const endpoint = useMemo(() => {
+    const base = API_BASE;
     const role = userType?.toLowerCase();
 
-    if (role === 'vendor') return `${API_BASE}/api/vendor/withdrawals`;
-    if (role === 'affiliate') return `${API_BASE}/api/affiliate/withdrawals`;
+    if (role === 'vendor') return `${base}/vendor/withdrawals`;
+    if (role === 'affiliate') return `${base}/affiliate/withdrawals`;
 
-    return `${API_BASE}/api/withdrawals`;
+    return `${base}/withdrawals`;
   }, [userType]);
 
   const fetchWithdrawals = useCallback(async () => {
@@ -94,12 +95,13 @@ export function useCreateWithdrawal(userType?: string) {
   const [error, setError] = useState<Error | null>(null);
 
   const endpoint = useMemo(() => {
+    const base = API_BASE;
     const role = userType?.toLowerCase();
 
-    if (role === 'vendor') return `${API_BASE}/api/vendor/withdrawals`;
-    if (role === 'affiliate') return `${API_BASE}/api/affiliate/withdrawals`;
+    if (role === 'vendor') return `${base}/vendor/withdrawals`;
+    if (role === 'affiliate') return `${base}/affiliate/withdrawals`;
 
-    return `${API_BASE}/api/withdrawals`;
+    return `${base}/withdrawals`;
   }, [userType]);
 
   const mutateAsync = useCallback(

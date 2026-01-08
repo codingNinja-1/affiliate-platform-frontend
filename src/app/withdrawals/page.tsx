@@ -1,12 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useWithdrawals, useCreateWithdrawal, type Withdrawal } from '@/hooks/useWithdrawals';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api';
+
+type BankDetails = {
+  bank_name: string;
+  account_name: string;
+  account_number: string;
+  bank_code?: string;
+};
+
 export default function WithdrawalsPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const userType = user?.user_type || 'customer';
   
   const { data: withdrawals = [], isLoading, refetch } = useWithdrawals(userType);
@@ -18,10 +27,70 @@ export default function WithdrawalsPage() {
   const [bankName, setBankName] = useState('');
   const [accountName, setAccountName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+  const [bankLoading, setBankLoading] = useState(true);
+  const [bankError, setBankError] = useState('');
+  const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
+
+  useEffect(() => {
+    if (!token) {
+      setBankLoading(false);
+      return;
+    }
+
+    const fetchBankDetails = async () => {
+      try {
+        setBankError('');
+        const res = await fetch(`${API_BASE}/settings`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error('Could not load bank details');
+        }
+
+        const data = await res.json();
+        const details =
+          data?.data?.bank_details || data?.bank_details || data?.bankDetails || null;
+
+        if (details) {
+          const normalized: BankDetails = {
+            bank_name: details.bank_name || '',
+            account_name: details.account_name || '',
+            account_number: details.account_number || '',
+            bank_code: details.bank_code || '',
+          };
+
+          setBankDetails(normalized);
+          setBankName(normalized.bank_name);
+          setAccountName(normalized.account_name);
+          setAccountNumber(normalized.account_number);
+        } else {
+          setBankDetails(null);
+          setBankError('Add your bank details in Settings to request withdrawals.');
+        }
+      } catch (err) {
+        setBankDetails(null);
+        setBankError(
+          err instanceof Error ? err.message : 'Unable to load bank details, please retry.'
+        );
+      } finally {
+        setBankLoading(false);
+      }
+    };
+
+    fetchBankDetails();
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!bankName || !accountName || !accountNumber) {
+      setError('Please add your bank details in Settings before requesting a withdrawal.');
+      return;
+    }
 
     try {
       await createWithdrawal.mutateAsync({
@@ -34,7 +103,7 @@ export default function WithdrawalsPage() {
       setAmount('');
       setBankName('');
       setAccountName('');
-      setAccountNumber('');
+      setAccountNumber(accountNumber);
       setShowForm(false);
       refetch();
     } catch (err) {
@@ -60,15 +129,26 @@ export default function WithdrawalsPage() {
         </button>
       </header>
 
-      {error && (
+      {(error || bankError) && (
         <div className="rounded-md border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-          {error}
+          {error || bankError}
         </div>
       )}
 
       {showForm && (
         <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl">
           <h2 className="mb-4 text-xl font-semibold">Request withdrawal</h2>
+          {bankLoading ? (
+            <div className="space-y-3 text-sm text-slate-400">
+              <div className="h-10 animate-pulse rounded-md bg-slate-800" />
+              <div className="h-10 animate-pulse rounded-md bg-slate-800" />
+              <div className="h-10 animate-pulse rounded-md bg-slate-800" />
+            </div>
+          ) : !bankDetails ? (
+            <div className="rounded-md border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              No bank details found. Please add them in <Link href="/settings" className="text-blue-300 underline">Settings</Link>.
+            </div>
+          ) : null}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="mb-2 block text-sm text-slate-300">Amount (₦)</label>
@@ -86,49 +166,21 @@ export default function WithdrawalsPage() {
               <p className="mt-1 text-xs text-slate-400">Minimum withdrawal: ₦1,000</p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm text-slate-300">Bank name</label>
-                <input
-                  type="text"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  required
-                  disabled={createWithdrawal.isPending}
-                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
-                  placeholder="e.g., GTBank, Access Bank"
-                />
+            {bankDetails && (
+              <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-200">
+                <p className="text-slate-400">Payout destination</p>
+                <p className="mt-1 font-semibold text-white">{bankName}</p>
+                <p className="text-slate-300">{accountName}</p>
+                <p className="text-slate-300">Acct: {accountNumber}</p>
+                <div className="mt-2 text-xs text-slate-400">
+                  Need to change this? Update in <Link href="/settings" className="text-blue-300 underline">Settings</Link>.
+                </div>
               </div>
-              <div>
-                <label className="mb-2 block text-sm text-slate-300">Account name</label>
-                <input
-                  type="text"
-                  value={accountName}
-                  onChange={(e) => setAccountName(e.target.value)}
-                  required
-                  disabled={createWithdrawal.isPending}
-                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
-                  placeholder="Full name on account"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-slate-300">Account number</label>
-              <input
-                type="text"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                required
-                disabled={createWithdrawal.isPending}
-                className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
-                placeholder="10-digit account number"
-              />
-            </div>
+            )}
 
             <button
               type="submit"
-              disabled={createWithdrawal.isPending}
+              disabled={createWithdrawal.isPending || bankLoading || !bankDetails}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500 disabled:opacity-50"
             >
               {createWithdrawal.isPending ? 'Submitting...' : 'Submit request'}
