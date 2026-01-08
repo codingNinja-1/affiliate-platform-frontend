@@ -8,6 +8,7 @@ use App\Models\Vendor;
 use App\Models\Withdrawal;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class WithdrawalController extends Controller
 {
@@ -103,7 +104,7 @@ class WithdrawalController extends Controller
                 'message' => 'Withdrawal approved successfully.',
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error approving withdrawal', [
+            Log::error('Error approving withdrawal', [
                 'error' => $e->getMessage(),
                 'withdrawal_id' => $withdrawal?->id ?? 'unknown',
             ]);
@@ -164,7 +165,7 @@ class WithdrawalController extends Controller
                 'message' => 'Withdrawal rejected successfully.',
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error rejecting withdrawal', [
+            Log::error('Error rejecting withdrawal', [
                 'error' => $e->getMessage(),
                 'withdrawal_id' => $withdrawal?->id ?? 'unknown',
             ]);

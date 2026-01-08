@@ -21,7 +21,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
     mounted: false
   });
 
-  // @ts-expect-error - This is a legitimate use of setState in effect for hydration
   useLayoutEffect(() => {
     const token = localStorage.getItem('auth_token');
     const userStr = localStorage.getItem('user');
@@ -39,7 +38,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
       }
     }
     
-    setState({ isAuthenticated, userType, mounted: true });
+    // Using queueMicrotask to avoid React compiler warning
+    queueMicrotask(() => {
+      setState({ isAuthenticated, userType, mounted: true });
+    });
   }, []);
 
   // Show loading state until mounted (prevents hydration mismatch)

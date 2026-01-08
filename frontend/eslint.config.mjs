@@ -8,6 +8,7 @@ const eslintConfig = defineConfig([
   {
     rules: {
       '@next/next/no-sync-state-in-effect': 'off',
+      'react-compiler/react-compiler': 'off',
     },
   },
   // Override default ignores of eslint-config-next.

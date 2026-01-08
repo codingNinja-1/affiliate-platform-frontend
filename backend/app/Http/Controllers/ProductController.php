@@ -27,7 +27,8 @@ class ProductController extends Controller
      */
     public function show($slug)
     {
-        $product = Product::where('slug', $slug)
+        $product = Product::with('vendor')
+            ->where('slug', $slug)
             ->where('approval_status', 'approved')
             ->where('is_active', true)
             ->firstOrFail();
