@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './useAuth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api').replace(/\/$/, '');
 
 export type AdminDashboardMetrics = {
   app_gross_revenue: number;
@@ -68,7 +68,7 @@ export function useAdminDashboard() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/admin/dashboard`, {
+      const res = await fetch(`${API_BASE}/admin/dashboard`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -107,7 +107,7 @@ export function useAdminUsers() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/admin/users`, {
+      const res = await fetch(`${API_BASE}/admin/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -148,7 +148,7 @@ export function useAdminTransactions() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/admin/transactions`, {
+      const res = await fetch(`${API_BASE}/admin/transactions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -200,7 +200,7 @@ export function useAdminWithdrawals() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/admin/withdrawals`, {
+      const res = await fetch(`${API_BASE}/admin/withdrawals`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

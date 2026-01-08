@@ -6,10 +6,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAdminWithdrawals, type AdminWithdrawal } from '@/hooks/useAdmin';
 import AdminSidebar from '@/app/components/AdminSidebar';
 
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.134:8000/api').replace(/\/$/, '');
+
 export default function AdminWithdrawalsPage() {
   const { user, hydrated } = useAuth();
   const { data: withdrawals, isLoading, error, refetch } = useAdminWithdrawals();
   const [approving, setApproving] = useState<number | null>(null);
+  const [denying, setDenying] = useState<number | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -48,8 +51,7 @@ export default function AdminWithdrawalsPage() {
         return;
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const url = `${apiUrl}/api/admin/withdrawals/${withdrawalId}/approve`;
+      const url = `${API_BASE}/admin/withdrawals/${withdrawalId}/approve`;
       
       console.log('Attempting to approve withdrawal:', { url, withdrawalId, hasToken: !!token });
       
@@ -79,6 +81,55 @@ export default function AdminWithdrawalsPage() {
       alert(`Error approving withdrawal: ${error instanceof Error ? error.message : 'Network error'}. Make sure the backend server is running at http://127.0.0.1:8000`);
     } finally {
       setApproving(null);
+    }
+  };
+
+  const denyWithdrawal = async (withdrawalId: number) => {
+    const reason = prompt('Enter rejection reason:');
+    if (!reason || reason.trim() === '') {
+      alert('Rejection reason is required.');
+      return;
+    }
+
+    setDenying(withdrawalId);
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        alert('Authentication token not found. Please log in again.');
+        return;
+      }
+
+      const url = `${API_BASE}/admin/withdrawals/${withdrawalId}/reject`;
+      
+      console.log('Attempting to deny withdrawal:', { url, withdrawalId, hasToken: !!token });
+      
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+
+      console.log('Response status:', res.status);
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Success response:', data);
+        alert(data.message || 'Withdrawal denied successfully');
+        refetch();
+      } else {
+        const data = await res.json().catch(() => ({ message: 'Unknown error' }));
+        console.error('Error response:', { status: res.status, data });
+        alert(data.message || `Failed to deny withdrawal (${res.status})`);
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      alert(`Error denying withdrawal: ${error instanceof Error ? error.message : 'Network error'}. Make sure the backend server is running at http://127.0.0.1:8000`);
+    } finally {
+      setDenying(null);
     }
   };
 
@@ -146,13 +197,22 @@ export default function AdminWithdrawalsPage() {
                       </td>
                       <td className="py-3 px-4">
                         {w.status === 'pending' ? (
-                          <button
-                            onClick={() => approveWithdrawal(w.id)}
-                            disabled={approving === w.id}
-                            className="rounded bg-green-600 px-3 py-1 text-xs font-medium hover:bg-green-500 disabled:opacity-50"
-                          >
-                            {approving === w.id ? 'Approving...' : 'Approve'}
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => approveWithdrawal(w.id)}
+                              disabled={approving === w.id || denying === w.id}
+                              className="rounded bg-green-600 px-3 py-1 text-xs font-medium hover:bg-green-500 disabled:opacity-50"
+                            >
+                              {approving === w.id ? 'Approving...' : 'Approve'}
+                            </button>
+                            <button
+                              onClick={() => denyWithdrawal(w.id)}
+                              disabled={approving === w.id || denying === w.id}
+                              className="rounded bg-red-600 px-3 py-1 text-xs font-medium hover:bg-red-500 disabled:opacity-50"
+                            >
+                              {denying === w.id ? 'Denying...' : 'Deny'}
+                            </button>
+                          </div>
                         ) : (
                           <span className="text-slate-400 text-xs">{w.status}</span>
                         )}

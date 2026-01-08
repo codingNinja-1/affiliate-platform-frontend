@@ -23,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Return JSON for unauthenticated API requests instead of redirecting
-        $exceptions->respond(function (\Illuminate\Http\Response $response, \Throwable $exception, \Illuminate\Http\Request $request) {
+        $exceptions->respond(function ($response, $exception, $request) {
             if ($request->is('api/*') && $exception instanceof \Illuminate\Auth\AuthenticationException) {
                 return response()->json([
                     'success' => false,

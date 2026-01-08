@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, X, Users, ShoppingBag } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
   href: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
   visible?: boolean;
 };
 
@@ -24,31 +26,31 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
   const isAffiliate = userType === 'affiliate';
 
   const adminNav: NavItem[] = [
-    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { href: '/admin/users', label: 'Users', icon: '👥' },
-    { href: '/admin/products', label: 'Products', icon: '📦' },
-    { href: '/admin/payouts', label: 'Payouts', icon: '💰' },
-    { href: '/admin/reports', label: 'Reports', icon: '📈' },
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/admin/users', label: 'Users', icon: Users },
+    { href: '/admin/products', label: 'Products', icon: Package },
+    { href: '/admin/payouts', label: 'Payouts', icon: DollarSign },
+    { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
   ];
 
   const vendorNav: NavItem[] = [
-    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { href: '/products', label: 'My Products', icon: '📦' },
-    { href: '/analytics', label: 'Analytics', icon: '📈' },
-    { href: '/withdrawals', label: 'Withdrawals', icon: '💰' },
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/products', label: 'My Products', icon: Package },
+    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/withdrawals', label: 'Withdrawals', icon: DollarSign },
   ];
 
   const affiliateNav: NavItem[] = [
-    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { href: '/products', label: 'Products', icon: '🛍️' },
-    { href: '/links', label: 'Affiliate Links', icon: '🔗' },
-    { href: '/analytics', label: 'Analytics', icon: '📈' },
-    { href: '/withdrawals', label: 'Withdrawals', icon: '💰' },
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/products', label: 'Products', icon: ShoppingBag },
+    { href: '/links', label: 'Affiliate Links', icon: Link2 },
+    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/withdrawals', label: 'Withdrawals', icon: DollarSign },
   ];
 
   const customerNav: NavItem[] = [
-    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { href: '/products', label: 'Products', icon: '🛍️' },
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/products', label: 'Products', icon: ShoppingBag },
   ];
 
   let navItems = customerNav;
@@ -58,32 +60,44 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
 
   const isActive = (href: string) => pathname === href;
 
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  };
+
   return (
     <>
       {/* Mobile toggle button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed left-4 top-4 z-50 md:hidden rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700"
+        className="fixed left-4 top-4 z-50 md:hidden rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700 shadow-lg"
       >
-        {isOpen ? '✕' : '☰'}
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-slate-900 text-white shadow-lg transition-transform duration-300 md:translate-x-0 flex flex-col ${
+        className={`fixed left-0 top-0 h-screen w-60 bg-white shadow-sm transition-transform duration-300 md:translate-x-0 flex flex-col border-r border-gray-200 z-40 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Logo */}
-        <div className="border-b border-slate-800 p-6">
-          <h1 className="text-2xl font-bold text-blue-400">AffiliateHub</h1>
-          <p className="mt-1 text-xs text-slate-400">
-            {isAdmin ? 'Admin Panel' : isVendor ? 'Vendor' : isAffiliate ? 'Affiliate' : 'Customer'}
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold">A</span>
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">AffiliateHub</h1>
+          </div>
+          <p className="text-xs text-gray-500 ml-10">
+            {isAdmin ? 'Admin Panel' : isVendor ? 'Vendor Portal' : isAffiliate ? 'Affiliate Portal' : 'Customer'}
           </p>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-2 px-4 py-6 overflow-y-auto">
+        <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 mb-3">Menu</p>
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -93,36 +107,33 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
                   setIsOpen(false);
                 }
               }}
-              className={`flex items-center gap-3 rounded-lg px-4 py-3 transition ${
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
                 isActive(item.href)
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800'
+                  ? 'bg-blue-50 text-blue-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <span className="text-xl">{item.icon}</span>
-              <span className="font-medium">{item.label}</span>
+              <item.icon size={20} className={isActive(item.href) ? 'text-blue-600' : 'text-gray-500'} />
+              <span className="text-sm font-medium">{item.label}</span>
             </Link>
           ))}
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-slate-800 p-6">
+        <div className="border-t border-gray-100 p-4 space-y-2">
           <Link
             href="/settings"
-            className="mb-3 flex items-center gap-3 rounded-lg px-4 py-3 text-slate-300 hover:bg-slate-800"
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            <span>⚙️</span>
-            <span>Settings</span>
+            <SettingsIcon size={20} className="text-gray-500" />
+            <span className="text-sm font-medium">Settings</span>
           </Link>
           <button
-            onClick={() => {
-              localStorage.removeItem('auth_token');
-              localStorage.removeItem('user');
-              window.location.href = '/login';
-            }}
-            className="w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 font-medium transition-colors"
           >
-            Logout
+            <LogOut size={20} />
+            <span className="text-sm">Logout</span>
           </button>
         </div>
       </aside>

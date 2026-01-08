@@ -12,7 +12,7 @@ use App\Http\Controllers\DashboardController;
 |--------------------------------------------------------------------------
 */
 
-// Public routes
+// Public routes (no authentication required)
 Route::prefix('auth')->group(function () {
     Route::post('/register', [RegisterController::class, 'register']);
     Route::post('/login', [LoginController::class, 'login']);
@@ -20,6 +20,16 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
     Route::post('/verify-email', [RegisterController::class, 'verifyEmail']);
 });
+
+// Public product routes (no auth required)
+Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index']);
+Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show']);
+
+// Affiliate tracking (public - no auth required)
+Route::get('/track/{referralCode}/{productId}', [\App\Http\Controllers\TrackingController::class, 'trackClick']);
+
+// Purchase recording (public endpoint for now - in production add webhook security)
+Route::post('/purchases', [\App\Http\Controllers\PurchaseController::class, 'store']);
 
 // Protected routes (conditionally registered to avoid missing controller errors during development)
 Route::middleware('auth:sanctum')->group(function () {
@@ -73,8 +83,8 @@ Route::middleware('auth:sanctum')->group(function () {
     }
 
     // Customer/Authenticated user product routes
-    Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index']);
-    Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show']);
+    Route::get('/products-auth', [\App\Http\Controllers\ProductController::class, 'index']);
+    Route::get('/products-auth/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show']);
 
     // Shared routes
     if (class_exists('App\\Http\\Controllers\\ProfileController')) {
@@ -91,11 +101,4 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// Note: Public product routes are defined inside auth:sanctum middleware
-// They work for both authenticated and unauthenticated users via optional auth
-
-// Affiliate tracking (public - no auth required)
-Route::get('/track/{referralCode}/{productId}', [\App\Http\Controllers\TrackingController::class, 'trackClick']);
-
-// Purchase recording (public endpoint for now - in production add webhook security)
-Route::post('/purchases', [\App\Http\Controllers\PurchaseController::class, 'store']);
+// Note: Public product routes are defined above without auth middleware

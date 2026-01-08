@@ -142,7 +142,7 @@ class PurchaseController extends Controller
             'transaction_id' => $transaction->id,
             'amount' => $commissionAmount,
             'rate' => $commissionRate,
-            'status' => 'pending', // Will be approved by admin
+            'status' => 'approved', // Auto-approve commissions
             'approved_at' => now(),
         ]);
 
@@ -153,10 +153,10 @@ class PurchaseController extends Controller
             'rate' => $commissionRate,
         ]);
 
-        // Update affiliate stats
+        // Update affiliate stats and balance
         $affiliate->increment('total_sales');
         $affiliate->increment('total_clicks'); // Basic conversion count
-        $affiliate->increment('total_earnings', $commissionAmount);
+        $affiliate->updateBalance($commissionAmount, 'add'); // Add commission to balance
         $affiliate->updateConversionRate();
         $affiliate->updateTier();
 
