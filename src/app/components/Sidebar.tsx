@@ -70,7 +70,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-slate-900 text-white shadow-lg transition-transform duration-300 md:translate-x-0 ${
+        className={`fixed left-0 top-0 h-screen w-64 bg-slate-900 text-white shadow-lg transition-transform duration-300 md:translate-x-0 flex flex-col ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -83,7 +83,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-2 px-4 py-6">
+        <nav className="flex-1 space-y-2 px-4 py-6 overflow-y-auto">
           {navItems.map((item) => (
             <Link
               key={item.href}
