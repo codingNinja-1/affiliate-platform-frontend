@@ -8,7 +8,17 @@ type AnalyticsData = {
   totalSales: number;
   conversionRate: number;
   avgOrderValue: number;
-  chartData?: unknown;
+  topProducts?: Array<{
+    product_id: number;
+    product_name: string;
+    sales_count: number;
+    revenue: number;
+  }>;
+  dailySales?: Array<{
+    date: string;
+    sales: number;
+    revenue: number;
+  }>;
 };
 
 export default function AnalyticsPage() {
@@ -95,8 +105,8 @@ export default function AnalyticsPage() {
           loading={loading}
         />
         <MetricCard
-          title="Conversion rate"
-          value={`${(analytics?.conversionRate || 0).toFixed(2)}%`}
+          title="Growth rate"
+          value={`${(analytics?.growthRate || analytics?.conversionRate || 0) > 0 ? '+' : ''}${(analytics?.growthRate || analytics?.conversionRate || 0).toFixed(2)}%`}
           loading={loading}
         />
         <MetricCard
@@ -108,20 +118,71 @@ export default function AnalyticsPage() {
 
       <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-semibold">Performance chart</h2>
-        <div className="flex h-64 items-center justify-center text-slate-400">
-          <div className="text-center">
-            <p>Chart visualization coming soon</p>
-            <p className="mt-2 text-sm">Connect to a charting library like Chart.js or Recharts</p>
+        {loading ? (
+          <div className="flex h-64 items-center justify-center">
+            <div className="h-8 w-32 animate-pulse rounded bg-slate-800" />
           </div>
-        </div>
+        ) : analytics?.dailySales && analytics.dailySales.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-slate-800">
+                <tr className="text-left text-slate-400">
+                  <th className="pb-3">Date</th>
+                  <th className="pb-3 text-right">Sales</th>
+                  <th className="pb-3 text-right">Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.dailySales.map((day, index) => (
+                  <tr key={index} className="border-b border-slate-800/50">
+                    <td className="py-3 text-slate-300">{new Date(day.date).toLocaleDateString()}</td>
+                    <td className="py-3 text-right font-medium text-white">{day.sales}</td>
+                    <td className="py-3 text-right font-medium text-white">₦{day.revenue.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex h-64 items-center justify-center text-slate-400">
+            <p>No sales data for this period</p>
+          </div>
+        )}
       </section>
 
       <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-semibold">Top performing items</h2>
-        <div className="py-8 text-center text-slate-400">
-          <p>Detailed breakdowns will appear here</p>
-          <p className="mt-2 text-sm">Hook this to your products/transactions API</p>
-        </div>
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 animate-pulse rounded bg-slate-800" />
+            ))}
+          </div>
+        ) : analytics?.topProducts && analytics.topProducts.length > 0 ? (
+          <div className="space-y-3">
+            {analytics.topProducts.map((product, index) => (
+              <div
+                key={product.product_id}
+                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-800/50 p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/20 text-sm font-bold text-blue-400">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="font-medium text-white">{product.product_name}</p>
+                    <p className="text-sm text-slate-400">{product.sales_count} sales</p>
+                  </div>
+                </div>
+                <p className="text-lg font-semibold text-white">₦{product.revenue.toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 text-center text-slate-400">
+            <p>No product sales data for this period</p>
+          </div>
+        )}
       </section>
     </main>
   );

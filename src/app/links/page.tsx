@@ -86,10 +86,35 @@ export default function LinksPage() {
     }
   };
 
-  const copyToClipboard = (link: string) => {
-    navigator.clipboard.writeText(link);
-    setCopiedLink(link);
-    setTimeout(() => setCopiedLink(''), 2000);
+  const copyToClipboard = async (link: string) => {
+    try {
+      // Check if clipboard API is available
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(link);
+        setCopiedLink(link);
+        setTimeout(() => setCopiedLink(''), 2000);
+      } else {
+        // Fallback for browsers that don't support clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = link;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          setCopiedLink(link);
+          setTimeout(() => setCopiedLink(''), 2000);
+        } catch (err) {
+          console.error('Failed to copy:', err);
+          alert('Failed to copy link. Please copy manually: ' + link);
+        }
+        document.body.removeChild(textArea);
+      }
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy link. Please copy manually: ' + link);
+    }
   };
 
   return (
