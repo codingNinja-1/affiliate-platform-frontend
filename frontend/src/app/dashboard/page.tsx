@@ -20,6 +20,33 @@ type DashboardSummary = {
   totalClicks: number;
 };
 
+type Transaction = {
+  id: number;
+  transaction_ref: string;
+  product_name: string;
+  customer_name: string;
+  amount: number;
+  vendor_amount: number;
+  created_at_human: string;
+};
+
+type Withdrawal = {
+  id: number;
+  withdrawal_ref: string;
+  amount: number;
+  status: string;
+  created_at: string;
+};
+
+type Commission = {
+  id: number;
+  product_name: string;
+  amount: number;
+  status: string;
+  transaction_ref: string;
+  created_at_human: string;
+};
+
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -182,15 +209,7 @@ function RoleSections({
           loading={loading}
         />
 
-        <Panels
-          primaryTitle="Sales & payouts"
-          primaryHint="Hook this to vendor orders and payout queue."
-          actions={[
-            { href: '/products', label: 'Manage products' },
-            { href: '/withdrawals', label: 'Request payout' },
-            { href: '/analytics', label: 'View sales analytics' },
-          ]}
-        />
+        <VendorSalesPayouts />
       </>
     );
   }
@@ -210,15 +229,7 @@ function RoleSections({
           loading={loading}
         />
 
-        <Panels
-          primaryTitle="Affiliate performance"
-          primaryHint="Connect this to conversions and commissions."
-          actions={[
-            { href: '/links', label: 'Get referral links' },
-            { href: '/withdrawals', label: 'Request withdrawal' },
-            { href: '/analytics', label: 'View funnel analytics' },
-          ]}
-        />
+        <AffiliatePerformance />
       </>
     );
   }
@@ -332,5 +343,289 @@ function StatCard({
         </p>
       )}
     </div>
+  );
+}
+
+function VendorSalesPayouts() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    const fetchData = async () => {
+      try {
+        const [transRes, withdrawRes] = await Promise.all([
+          fetch('http://127.0.0.1:8000/api/vendor/transactions?limit=5', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('http://127.0.0.1:8000/api/vendor/withdrawals', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        if (transRes.ok) {
+          const transData = await transRes.json();
+          setTransactions(transData.data || []);
+        }
+
+        if (withdrawRes.ok) {
+          const withdrawData = await withdrawRes.json();
+          setWithdrawals((withdrawData.data || []).slice(0, 5));
+        }
+      } catch (error) {
+        console.error('Failed to load sales data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return (
+    <section className="grid gap-4 lg:grid-cols-3">
+      {/* Recent Sales */}
+      <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm lg:col-span-2">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Recent Sales</h2>
+          <Link href="/products" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            View all →
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 animate-pulse rounded bg-gray-100" />
+            ))}
+          </div>
+        ) : transactions.length === 0 ? (
+          <p className="text-center text-sm text-gray-500 py-8">No sales yet</p>
+        ) : (
+          <div className="space-y-3">
+            {transactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0"
+              >
+                <div>
+                  <p className="font-medium text-gray-900">{transaction.product_name}</p>
+                  <p className="text-xs text-gray-500">
+                    {transaction.customer_name} • {transaction.created_at_human}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">₦{transaction.vendor_amount.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">from ₦{transaction.amount.toLocaleString()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Withdrawal Queue */}
+      <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Withdrawals</h2>
+          <Link href="/withdrawals" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            Manage →
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-12 animate-pulse rounded bg-gray-100" />
+            ))}
+          </div>
+        ) : withdrawals.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-sm text-gray-500 mb-3">No withdrawal requests</p>
+            <Link
+              href="/withdrawals"
+              className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Request payout
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {withdrawals.map((withdrawal) => (
+              <div
+                key={withdrawal.id}
+                className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0"
+              >
+                <div>
+                  <p className="text-sm font-medium text-gray-900">₦{withdrawal.amount.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">{withdrawal.withdrawal_ref}</p>
+                </div>
+                <span
+                  className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    withdrawal.status === 'pending'
+                      ? 'bg-amber-100 text-amber-700'
+                      : withdrawal.status === 'approved' || withdrawal.status === 'paid'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}
+                >
+                  {withdrawal.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function AffiliatePerformance() {
+  const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    const fetchData = async () => {
+      try {
+        const [commRes, withdrawRes] = await Promise.all([
+          fetch('http://127.0.0.1:8000/api/affiliate/commissions?limit=5', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('http://127.0.0.1:8000/api/affiliate/withdrawals', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        if (commRes.ok) {
+          const commData = await commRes.json();
+          setCommissions(commData.data || []);
+        }
+
+        if (withdrawRes.ok) {
+          const withdrawData = await withdrawRes.json();
+          setWithdrawals((withdrawData.data || []).slice(0, 5));
+        }
+      } catch (error) {
+        console.error('Failed to load affiliate data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return (
+    <section className="grid gap-4 lg:grid-cols-3">
+      {/* Recent Commissions */}
+      <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm lg:col-span-2">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Recent Commissions</h2>
+          <Link href="/analytics" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            View analytics →
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 animate-pulse rounded bg-gray-100" />
+            ))}
+          </div>
+        ) : commissions.length === 0 ? (
+          <p className="text-center text-sm text-gray-500 py-8">No commissions yet</p>
+        ) : (
+          <div className="space-y-3">
+            {commissions.map((commission) => (
+              <div
+                key={commission.id}
+                className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0"
+              >
+                <div>
+                  <p className="font-medium text-gray-900">{commission.product_name}</p>
+                  <p className="text-xs text-gray-500">
+                    {commission.transaction_ref} • {commission.created_at_human}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">₦{commission.amount.toLocaleString()}</p>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      commission.status === 'pending'
+                        ? 'bg-amber-100 text-amber-700'
+                        : commission.status === 'approved'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}
+                  >
+                    {commission.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Withdrawal Queue */}
+      <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Withdrawals</h2>
+          <Link href="/withdrawals" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            Manage →
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-12 animate-pulse rounded bg-gray-100" />
+            ))}
+          </div>
+        ) : withdrawals.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-sm text-gray-500 mb-3">No withdrawal requests</p>
+            <Link
+              href="/withdrawals"
+              className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Request withdrawal
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {withdrawals.map((withdrawal) => (
+              <div
+                key={withdrawal.id}
+                className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0"
+              >
+                <div>
+                  <p className="text-sm font-medium text-gray-900">₦{withdrawal.amount.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">{withdrawal.withdrawal_ref}</p>
+                </div>
+                <span
+                  className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    withdrawal.status === 'pending'
+                      ? 'bg-amber-100 text-amber-700'
+                      : withdrawal.status === 'approved' || withdrawal.status === 'paid'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}
+                >
+                  {withdrawal.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

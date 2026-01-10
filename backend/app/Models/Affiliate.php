@@ -82,7 +82,7 @@ class Affiliate extends Model
 
     public function withdrawals()
     {
-        return $this->hasMany(Withdrawal::class, 'user_id')
+        return $this->hasMany(Withdrawal::class, 'user_id', 'user_id')
             ->where('user_type', 'affiliate');
     }
 
@@ -104,7 +104,7 @@ class Affiliate extends Model
     // Accessors
     public function getPendingBalanceAttribute()
     {
-        return $this->commissions()
+        return $this->withdrawals()
             ->where('status', 'pending')
             ->sum('amount');
     }

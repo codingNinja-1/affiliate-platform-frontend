@@ -62,7 +62,7 @@ class Vendor extends Model
 
     public function withdrawals()
     {
-        return $this->hasMany(Withdrawal::class, 'user_id')
+        return $this->hasMany(Withdrawal::class, 'user_id', 'user_id')
             ->where('user_type', 'vendor');
     }
 
@@ -74,7 +74,7 @@ class Vendor extends Model
     // Accessors
     public function getPendingBalanceAttribute()
     {
-        return $this->commissions()
+        return $this->withdrawals()
             ->where('status', 'pending')
             ->sum('amount');
     }

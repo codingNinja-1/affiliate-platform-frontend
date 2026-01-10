@@ -28,7 +28,13 @@ Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController:
 // Affiliate tracking (public - no auth required)
 Route::get('/track/{referralCode}/{productId}', [\App\Http\Controllers\TrackingController::class, 'trackClick']);
 
-// Purchase recording (public endpoint for now - in production add webhook security)
+// Payment routes (public)
+Route::post('/payment/initialize', [\App\Http\Controllers\PurchaseController::class, 'initializePayment']);
+Route::get('/payment/callback', [\App\Http\Controllers\PurchaseController::class, 'handleCallback']);
+Route::post('/payment/webhook', [\App\Http\Controllers\PurchaseController::class, 'handleWebhook']);
+Route::get('/payment/public-key', [\App\Http\Controllers\PurchaseController::class, 'getPublicKey']);
+
+// Purchase recording (legacy demo endpoint)
 Route::post('/purchases', [\App\Http\Controllers\PurchaseController::class, 'store']);
 
 // Protected routes (conditionally registered to avoid missing controller errors during development)
@@ -45,10 +51,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/change-password', [PasswordResetController::class, 'changePassword']);
     });
 
+    // Settings routes
+    Route::prefix('settings')->group(function () {
+        Route::get('/notifications', [\App\Http\Controllers\NotificationSettingsController::class, 'index']);
+        Route::post('/notifications', [\App\Http\Controllers\NotificationSettingsController::class, 'update']);
+
+        // SMTP settings
+        Route::get('/smtp', [\App\Http\Controllers\SmtpSettingsController::class, 'index']);
+        Route::post('/smtp', [\App\Http\Controllers\SmtpSettingsController::class, 'update']);
+        Route::post('/smtp/test', [\App\Http\Controllers\SmtpSettingsController::class, 'test']);
+
+        // Email templates
+        Route::get('/email-templates/{templateKey}', [\App\Http\Controllers\EmailTemplateController::class, 'show']);
+        Route::post('/email-templates/{templateKey}', [\App\Http\Controllers\EmailTemplateController::class, 'update']);
+    });
+
     // Admin routes
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index']);
         Route::get('/reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index']);
+        Route::get('/affiliates', [\App\Http\Controllers\Admin\AffiliateController::class, 'index']);
+        Route::post('/affiliates/{id}/approve', [\App\Http\Controllers\Admin\AffiliateController::class, 'approve']);
+        Route::post('/affiliates/{id}/reject', [\App\Http\Controllers\Admin\AffiliateController::class, 'reject']);
         Route::apiResource('users', \App\Http\Controllers\Admin\UserController::class)->only(['index', 'show', 'update']);
         Route::apiResource('products', \App\Http\Controllers\Admin\ProductController::class)->only(['index', 'show']);
         Route::apiResource('transactions', \App\Http\Controllers\Admin\TransactionController::class)->only(['index', 'show']);
@@ -57,12 +81,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/products/{product}/reject', [\App\Http\Controllers\Admin\ProductController::class, 'reject'])->name('admin.products.reject');
         Route::post('/withdrawals/{withdrawal}/approve', [\App\Http\Controllers\Admin\WithdrawalController::class, 'approve'])->name('admin.withdrawals.approve');
         Route::post('/withdrawals/{withdrawal}/reject', [\App\Http\Controllers\Admin\WithdrawalController::class, 'reject'])->name('admin.withdrawals.reject');
+
+        // Settings
+        Route::get('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'getPaymentSettings']);
+        Route::post('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePaymentSettings']);
     });
 
     // Vendor routes
     Route::prefix('vendor')->middleware('role:vendor')->group(function () {
         Route::apiResource('products', \App\Http\Controllers\Vendor\ProductController::class);
         Route::apiResource('withdrawals', \App\Http\Controllers\Vendor\WithdrawalController::class);
+        Route::get('/transactions', [\App\Http\Controllers\Vendor\TransactionController::class, 'index']);
         Route::get('/reports', \App\Http\Controllers\Vendor\ReportController::class . '@index');
     });
 
@@ -71,6 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/products', \App\Http\Controllers\Affiliate\ProductController::class . '@index');
         Route::get('/products/{product}', \App\Http\Controllers\Affiliate\ProductController::class . '@show');
         Route::apiResource('withdrawals', \App\Http\Controllers\Affiliate\WithdrawalController::class);
+        Route::get('/commissions', [\App\Http\Controllers\Affiliate\CommissionController::class, 'index']);
         Route::get('/reports', \App\Http\Controllers\Affiliate\ReportController::class . '@index');
     });
 

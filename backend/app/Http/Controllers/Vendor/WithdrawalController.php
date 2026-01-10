@@ -44,6 +44,19 @@ class WithdrawalController extends Controller
 
         $user = Auth::user();
 
+        // Check if there's already a pending withdrawal
+        $hasPending = Withdrawal::where('user_id', $user->id)
+            ->where('user_type', 'vendor')
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($hasPending) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You already have a pending withdrawal request. Please wait for it to be processed before requesting another withdrawal.',
+            ], 400);
+        }
+
         // Check if vendor has sufficient balance
         $vendor = $user->vendor;
         if (!$vendor) {

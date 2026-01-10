@@ -26,8 +26,12 @@ export default function ProductSalesPage() {
   const slug = params.slug as string;
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState(false);
   const [error, setError] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [paystackKey, setPaystackKey] = useState('');
   const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
   useEffect(() => {
@@ -41,6 +45,21 @@ export default function ProductSalesPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('ref') || '';
     setReferralCode(code);
+
+    // Fetch Paystack public key
+    const fetchPaystackKey = async () => {
+      try {
+        const response = await fetch(`${apiBase}/payment/public-key`);
+        if (response.ok) {
+          const data = await response.json();
+          setPaystackKey(data.public_key);
+        }
+      } catch (err) {
+        console.error('Error fetching Paystack key:', err);
+      }
+    };
+
+    fetchPaystackKey();
 
     // Fetch product details
     const fetchProduct = async () => {
@@ -84,15 +103,75 @@ export default function ProductSalesPage() {
   const handlePurchase = async () => {
     if (!product) return;
 
+    if (!customerEmail || !customerName) {
+      alert('Please enter your email and name');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerEmail)) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    setPurchasing(true);
+
     try {
-      // Create a purchase request
+      // Check if Paystack is configured
+      if (!paystackKey) {
+        // Fallback to demo mode
+        await handleDemoPurchase();
+        return;
+      }
+
+      // Initialize payment with backend
+      const response = await fetch(`${apiBase}/payment/initialize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          product_id: product.id,
+          customer_email: customerEmail,
+          customer_name: customerName,
+          ref: referralCode || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Payment initialization failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data.authorization_url) {
+        // Redirect to Paystack payment page
+        window.location.href = result.data.authorization_url;
+      } else {
+        throw new Error('Failed to get payment URL');
+      }
+    } catch (err) {
+      console.error('Error processing purchase:', err);
+      alert(err instanceof Error ? err.message : 'Failed to process purchase');
+      setPurchasing(false);
+    }
+  };
+
+  const handleDemoPurchase = async () => {
+    if (!product) return;
+
+    try {
+      // Create a demo purchase request
       const purchaseData = {
         product_id: product.id,
-        customer_email: 'customer@example.com', // In real app, get from checkout form
-        customer_name: 'Customer Name', // In real app, get from checkout form
+        customer_email: customerEmail,
+        customer_name: customerName,
         amount: product.price,
         ref: referralCode || null,
-        payment_method: 'credit_card', // In real app, use actual payment method
+        payment_method: 'demo',
       };
 
       const response = await fetch(`${apiBase}/purchases`, {
@@ -106,15 +185,7 @@ export default function ProductSalesPage() {
 
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(
-          `Purchase failed: ${response.status} ${response.statusText} ${text?.slice(0, 120)}`
-        );
-      }
-
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`Unexpected response format: ${text?.slice(0, 120)}`);
+        throw new Error(`Purchase failed: ${response.status}`);
       }
 
       const result = await response.json();
@@ -123,6 +194,8 @@ export default function ProductSalesPage() {
     } catch (err) {
       console.error('Error processing purchase:', err);
       alert(err instanceof Error ? err.message : 'Failed to process purchase');
+    } finally {
+      setPurchasing(false);
     }
   };
 
@@ -231,20 +304,62 @@ export default function ProductSalesPage() {
             </div>
           )}
 
+          {/* Customer Information Form */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Customer Information
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Purchase Button */}
           <button
             onClick={handlePurchase}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition duration-200"
+            disabled={purchasing || !customerEmail || !customerName}
+            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg transition duration-200"
           >
-            Buy Now - {product.price.toLocaleString()} {product.currency || 'NGN'}
+            {purchasing ? 'Processing...' : `Buy Now - ${product.price.toLocaleString()} ${product.currency || 'NGN'}`}
           </button>
 
-          {/* Demo Notice */}
-          <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-800">
-              <strong>Demo Mode:</strong> This is a demo purchase. In production,
-              this would connect to a real payment gateway. The affiliate
-              commission will be recorded for this sale.
+          {/* Payment Method Notice */}
+          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              {paystackKey ? (
+                <>
+                  <strong>Secure Payment:</strong> You will be redirected to Paystack to complete your payment securely.
+                </>
+              ) : (
+                <>
+                  <strong>Demo Mode:</strong> Paystack is not configured. This will create a demo purchase for testing purposes.
+                </>
+              )}
             </p>
           </div>
         </div>

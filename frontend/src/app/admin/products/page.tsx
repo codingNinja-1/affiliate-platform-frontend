@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import AdminSidebar from '@/app/components/AdminSidebar';
+import { Home, Users, Package, CreditCard, DollarSign, Building2, TrendingUp, Settings, Mail, Plug, ChevronLeft } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -14,6 +14,80 @@ interface Product {
   rejection_reason?: string;
   created_at: string;
 }
+
+const Sidebar = () => {
+  const router = useRouter();
+  
+  const menuItems = [
+    { id: 'dashboard', icon: Home, label: 'Dashboard', path: '/admin' },
+    { id: 'users', icon: Users, label: 'Users', path: '/admin/users' },
+    { id: 'products', icon: Package, label: 'Products', path: '/admin/products' },
+    { id: 'transactions', icon: CreditCard, label: 'Transactions', path: '/admin/transactions' },
+    { id: 'withdrawals', icon: DollarSign, label: 'Withdrawals', path: '/admin/withdrawals' },
+    { id: 'affiliates', icon: TrendingUp, label: 'Affiliates', path: '/admin/affiliates' },
+    { id: 'vendors', icon: Building2, label: 'Vendors', path: '/admin/vendors' },
+  ];
+
+  const preferences = [
+    { id: 'settings', icon: Settings, label: 'Settings', path: '/admin/settings' },
+    { id: 'integrations', icon: Plug, label: 'Integrations', path: '/admin/integrations' },
+    { id: 'email', icon: Mail, label: 'Email', path: '/admin/email' },
+  ];
+
+  return (
+    <div className="fixed left-0 top-0 h-screen w-60 bg-white border-r border-gray-200 flex flex-col">
+      <div className="p-6 border-b border-gray-200">
+        <h1 className="text-xl font-bold text-gray-900">AffiliateHub</h1>
+        <p className="text-xs text-gray-500 mt-1">Admin Panel</p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="mb-6">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Dashboard</p>
+          <div className="space-y-1">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.id === 'products';
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => router.push(item.path)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon size={18} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Preferences</p>
+          <div className="space-y-1">
+            {preferences.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => router.push(item.path)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Icon size={18} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function AdminProductsPage() {
   const router = useRouter();
@@ -46,10 +120,10 @@ export default function AdminProductsPage() {
     setError('');
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.134:8000/api').replace(/\/$/, '');
       const statusParam = filter === 'all' ? '' : `?status=${filter}`;
 
-      const res = await fetch(`${apiUrl}/api/admin/products${statusParam}`, {
+      const res = await fetch(`${API_BASE}/admin/products${statusParam}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -69,8 +143,8 @@ export default function AdminProductsPage() {
     setError('');
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const res = await fetch(`${apiUrl}/api/admin/products/${id}/approve`, {
+      const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.134:8000/api').replace(/\/$/, '');
+      const res = await fetch(`${API_BASE}/admin/products/${id}/approve`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -94,8 +168,8 @@ export default function AdminProductsPage() {
     setError('');
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const res = await fetch(`${apiUrl}/api/admin/products/${id}/reject`, {
+      const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.134:8000/api').replace(/\/$/, '');
+      const res = await fetch(`${API_BASE}/admin/products/${id}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -116,174 +190,181 @@ export default function AdminProductsPage() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-950">
-      <AdminSidebar />
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar />
 
-      <div className="flex-1 overflow-auto">
-        <div className="p-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white">Product Approvals</h1>
-            <p className="text-gray-400 mt-2">Review and approve vendor products</p>
+      <div className="ml-60 flex-1 overflow-auto p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <button 
+            onClick={() => router.push('/admin')}
+            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 mb-4"
+          >
+            <ChevronLeft size={16} />
+            Back to admin dashboard
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900">Product Approvals</h1>
+          <p className="text-gray-600 mt-2">Review and approve vendor products</p>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex gap-3 mb-6">
+          {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
+            <button
+              key={status}
+              onClick={() => {
+                setFilter(status);
+                setMessage('');
+                setError('');
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filter === status
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+              }`}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Success Message */}
+        {message && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+            {message}
           </div>
+        )}
 
-          {/* Filter Tabs */}
-          <div className="flex gap-4 mb-6">
-            {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+            {error}
+          </div>
+        )}
+
+        {/* Rejection Modal */}
+        {rejectingId !== null && (
+          <div className="mb-6 bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Product</h3>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Enter rejection reason..."
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={4}
+            />
+            <div className="flex gap-3">
               <button
-                key={status}
-                onClick={() => {
-                  setFilter(status);
-                  setMessage('');
-                  setError('');
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  filter === status
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
-                }`}
+                onClick={() => handleRejectSubmit(rejectingId)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                Confirm Rejection
               </button>
-            ))}
+              <button
+                onClick={() => {
+                  setRejectingId(null);
+                  setRejectReason('');
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
+        )}
 
-          {/* Success Message */}
-          {message && (
-            <div className="mb-6 p-4 bg-green-500/20 border border-green-500 rounded-lg text-green-400">
-              {message}
+        {/* Products Table */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-gray-500">Loading products...</div>
             </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
-              {error}
+          ) : products.length === 0 ? (
+            <div className="p-12 text-center">
+              <Package size={48} className="mx-auto mb-4 text-gray-300" />
+              <p className="text-lg font-medium text-gray-900">No {filter === 'all' ? '' : filter} products found</p>
+              <p className="text-sm text-gray-500 mt-1">Product submissions will appear here</p>
             </div>
-          )}
-
-          {/* Rejection Modal */}
-          {rejectingId !== null && (
-            <div className="mb-6 bg-slate-900 border border-slate-700 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Reject Product</h3>
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Enter rejection reason..."
-                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white mb-4 focus:outline-none focus:border-blue-500"
-                rows={4}
-              />
-              <div className="flex gap-3">
-                <button
-                  onClick={() => handleRejectSubmit(rejectingId)}
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                >
-                  Confirm Rejection
-                </button>
-                <button
-                  onClick={() => {
-                    setRejectingId(null);
-                    setRejectReason('');
-                  }}
-                  className="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-600"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Products Table */}
-          <div className="bg-slate-900 rounded-lg overflow-hidden">
-            {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="text-gray-400">Loading products...</div>
-              </div>
-            ) : products.length === 0 ? (
-              <div className="p-12 text-center">
-                <div className="text-gray-400">No {filter === 'all' ? '' : filter} products found</div>
-              </div>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-700">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Product Name
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Price
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Commission
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Submitted
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Actions
-                    </th>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Product Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Commission
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Submitted
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((product) => (
+                  <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                      {product.name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      ₦{Number(product.price).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {Number(product.commission_rate).toFixed(2)}%
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          product.approval_status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : product.approval_status === 'approved'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {product.approval_status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(product.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {product.approval_status === 'pending' && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleApprove(product.id)}
+                            className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-xs font-medium transition-colors"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => setRejectingId(product.id)}
+                            className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-xs font-medium transition-colors"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                      {product.approval_status === 'rejected' && (
+                        <div className="text-xs text-red-600">
+                          <p className="truncate max-w-xs">{product.rejection_reason || 'No reason provided'}</p>
+                        </div>
+                      )}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => (
-                    <tr key={product.id} className="border-b border-slate-700 hover:bg-slate-800">
-                      <td className="px-6 py-4 text-sm text-white font-medium">
-                        {product.name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-300">
-                        ${Number(product.price).toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-300">
-                        {Number(product.commission_rate).toFixed(2)}%
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            product.approval_status === 'pending'
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : product.approval_status === 'approved'
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-red-500/20 text-red-400'
-                          }`}
-                        >
-                          {product.approval_status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-300">
-                        {new Date(product.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        {product.approval_status === 'pending' && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleApprove(product.id)}
-                              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs font-medium"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => setRejectingId(product.id)}
-                              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        )}
-                        {product.approval_status === 'rejected' && (
-                          <div className="text-xs text-red-400">
-                            <p className="truncate max-w-xs">{product.rejection_reason || 'No reason provided'}</p>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
