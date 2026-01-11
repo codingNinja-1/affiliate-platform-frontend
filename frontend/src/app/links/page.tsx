@@ -9,6 +9,7 @@ type Product = {
   slug: string;
   price: number;
   commission_rate: number;
+  sales_page_url?: string | null;
 };
 
 type AffiliateLink = {
@@ -68,15 +69,21 @@ export default function LinksPage() {
       const userStr = localStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
       const referralCode = user?.referral_code || user?.affiliate?.referral_code || 'YOURCODE';
+  const affiliateId = user?.affiliate?.id;
 
       // Generate affiliate links using the referral code
-      const affiliateLinks = (productsData.data || []).map((product: Product) => ({
-        product_id: product.id,
-        product_name: product.name,
-        referral_link: `${window.location.origin}/products/${product.slug}?ref=${referralCode}`,
-        clicks: 0,
-        sales: 0,
-      }));
+      const affiliateLinks = (productsData.data || []).map((product: Product) => {
+        // Use centralized checkout with product and affiliate IDs
+        const checkoutUrl = `${window.location.origin}/checkout?p=${product.id}&a=${affiliateId || ''}`;
+
+        return {
+          product_id: product.id,
+          product_name: product.name,
+          referral_link: checkoutUrl,
+          clicks: 0,
+          sales: 0,
+        };
+      });
       setLinks(affiliateLinks);
     } catch (err) {
       setError('Unable to load affiliate links. The products API may not be ready yet.');

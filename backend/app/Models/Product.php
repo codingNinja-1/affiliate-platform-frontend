@@ -75,7 +75,17 @@ class Product extends Model
             }
 
             if (!$product->slug) {
-                $product->slug = Str::slug($product->name);
+                $baseSlug = Str::slug($product->name);
+                $slug = $baseSlug;
+                $count = 1;
+                
+                // Ensure slug is unique
+                while (static::where('slug', $slug)->exists()) {
+                    $slug = $baseSlug . '-' . $count;
+                    $count++;
+                }
+                
+                $product->slug = $slug;
             }
 
             // Calculate commission amount

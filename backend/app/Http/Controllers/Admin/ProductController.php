@@ -95,8 +95,10 @@ class ProductController extends Controller
 
         $product->update([
             'approval_status' => 'approved',
+            'is_active' => true,
             'approved_at' => now(),
             'approved_by' => $user->id,
+            'rejection_reason' => null,
         ]);
 
         return response()->json([
@@ -138,6 +140,37 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Product rejected successfully',
+            'data' => $product,
+        ]);
+    }
+
+    /**
+     * Activate/Deactivate a product visibility.
+     */
+    public function setActive(Request $request, $productId)
+    {
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->user_type, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'is_active' => 'required|boolean',
+        ]);
+
+        $product = Product::findOrFail($productId);
+
+        $product->update([
+            'is_active' => $validated['is_active'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $validated['is_active'] ? 'Product activated' : 'Product deactivated',
             'data' => $product,
         ]);
     }

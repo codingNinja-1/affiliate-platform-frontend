@@ -34,6 +34,11 @@ Route::get('/payment/callback', [\App\Http\Controllers\PurchaseController::class
 Route::post('/payment/webhook', [\App\Http\Controllers\PurchaseController::class, 'handleWebhook']);
 Route::get('/payment/public-key', [\App\Http\Controllers\PurchaseController::class, 'getPublicKey']);
 
+// Centralized checkout (public - new Stakecut-style endpoint)
+Route::post('/checkout/initialize', [\App\Http\Controllers\CheckoutController::class, 'initialize']);
+
+// Conversion pixel tracking (public)
+Route::get('/pixel/conversion', [\App\Http\Controllers\PixelController::class, 'trackConversion']);
 // Purchase recording (legacy demo endpoint)
 Route::post('/purchases', [\App\Http\Controllers\PurchaseController::class, 'store']);
 
@@ -79,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('withdrawals', \App\Http\Controllers\Admin\WithdrawalController::class)->only(['index']);
         Route::post('/products/{product}/approve', [\App\Http\Controllers\Admin\ProductController::class, 'approve'])->name('admin.products.approve');
         Route::post('/products/{product}/reject', [\App\Http\Controllers\Admin\ProductController::class, 'reject'])->name('admin.products.reject');
+        Route::post('/products/{product}/activate', [\App\Http\Controllers\Admin\ProductController::class, 'setActive'])->name('admin.products.activate');
         Route::post('/withdrawals/{withdrawal}/approve', [\App\Http\Controllers\Admin\WithdrawalController::class, 'approve'])->name('admin.withdrawals.approve');
         Route::post('/withdrawals/{withdrawal}/reject', [\App\Http\Controllers\Admin\WithdrawalController::class, 'reject'])->name('admin.withdrawals.reject');
 

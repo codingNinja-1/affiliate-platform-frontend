@@ -11,8 +11,24 @@ interface Product {
   price: number;
   commission_rate: number;
   approval_status: string;
+  is_active?: boolean;
   rejection_reason?: string;
   created_at: string;
+  // Vendor details
+  vendor_id?: number;
+  vendor?: {
+    id: number;
+    user_id: number;
+    user?: {
+      first_name?: string;
+      last_name?: string;
+      email: string;
+    };
+  };
+  // Bank/account details
+  bank_name?: string;
+  account_name?: string;
+  account_number?: string;
 }
 
 const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (open: boolean) => void }) => {
@@ -165,6 +181,30 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleToggleActive = async (id: number, nextActive: boolean) => {
+    setMessage('');
+    setError('');
+
+    try {
+      const API_BASE = '/api';
+      const res = await fetch(`${API_BASE}/admin/products/${id}/activate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ is_active: nextActive }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update visibility');
+
+      setMessage(nextActive ? 'Product activated' : 'Product deactivated');
+      await loadProducts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update visibility');
+    }
+  };
+
   const handleRejectSubmit = async (id: number) => {
     if (!rejectReason.trim()) {
       setError('Please provide a rejection reason');
@@ -297,6 +337,12 @@ export default function AdminProductsPage() {
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Vendor
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Account
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Product Name
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
@@ -309,7 +355,7 @@ export default function AdminProductsPage() {
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Submitted
+                    Visibility
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Actions
@@ -317,8 +363,24 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
+                {products.map((product) => {
+                  const vendorName = (product.vendor?.user?.first_name || product.vendor?.user?.last_name)
+                    ? `${product.vendor?.user?.first_name ?? ''} ${product.vendor?.user?.last_name ?? ''}`.trim()
+                    : (product.vendor?.user?.email ?? `Vendor #${product.vendor_id}`);
+                  const accountText = [product.account_name, product.bank_name, product.account_number]
+                    .filter(Boolean)
+                    .join(' • ');
+                  return (
                   <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{vendorName}</span>
+                        <span className="text-xs text-gray-500">ID: #{product.vendor_id}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-700">
+                      {accountText || <span className="text-gray-400">No account details</span>}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                       {product.name}
                     </td>
@@ -341,8 +403,14 @@ export default function AdminProductsPage() {
                         {product.approval_status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(product.created_at).toLocaleDateString()}
+                    <td className="px-6 py-4 text-sm">
+                      {product.approval_status === 'approved' ? (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.is_active ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {product.is_active ? 'active' : 'inactive'}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       {product.approval_status === 'pending' && (
@@ -366,9 +434,29 @@ export default function AdminProductsPage() {
                           <p className="truncate max-w-xs">{product.rejection_reason || 'No reason provided'}</p>
                         </div>
                       )}
+                      {product.approval_status === 'approved' && (
+                        <div className="flex gap-2">
+                          {product.is_active ? (
+                            <button
+                              onClick={() => handleToggleActive(product.id, false)}
+                              className="px-3 py-1 bg-gray-700 text-white rounded-md hover:bg-gray-800 text-xs font-medium transition-colors"
+                            >
+                              Deactivate
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleActive(product.id, true)}
+                              className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-medium transition-colors"
+                            >
+                              Activate
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           )}

@@ -82,7 +82,7 @@ class ProductController extends Controller
             'commission_rate' => $validated['commission_rate'],
             'stock_quantity' => $validated['stock_quantity'] ?? 0,
             'approval_status' => 'pending',
-            'is_active' => $validated['status'] === 'active',
+            'is_active' => isset($validated['status']) ? ($validated['status'] === 'active') : false,
             'sales_page_url' => $validated['sales_page_url'] ?? null,
             'delivery_link' => $validated['delivery_link'] ?? null,
             'buy_now_config' => $validated['buy_now_config'] ?? null,
