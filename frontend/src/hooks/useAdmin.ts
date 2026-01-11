@@ -50,6 +50,18 @@ export type AdminWithdrawal = {
   payment_method?: string;
   created_at: string;
   processed_at?: string;
+  // Bank/account details
+  bank_name?: string;
+  account_name?: string;
+  account_number?: string;
+  user_type?: string;
+  // Related user info (from with('user'))
+  user?: {
+    id: number;
+    email: string;
+    first_name?: string;
+    last_name?: string;
+  };
 };
 
 export function useAdminDashboard() {

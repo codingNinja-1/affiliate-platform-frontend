@@ -265,7 +265,8 @@ export default function AdminWithdrawalsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">User ID</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">User</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Account</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Amount</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Method</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Status</th>
@@ -274,9 +275,24 @@ export default function AdminWithdrawalsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {withdrawals.map((w: AdminWithdrawal) => (
+                  {withdrawals.map((w: AdminWithdrawal) => {
+                    const displayName = (w.user?.first_name || w.user?.last_name)
+                      ? `${w.user?.first_name ?? ''} ${w.user?.last_name ?? ''}`.trim()
+                      : (w.user?.email ?? `#${w.user_id}`);
+                    const accountText = [w.account_name, w.bank_name, w.account_number]
+                      .filter(Boolean)
+                      .join(' • ');
+                    return (
                     <tr key={w.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-4 text-sm text-gray-900">#{w.user_id}</td>
+                      <td className="py-3 px-4 text-sm text-gray-900">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{displayName}</span>
+                          <span className="text-xs text-gray-500">User ID: #{w.user_id}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-700">
+                        {accountText || <span className="text-gray-400">No account details</span>}
+                      </td>
                       <td className="py-3 px-4 text-sm font-semibold text-gray-900">₦{w.amount.toLocaleString()}</td>
                       <td className="py-3 px-4 text-sm text-gray-600">{w.payment_method || 'bank_transfer'}</td>
                       <td className="py-3 px-4">
@@ -314,7 +330,7 @@ export default function AdminWithdrawalsPage() {
                         )}
                       </td>
                     </tr>
-                  ))}
+                  );})}
                 </tbody>
               </table>
             </div>
