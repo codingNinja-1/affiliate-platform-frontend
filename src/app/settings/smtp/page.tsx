@@ -39,7 +39,7 @@ export default function SmtpSettingsPage() {
       return;
     }
 
-    fetch('http://127.0.0.1:8000/api/settings/smtp', {
+    fetch('/api/settings/smtp', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -63,7 +63,7 @@ export default function SmtpSettingsPage() {
     const token = localStorage.getItem('auth_token');
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/settings/smtp', {
+      const res = await fetch('/api/settings/smtp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ export default function SmtpSettingsPage() {
     const token = localStorage.getItem('auth_token');
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/settings/smtp/test', {
+      const res = await fetch('/api/settings/smtp/test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

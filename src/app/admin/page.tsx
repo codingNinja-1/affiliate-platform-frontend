@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Home, ShoppingBag, Users, CreditCard, TrendingUp, BarChart3, DollarSign, Settings, Mail, Link2, Plus, LogOut, LucideIcon } from 'lucide-react';
+import { Home, ShoppingBag, Users, CreditCard, TrendingUp, BarChart3, DollarSign, Settings, Mail, Link2, Plus, LogOut, Menu, X, LucideIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.134:8000/api').replace(/\/$/, '');
+const API_BASE = '/api';
 
 interface DashboardStats {
   app_gross_revenue: number;
@@ -22,7 +22,7 @@ interface DashboardStats {
 }
 
 // Sidebar Component
-const Sidebar = ({ currentPage, setCurrentPage }: { currentPage: string; setCurrentPage: (page: string) => void }) => {
+const Sidebar = ({ currentPage, setCurrentPage, isOpen, setIsOpen }: { currentPage: string; setCurrentPage: (page: string) => void; isOpen: boolean; setIsOpen: (open: boolean) => void }) => {
   const router = useRouter();
 
   const handleLogout = () => {
@@ -36,6 +36,10 @@ const Sidebar = ({ currentPage, setCurrentPage }: { currentPage: string; setCurr
       router.push(path);
     } else {
       setCurrentPage(id);
+    }
+    // Close sidebar on mobile after navigation
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsOpen(false);
     }
   };
 
@@ -56,13 +60,25 @@ const Sidebar = ({ currentPage, setCurrentPage }: { currentPage: string; setCurr
   ];
 
   return (
-    <div className="w-60 bg-white h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 shadow-sm">
-      <div className="p-6 border-b border-gray-100">
+    <>
+      {/* Mobile toggle button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed left-4 top-4 z-50 md:hidden rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700 shadow-lg"
+      >
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Sidebar */}
+      <div className={`w-60 bg-white h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 shadow-sm transition-transform duration-300 z-40 md:translate-x-0 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="p-4 sm:p-6 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold">A</span>
+          <div className="w-7 sm:w-8 h-7 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">A</span>
           </div>
-          <span className="text-xl font-bold text-gray-900">AffiliateHub</span>
+          <span className="text-base sm:text-xl font-bold text-gray-900">AffiliateHub</span>
         </div>
       </div>
 
@@ -95,7 +111,7 @@ const Sidebar = ({ currentPage, setCurrentPage }: { currentPage: string; setCurr
           {preferences.map(item => (
             <button
               key={item.id}
-              onClick={() => handleNavigation(item.id, item.path)}
+              onClick={() => setCurrentPage(item.id)}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg mb-1 transition-colors ${
                 currentPage === item.id 
                   ? 'bg-blue-50 text-blue-600 font-medium' 
@@ -121,50 +137,51 @@ const Sidebar = ({ currentPage, setCurrentPage }: { currentPage: string; setCurr
         </button>
       </div>
     </div>
+    </>
   );
 };
 
 // Dashboard Page
 const Dashboard = ({ stats }: { stats: DashboardStats | null }) => {
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen">
+      <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:justify-between md:items-center mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-600">Platform overview and management</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-xs sm:text-sm text-gray-600">Platform overview and management</p>
         </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 shadow-sm">
-          <Plus size={20} />
+        <button className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 shadow-sm text-sm sm:text-base w-full sm:w-auto">
+          <Plus size={18} />
           New Campaign
         </button>
       </div>
 
       {/* Quick Setup Guide */}
-      <div className="bg-blue-50 rounded-xl p-6 mb-6 border border-blue-100">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Quick setup guide</h2>
-          <button className="text-sm text-gray-600 hover:text-gray-900">Collapse</button>
+      <div className="bg-blue-50 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-blue-100">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mb-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Quick setup guide</h2>
+          <button className="text-xs sm:text-sm text-gray-600 hover:text-gray-900">Collapse</button>
         </div>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
-            <div className="h-24 bg-linear-to-br from-green-100 to-green-200 rounded-lg mb-3 flex items-center justify-center">
-              <div className="text-4xl">📊</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-gray-100">
+            <div className="h-20 sm:h-24 bg-linear-to-br from-green-100 to-green-200 rounded-lg mb-3 flex items-center justify-center">
+              <div className="text-3xl sm:text-4xl">📊</div>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-1">Customize your account</h3>
+            <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">Customize your account</h3>
             <p className="text-xs text-gray-600">Supercharge your brand identity. Upload your logo to your account.</p>
           </div>
-          <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
-            <div className="h-24 bg-linear-to-br from-red-100 to-red-200 rounded-lg mb-3 flex items-center justify-center">
-              <div className="text-4xl">🎯</div>
+          <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-gray-100">
+            <div className="h-20 sm:h-24 bg-linear-to-br from-red-100 to-red-200 rounded-lg mb-3 flex items-center justify-center">
+              <div className="text-3xl sm:text-4xl">🎯</div>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-1">Create the 1st offer</h3>
+            <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">Create the 1st offer</h3>
             <p className="text-xs text-gray-600">Set up affiliate commissions and add your landing page in under 5 minutes.</p>
           </div>
-          <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
-            <div className="h-24 bg-linear-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center">
-              <div className="text-4xl">✅</div>
+          <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-gray-100">
+            <div className="h-20 sm:h-24 bg-linear-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center">
+              <div className="text-3xl sm:text-4xl">✅</div>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-1">Verify the configuration</h3>
+            <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">Verify the configuration</h3>
             <p className="text-xs text-gray-600">Test that your affiliates can sign up and generate referral codes.</p>
             <p className="text-xs text-gray-600">Once you&apos;ve configured the tracking, test the initial click.</p>
           </div>
@@ -172,136 +189,104 @@ const Dashboard = ({ stats }: { stats: DashboardStats | null }) => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-600 mb-2">Revenue</p>
-          <div className="flex items-baseline gap-2 mb-2">
-            <p className="text-3xl font-bold text-gray-900">₦{stats?.app_gross_revenue?.toLocaleString() || '0'}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+          <p className="text-xs sm:text-sm text-gray-600 mb-2">Revenue</p>
+          <div className="flex items-baseline gap-2 mb-2 flex-wrap">
+            <p className="text-xl sm:text-3xl font-bold text-gray-900">₦{stats?.app_gross_revenue?.toLocaleString() || '0'}</p>
             <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full font-medium">+5%</span>
           </div>
           <p className="text-xs text-gray-500">↗ +27.5% From last month</p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-600 mb-2">Transactions</p>
-          <div className="flex items-baseline gap-2 mb-2">
-            <p className="text-3xl font-bold text-gray-900">{stats?.total_transactions?.toLocaleString() || '0'}</p>
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+          <p className="text-xs sm:text-sm text-gray-600 mb-2">Transactions</p>
+          <div className="flex items-baseline gap-2 mb-2 flex-wrap">
+            <p className="text-xl sm:text-3xl font-bold text-gray-900">{stats?.total_transactions?.toLocaleString() || '0'}</p>
             <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">-2.5%</span>
           </div>
           <p className="text-xs text-gray-500">↘ -2.5% From last month</p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-600 mb-2">Conversions</p>
-          <div className="flex items-baseline gap-2 mb-2">
-            <p className="text-3xl font-bold text-gray-900">{stats?.active_affiliates || '47'}</p>
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+          <p className="text-xs sm:text-sm text-gray-600 mb-2">Conversions</p>
+          <div className="flex items-baseline gap-2 mb-2 flex-wrap">
+            <p className="text-xl sm:text-3xl font-bold text-gray-900">{stats?.active_affiliates || '47'}</p>
             <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full font-medium">+4.5%</span>
           </div>
           <p className="text-xs text-gray-500">↗ +4.5% From last month</p>
         </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-600 mb-2">Payouts</p>
-          <div className="flex items-baseline gap-2 mb-2">
-            <p className="text-3xl font-bold text-gray-900">₦{stats?.total_paid_out?.toLocaleString() || '0'}</p>
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+          <p className="text-xs sm:text-sm text-gray-600 mb-2">Payouts</p>
+          <div className="flex items-baseline gap-2 mb-2 flex-wrap">
+            <p className="text-xl sm:text-3xl font-bold text-gray-900">₦{stats?.total_paid_out?.toLocaleString() || '0'}</p>
             <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full font-medium">+5%</span>
           </div>
           <p className="text-xs text-gray-500">↗ +5% From last month</p>
         </div>
       </div>
-
-      {/* Performance Overview and Campaign */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
-        <div className="col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+      {/* Performance Overview & Campaign */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
+        <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Performance Overview</h3>
-            <select className="text-sm border border-gray-200 rounded-lg px-3 py-1.5">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Performance Overview</h3>
+            <select className="text-xs sm:text-sm border border-gray-200 rounded-lg px-2 sm:px-3 py-1.5">
               <option>Last Month</option>
               <option>Last 3 Months</option>
               <option>Last 6 Months</option>
             </select>
           </div>
-          <div className="h-64 flex items-center justify-center bg-linear-to-br from-blue-50 to-purple-50 rounded-lg">
+          <div className="h-48 sm:h-64 flex items-center justify-center bg-linear-to-br from-blue-50 to-purple-50 rounded-lg">
             <div className="text-center">
-              <div className="text-5xl mb-2">📈</div>
-              <p className="text-gray-600">Chart visualization coming soon</p>
+              <div className="text-3xl sm:text-5xl mb-2">📈</div>
+              <p className="text-xs sm:text-sm text-gray-600">Chart visualization coming soon</p>
             </div>
           </div>
         </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Discount campaign</h3>
-          <div className="text-center">
-            <div className="w-48 h-48 mx-auto mb-4 relative flex items-center justify-center bg-linear-to-br from-purple-100 to-blue-100 rounded-full">
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Performance Progress</p>
-                <p className="text-3xl font-bold text-gray-900">₦{stats?.affiliate_earnings?.toLocaleString() || '0'}</p>
-              </div>
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Discount campaign</h3>
+          <button className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm w-full mb-4">Create Campaign</button>
+          <div className="w-40 h-40 mx-auto mb-4 relative flex items-center justify-center bg-linear-to-br from-purple-100 to-blue-100 rounded-full">
+            <div className="text-center">
+              <p className="text-xs text-gray-600 mb-1">Performance Progress</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">₦{stats?.affiliate_earnings?.toLocaleString() || '0'}</p>
             </div>
           </div>
+          <p className="text-xs text-gray-500 text-center">Affiliates earnings to date</p>
         </div>
       </div>
 
-      {/* Earnings & Balances */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        <div>
-          <h2 className="text-lg font-semibold mb-4 text-gray-900">Earnings</h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <p className="text-sm text-gray-600 mb-2">Vendor Earnings</p>
-              <p className="text-2xl font-bold text-gray-900">₦{stats?.vendor_earnings?.toLocaleString() || '0'}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <p className="text-sm text-gray-600 mb-2">Affiliate Earnings</p>
-              <p className="text-2xl font-bold text-gray-900">₦{stats?.affiliate_earnings?.toLocaleString() || '0'}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <p className="text-sm text-gray-600 mb-2">App Commission</p>
-              <p className="text-2xl font-bold text-gray-900">₦{stats?.app_gross_revenue && stats?.vendor_earnings && stats?.affiliate_earnings 
-                ? (stats.app_gross_revenue - stats.vendor_earnings - stats.affiliate_earnings).toLocaleString()
-                : '0'}</p>
-            </div>
-          </div>
+      {/* Pending Balances */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+          <p className="text-xs sm:text-sm text-gray-600 mb-2">Vendor Unpaid</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900">₦{stats?.unpaid_vendor_balance?.toLocaleString() || '0'}</p>
         </div>
-
-        <div>
-          <h2 className="text-lg font-semibold mb-4 text-gray-900">Pending Balances</h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <p className="text-sm text-gray-600 mb-2">Vendor Unpaid</p>
-              <p className="text-2xl font-bold text-gray-900">₦{stats?.unpaid_vendor_balance?.toLocaleString() || '0'}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <p className="text-sm text-gray-600 mb-2">Affiliate Unpaid</p>
-              <p className="text-2xl font-bold text-gray-900">₦{stats?.unpaid_affiliate_balance?.toLocaleString() || '0'}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <p className="text-sm text-gray-600 mb-2">Pending Withdrawals</p>
-              <p className="text-2xl font-bold text-gray-900">{stats?.pending_withdrawals?.toLocaleString() || '0'}</p>
-            </div>
-          </div>
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+          <p className="text-xs sm:text-sm text-gray-600 mb-2">Pending Withdrawals</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats?.pending_withdrawals?.toLocaleString() || '0'}</p>
         </div>
       </div>
 
       {/* Users & Products */}
       <div>
-        <h2 className="text-lg font-semibold mb-4 text-gray-900">Users & Products</h2>
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <p className="text-sm text-gray-600 mb-2">Active Vendors</p>
-            <p className="text-3xl font-bold text-gray-900">{stats?.active_vendors || '0'}</p>
+        <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-gray-900">Users & Products</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+            <p className="text-xs sm:text-sm text-gray-600 mb-2">Active Vendors</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats?.active_vendors?.toLocaleString() || '0'}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <p className="text-sm text-gray-600 mb-2">Active Affiliates</p>
-            <p className="text-3xl font-bold text-gray-900">{stats?.active_affiliates || '0'}</p>
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+            <p className="text-xs sm:text-sm text-gray-600 mb-2">Active Affiliates</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats?.active_affiliates?.toLocaleString() || '0'}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <p className="text-sm text-gray-600 mb-2">Total Customers</p>
-            <p className="text-3xl font-bold text-gray-900">{stats?.total_customers || '0'}</p>
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+            <p className="text-xs sm:text-sm text-gray-600 mb-2">Total Customers</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats?.total_customers?.toLocaleString() || '0'}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <p className="text-sm text-gray-600 mb-2">Approved Products</p>
-            <p className="text-3xl font-bold text-gray-900">{stats?.approved_products || '0'}</p>
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
+            <p className="text-xs sm:text-sm text-gray-600 mb-2">Approved Products</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats?.approved_products?.toLocaleString() || '0'}</p>
           </div>
         </div>
       </div>
@@ -328,7 +313,7 @@ const EmailPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ user_type?: string } | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -383,7 +368,7 @@ const EmailPage = () => {
       } else {
         setMessage(data.message || 'Failed to save settings');
       }
-    } catch (error) {
+    } catch {
       setMessage('An error occurred while saving settings');
     } finally {
       setSaving(false);
@@ -432,7 +417,7 @@ const EmailPage = () => {
             />
           </button>
         )}
-        <button className="text-gray-400 hover:text-gray-600">
+        <button className="text-gray-400 hover:text-gray-600" aria-label="Email info">
           <Mail size={20} />
         </button>
       </div>
@@ -615,6 +600,7 @@ const EmailPage = () => {
 export default function AdminApp() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -658,8 +644,8 @@ export default function AdminApp() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
-      <div className="ml-60 flex-1 overflow-y-auto">
+      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} isOpen={isOpen} setIsOpen={setIsOpen} />
+      <div className="w-full md:ml-60 flex-1 overflow-y-auto">
         {renderPage()}
       </div>
     </div>

@@ -41,7 +41,7 @@ export default function LinksPage() {
 
     try {
       const [productsRes] = await Promise.all([
-        fetch('http://127.0.0.1:8000/api/affiliate/products', {
+        fetch('/api/affiliate/products', {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);

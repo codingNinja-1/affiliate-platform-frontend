@@ -47,7 +47,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,7 +58,19 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || 'Registration failed');
+        // Show detailed validation errors when available
+        if (data && data.errors) {
+          try {
+            const messages = Object.values(data.errors as Record<string, string[]>)
+              .flat()
+              .join('\n');
+            setError(messages || data.message || 'Registration failed');
+          } catch {
+            setError(data.message || 'Registration failed');
+          }
+        } else {
+          setError(data?.message || 'Registration failed');
+        }
         return;
       }
 

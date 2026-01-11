@@ -34,7 +34,7 @@ export default function NotificationSettingsPage() {
     setUser(parsedUser);
 
     // Load settings
-    fetch('http://127.0.0.1:8000/api/settings/notifications', {
+    fetch('/api/settings/notifications', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -61,7 +61,7 @@ export default function NotificationSettingsPage() {
     const token = localStorage.getItem('auth_token');
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/settings/notifications', {
+      const res = await fetch('/api/settings/notifications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

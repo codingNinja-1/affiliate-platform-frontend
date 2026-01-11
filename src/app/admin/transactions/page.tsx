@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminTransactions, type AdminTransaction } from '@/hooks/useAdmin';
-import { Home, Users, Package, CreditCard, DollarSign, Building2, TrendingUp, Settings, Mail, Plug, ChevronLeft } from 'lucide-react';
+import { Home, Users, Package, CreditCard, DollarSign, Building2, TrendingUp, Settings, Mail, Plug, ChevronLeft, Menu, X } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (open: boolean) => void }) => {
   const router = useRouter();
   
   const menuItems = [
@@ -26,61 +26,78 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="fixed left-0 top-0 h-screen w-60 bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-900">AffiliateHub</h1>
-        <p className="text-xs text-gray-500 mt-1">Admin Panel</p>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="mb-6">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Dashboard</p>
-          <div className="space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = item.id === 'transactions';
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => router.push(item.path)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
+    <>
+      <button 
+        onClick={() => setIsOpen(!isOpen)} 
+        className="fixed left-4 top-4 z-50 md:hidden rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700 shadow-lg"
+      >
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+      
+      <div className={`w-60 bg-white h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 shadow-sm transition-transform duration-300 z-40 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-xl font-bold text-gray-900">AffiliateHub</h1>
+          <p className="text-xs text-gray-500 mt-1">Admin Panel</p>
         </div>
 
-        <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Preferences</p>
-          <div className="space-y-1">
-            {preferences.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => router.push(item.path)}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="mb-6">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Dashboard</p>
+            <div className="space-y-1">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = item.id === 'transactions';
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => router.push(item.path)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Icon size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Preferences</p>
+            <div className="space-y-1">
+              {preferences.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => router.push(item.path)}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Icon size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-30 bg-black/50 md:hidden" 
+          onClick={() => setIsOpen(false)} 
+        />
+      )}
+    </>
   );
 };
 
 export default function AdminTransactionsPage() {
+  const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
   const { user, hydrated } = useAuth();
   const { data: transactions, isLoading, error } = useAdminTransactions();
 
@@ -93,8 +110,8 @@ export default function AdminTransactionsPage() {
   if (!hydrated) {
     return (
       <div className="flex h-screen bg-gray-100">
-        <Sidebar />
-        <div className="ml-60 flex-1 flex items-center justify-center">
+        <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className="w-full md:ml-60 flex-1 flex items-center justify-center">
           <p className="text-gray-400">Loading...</p>
         </div>
       </div>
@@ -107,9 +124,9 @@ export default function AdminTransactionsPage() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar />
+      <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
       
-      <main className="ml-60 flex-1 overflow-y-auto p-8">
+      <main className="w-full md:ml-60 flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
         <div className="mb-8">
           <button 
             onClick={() => router.push('/admin')}

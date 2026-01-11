@@ -37,7 +37,8 @@ export type CreateProductPayload = {
   } | null;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+// Use Next.js API proxy routes to avoid CORS and environment coupling
+const API_BASE = '/api';
 
 export function normalizeProduct(item: unknown): Product {
   const data = item as Record<string, unknown>;
@@ -62,10 +63,10 @@ export function useProducts(userType?: string) {
   const endpoint = useMemo(() => {
     const role = userType?.toLowerCase();
 
-    if (role === 'vendor') return `${API_BASE}/api/vendor/products`;
-    if (role === 'affiliate') return `${API_BASE}/api/affiliate/products`;
+    if (role === 'vendor') return `${API_BASE}/vendor/products`;
+    if (role === 'affiliate') return `${API_BASE}/affiliate/products`;
 
-    return `${API_BASE}/api/products`;
+    return `${API_BASE}/products`;
   }, [userType]);
 
   const fetchProducts = useCallback(async () => {
@@ -118,10 +119,10 @@ export function useCreateProduct() {
   const endpoint = useMemo(() => {
     const role = user?.user_type?.toLowerCase();
 
-    if (role === 'vendor') return `${API_BASE}/api/vendor/products`;
-    if (role === 'affiliate') return `${API_BASE}/api/affiliate/products`;
+    if (role === 'vendor') return `${API_BASE}/vendor/products`;
+    if (role === 'affiliate') return `${API_BASE}/affiliate/products`;
 
-    return `${API_BASE}/api/products`;
+    return `${API_BASE}/products`;
   }, [user?.user_type]);
 
   const mutateAsync = useCallback(

@@ -17,7 +17,6 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -66,7 +65,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${apiBase}/auth/reset-password`, {
+      const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

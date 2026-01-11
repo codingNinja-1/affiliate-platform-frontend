@@ -19,6 +19,9 @@ import {
   Mail,
   Link2,
   ChevronLeft,
+  Menu,
+  X,
+  LucideIcon,
 } from 'lucide-react';
 
 interface Affiliate {
@@ -33,13 +36,13 @@ interface Affiliate {
   approval_date?: string;
 }
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.134:8000/api').replace(/\/$/, '');
+const API_BASE = '/api';
 
-// Reuse the modern admin sidebar from the dashboard styling
-const Sidebar = () => {
+// Responsive sidebar (mobile collapsible)
+const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (open: boolean) => void }) => {
   const router = useRouter();
-  
-  const menuItems = [
+
+  const menuItems: Array<{ id: string; icon: LucideIcon; label: string; path: string }> = [
     { id: 'dashboard', icon: Home, label: 'Dashboard', path: '/admin' },
     { id: 'users', icon: Users, label: 'Users', path: '/admin/users' },
     { id: 'products', icon: ShoppingBag, label: 'Products', path: '/admin/products' },
@@ -55,63 +58,95 @@ const Sidebar = () => {
     { id: 'email', icon: Mail, label: 'Email', path: '/admin/email' },
   ];
 
+  const handleNavigation = (path: string) => {
+    router.push(path);
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsOpen(false);
+    }
+  };
+
   return (
-    <div className="fixed left-0 top-0 h-screen w-60 bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-900">AffiliateHub</h1>
-        <p className="text-xs text-gray-500 mt-1">Admin Panel</p>
-      </div>
+    <>
+      {/* Mobile toggle */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed left-4 top-4 z-50 md:hidden rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700 shadow-lg"
+        aria-label="Toggle sidebar"
+      >
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="mb-6">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Dashboard</p>
-          <div className="space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = item.id === 'affiliates';
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => router.push(item.path)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
+      {/* Sidebar */}
+      <div
+        className={`w-60 bg-white h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 shadow-sm transition-transform duration-300 z-40 md:translate-x-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-xl font-bold text-gray-900">AffiliateHub</h1>
+          <p className="text-xs text-gray-500 mt-1">Admin Panel</p>
         </div>
 
-        <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Preferences</p>
-          <div className="space-y-1">
-            {preferences.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => router.push(item.path)}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="mb-6">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Dashboard</p>
+            <div className="space-y-1">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = item.id === 'affiliates';
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavigation(item.path)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Icon size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Preferences</p>
+            <div className="space-y-1">
+              {preferences.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavigation(item.path)}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Icon size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Overlay on mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={() => setIsOpen(false)}
+          aria-hidden
+        />
+      )}
+    </>
   );
 };
 
 export default function AdminAffiliatesPage() {
+  const router = useRouter();
   const { user, hydrated } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
   const [affiliates, setAffiliates] = useState<Affiliate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -151,7 +186,7 @@ export default function AdminAffiliatesPage() {
             return s === 'approved' || s === 'active';
           }).length;
           const totalEarnings = (data.data || []).reduce((sum: number, a: Affiliate) => {
-            const earnings = parseFloat(a.total_earnings as any) || 0;
+            const earnings = parseFloat(String(a.total_earnings || 0));
             return sum + earnings;
           }, 0);
           const totalReferrals = (data.data || []).reduce((sum: number, a: Affiliate) => sum + (a.total_referrals || 0), 0);
@@ -198,8 +233,8 @@ export default function AdminAffiliatesPage() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-      <div className="ml-60 flex-1 overflow-y-auto p-8">
+      <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
+      <div className="w-full md:ml-60 flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
         <div className="mb-8">
           <button 
             onClick={() => router.push('/admin')}
@@ -213,7 +248,7 @@ export default function AdminAffiliatesPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -268,7 +303,7 @@ export default function AdminAffiliatesPage() {
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
           <div className="flex gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-3 text-gray-400" size={20} />

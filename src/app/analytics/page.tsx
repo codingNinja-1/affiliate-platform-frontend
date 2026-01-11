@@ -39,7 +39,7 @@ export default function AnalyticsPage() {
       const prefix = user.user_type === 'vendor' ? 'vendor' : 'affiliate';
 
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/${prefix}/reports?period=${period}`, {
+        const res = await fetch(`/api/${prefix}/reports?period=${period}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -106,7 +106,7 @@ export default function AnalyticsPage() {
         />
         <MetricCard
           title="Growth rate"
-          value={`${(analytics?.growthRate || analytics?.conversionRate || 0) > 0 ? '+' : ''}${(analytics?.growthRate || analytics?.conversionRate || 0).toFixed(2)}%`}
+          value={`${(analytics?.conversionRate || 0) > 0 ? '+' : ''}${(analytics?.conversionRate || 0).toFixed(2)}%`}
           loading={loading}
         />
         <MetricCard
