@@ -10,6 +10,20 @@ export default function PurchaseSuccessPage() {
   const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
+        // Fire conversion tracking pixel
+        const trackConversion = async () => {
+          try {
+            // Send pixel event to backend
+            const pixelImg = new Image();
+            pixelImg.src = `${window.location.origin}/api/pixel/conversion?ref=${reference}`;
+            pixelImg.onload = () => console.log('Conversion pixel tracked');
+            pixelImg.onerror = () => console.log('Conversion pixel failed');
+          } catch (err) {
+            console.error('Pixel tracking error:', err);
+          }
+        };
+        trackConversion();
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
