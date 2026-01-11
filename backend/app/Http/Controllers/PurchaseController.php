@@ -8,10 +8,13 @@ use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\PaystackService;
+use App\Notifications\PurchaseConfirmationNotification;
+use App\Mail\NewSaleMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class PurchaseController extends Controller
 {
@@ -146,6 +149,21 @@ class PurchaseController extends Controller
                             $transaction->vendor_amount
                         );
                     }
+
+                    // Send purchase confirmation email to customer
+                    try {
+                        $transaction->refresh();
+                        $transaction->customer->notify(new PurchaseConfirmationNotification($transaction));
+                        Log::info('Purchase confirmation email sent', [
+                            'transaction_id' => $transaction->id,
+                            'customer_email' => $transaction->customer->email,
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send purchase confirmation email', [
+                            'transaction_id' => $transaction->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
                 }
 
                 return redirect($frontendUrl . '/purchase/success?reference=' . $reference);
@@ -204,6 +222,21 @@ class PurchaseController extends Controller
                         $transaction->vendor_amount
                     );
                 }
+
+                // Send purchase confirmation email to customer
+                try {
+                    $transaction->refresh();
+                    $transaction->customer->notify(new PurchaseConfirmationNotification($transaction));
+                    Log::info('Purchase confirmation email sent via webhook', [
+                        'transaction_id' => $transaction->id,
+                        'customer_email' => $transaction->customer->email,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to send purchase confirmation email via webhook', [
+                        'transaction_id' => $transaction->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
         }
 
@@ -240,7 +273,12 @@ class PurchaseController extends Controller
 
         // Use product price if amount not provided
         $amount = $validated['amount'] ?? $product->price;
-        $paymentMethod = $validated['payment_method'] ?? 'demo';
+        // Map unsupported methods (like 'demo') to an allowed enum value
+        $paymentMethod = $validated['payment_method'] ?? 'bank_transfer';
+        $allowedMethods = ['stripe', 'paystack', 'bank_transfer', 'wallet', 'credit_card', 'debit_card'];
+        if (!in_array($paymentMethod, $allowedMethods, true)) {
+            $paymentMethod = 'bank_transfer';
+        }
 
         // Create or get customer user
         $nameParts = explode(' ', $validated['customer_name'], 2);
@@ -345,7 +383,7 @@ class PurchaseController extends Controller
         $commissionRate = $product->commission_rate;
 
         // Create commission record
-        Commission::create([
+        $commission = Commission::create([
             'uuid' => Str::uuid(),
             'user_id' => $affiliate->user_id,
             'user_type' => 'affiliate',
@@ -363,6 +401,25 @@ class PurchaseController extends Controller
             'amount' => $commissionAmount,
             'rate' => $commissionRate,
         ]);
+
+        // Send sale notification email to affiliate
+        try {
+            $affiliateUser = $affiliate->user;
+            if ($affiliateUser && $affiliateUser->email) {
+                Mail::to($affiliateUser->email)->send(
+                    new NewSaleMail($affiliateUser, $commission, $product)
+                );
+                Log::info('New sale notification email sent to affiliate', [
+                    'affiliate_id' => $affiliate->id,
+                    'commission_id' => $commission->id,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to send new sale notification email', [
+                'affiliate_id' => $affiliate->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         // Update affiliate stats and balance
         $affiliate->increment('total_sales');

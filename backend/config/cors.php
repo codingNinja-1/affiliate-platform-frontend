@@ -26,12 +26,19 @@ return [
         'http://127.0.0.1:3001',
         'http://localhost',
         'http://127.0.0.1',
+        // Common LAN hosts
         'http://192.168.1.134:3000',
         'http://192.168.1.134:3001',
         'http://192.168.1.134',
+        'http://192.168.1.103:3000',
+        'http://192.168.1.103:3001',
+        'http://192.168.1.103',
     ],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        // Allow any local LAN origin on 192.168.1.x with optional port
+        '^https?:\/\/192\.168\.1\.\d{1,3}(?::\d+)?$'
+    ],
 
     'allowed_headers' => ['*'],
 

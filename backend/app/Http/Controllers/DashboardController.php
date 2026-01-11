@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\Affiliate;
+use App\Models\AffiliateClick;
+use App\Models\Commission;
 use App\Models\Vendor;
 
 class DashboardController extends Controller
@@ -61,13 +63,33 @@ class DashboardController extends Controller
             ];
         }
 
+        // Use live aggregates keyed by user_id so totals reflect actual commissions
+        $approvedCommissions = Commission::where('user_id', $user->id)
+            ->where('user_type', 'affiliate')
+            ->whereIn('status', ['approved', 'paid']);
+        $totalEarnings = (float) $approvedCommissions->sum('amount');
+        $totalSales = (int) $approvedCommissions->count();
+
+        $totalWithdrawn = (float) $affiliate->withdrawals()
+            ->where('status', 'approved')
+            ->sum('amount');
+
+        $pendingBalance = (float) $affiliate->withdrawals()
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        // Derive available balance from earnings minus approved payouts
+        $derivedBalance = max($totalEarnings - $totalWithdrawn, 0);
+
+        $totalClicks = (int) AffiliateClick::where('affiliate_id', $affiliate->id)->count();
+
         return [
-            'balance' => (float) $affiliate->balance,
-            'total_earnings' => (float) $affiliate->total_earnings,
-            'total_withdrawn' => (float) $affiliate->total_withdrawn,
-            'pending_balance' => (float) $affiliate->pending_balance,
-            'total_sales' => (int) $affiliate->total_sales,
-            'total_clicks' => (int) $affiliate->total_clicks,
+            'balance' => $derivedBalance,
+            'total_earnings' => $totalEarnings,
+            'total_withdrawn' => $totalWithdrawn,
+            'pending_balance' => $pendingBalance,
+            'total_sales' => $totalSales,
+            'total_clicks' => $totalClicks,
         ];
     }
 

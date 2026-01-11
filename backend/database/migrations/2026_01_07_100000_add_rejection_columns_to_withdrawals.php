@@ -22,8 +22,8 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('withdrawals', function (Blueprint $table) {
-            $table->dropForeignIdFor(\App\Models\User::class, 'rejected_by');
-            $table->dropColumn('rejected_at');
+            $table->dropForeign(['rejected_by']);
+            $table->dropColumn('rejected_by', 'rejected_at');
         });
     }
 };

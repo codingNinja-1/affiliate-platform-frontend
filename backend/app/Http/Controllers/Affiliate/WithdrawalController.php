@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Affiliate;
 
 use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
+use App\Models\Commission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -66,15 +67,23 @@ class WithdrawalController extends Controller
             ], 404);
         }
 
-        $balance = $affiliate->balance ?? 0;
+        // Recompute available balance from commissions minus withdrawals to stay in sync with dashboard
+        $totalEarnings = (float) Commission::where('user_id', $user->id)
+            ->where('user_type', 'affiliate')
+            ->whereIn('status', ['approved', 'paid'])
+            ->sum('amount');
 
-        // Check for pending withdrawals to calculate available balance
-        $pendingWithdrawals = Withdrawal::where('user_id', $user->id)
+        $approvedWithdrawals = (float) Withdrawal::where('user_id', $user->id)
+            ->where('user_type', 'affiliate')
+            ->where('status', 'approved')
+            ->sum('amount');
+
+        $pendingWithdrawals = (float) Withdrawal::where('user_id', $user->id)
             ->where('user_type', 'affiliate')
             ->where('status', 'pending')
             ->sum('amount');
 
-        $availableBalance = $balance - $pendingWithdrawals;
+        $availableBalance = $totalEarnings - $approvedWithdrawals - $pendingWithdrawals;
 
         if ($availableBalance < $validated['amount']) {
             return response()->json([
@@ -85,8 +94,9 @@ class WithdrawalController extends Controller
 
         DB::beginTransaction();
         try {
-            // Deduct balance immediately to prevent double-withdrawal
-            $affiliate->decrement('balance', $validated['amount']);
+            // Snap balance to derived available and deduct this request to prevent double-withdrawal
+            $newBalance = max($availableBalance - $validated['amount'], 0);
+            $affiliate->update(['balance' => $newBalance]);
 
             // Create withdrawal request
             $withdrawal = Withdrawal::create([

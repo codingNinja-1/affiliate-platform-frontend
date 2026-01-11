@@ -82,7 +82,7 @@ export default function DashboardPage() {
 
       // Check if non-admin users have set up bank details
       if (userType !== 'superadmin' && userType !== 'admin') {
-        fetch('http://127.0.0.1:8000/api/settings/check-bank-details', {
+        fetch('/api/settings/check-bank-details', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -103,7 +103,7 @@ export default function DashboardPage() {
 
     const loadSummary = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/dashboard/summary', {
+        const res = await fetch('/api/dashboard/summary', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -154,18 +154,18 @@ export default function DashboardPage() {
     : user?.email;
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <header className="mb-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
+      <header className="mb-4 sm:mb-4 sm:mb-6">
+        <div className="flex flex-col gap-3 sm:gap-4">
           <div>
-            <p className="text-sm text-gray-600">{greeting}, {fullName ?? 'there'}</p>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-sm text-gray-500">Account overview and quick actions</p>
+            <p className="text-xs sm:text-sm text-gray-600">{greeting}, {fullName ?? 'there'}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-xs sm:text-sm text-gray-500">Account overview and quick actions</p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <Link
               href="/profile"
-              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
+              className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
             >
               Profile
             </Link>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
       </header>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mb-4 sm:mb-6 rounded-lg border border-amber-200 bg-amber-50 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-amber-800">
           {error}
         </div>
       )}
@@ -269,7 +269,7 @@ function StatsGrid({
   loading: boolean;
 }) {
   return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <section className="mb-6 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((item) => (
         <StatCard
           key={item.title}
@@ -293,7 +293,7 @@ function Panels({
   actions: { href: string; label: string }[];
 }) {
   return (
-    <section className="grid gap-4 lg:grid-cols-3">
+    <section className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-3">
       <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm lg:col-span-2">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">{primaryTitle}</h2>
@@ -332,12 +332,12 @@ function StatCard({
   loading?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-      <p className="text-sm font-medium text-gray-600">{title}</p>
+    <div className="rounded-lg border border-gray-100 bg-white p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
+      <p className="text-xs sm:text-sm font-medium text-gray-600">{title}</p>
       {loading ? (
-        <div className="mt-3 h-8 w-32 animate-pulse rounded bg-gray-100" />
+        <div className="mt-2 sm:mt-3 h-7 sm:h-8 w-24 sm:w-32 animate-pulse rounded bg-gray-100" />
       ) : (
-        <p className="mt-2 text-2xl font-bold text-gray-900">
+        <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-gray-900">
           {prefix ?? ''}
           {value.toLocaleString()}
         </p>
@@ -358,10 +358,10 @@ function VendorSalesPayouts() {
     const fetchData = async () => {
       try {
         const [transRes, withdrawRes] = await Promise.all([
-          fetch('http://127.0.0.1:8000/api/vendor/transactions?limit=5', {
+          fetch('/api/vendor/transactions?limit=5', {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('http://127.0.0.1:8000/api/vendor/withdrawals', {
+          fetch('/api/vendor/withdrawals', {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -495,10 +495,10 @@ function AffiliatePerformance() {
     const fetchData = async () => {
       try {
         const [commRes, withdrawRes] = await Promise.all([
-          fetch('http://127.0.0.1:8000/api/affiliate/commissions?limit=5', {
+          fetch('/api/affiliate/commissions?limit=5', {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('http://127.0.0.1:8000/api/affiliate/withdrawals', {
+          fetch('/api/affiliate/withdrawals', {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);

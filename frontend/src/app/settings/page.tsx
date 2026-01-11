@@ -45,7 +45,7 @@ export default function SettingsPage() {
 
   const loadSettings = async (token: string) => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/settings', {
+      const res = await fetch('/api/settings', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -92,7 +92,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch('http://127.0.0.1:8000/api/settings/bank-details', {
+      const res = await fetch('/api/settings/bank-details', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

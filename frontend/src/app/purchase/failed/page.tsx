@@ -12,11 +12,13 @@ export default function PurchaseFailedPage() {
       case 'no_reference':
         return 'No payment reference was provided.';
       case 'verification_failed':
-        return 'Payment verification failed. Please contact support.';
+        return 'Payment verification failed. Please contact support if you were charged.';
       case 'verification_error':
-        return 'An error occurred while verifying your payment.';
+        return 'An error occurred while verifying your payment. Please contact support.';
+      case 'server_error':
+        return 'A server error occurred. Please try again or contact support.';
       default:
-        return 'Your payment could not be completed.';
+        return 'Your payment could not be processed. Please try again.';
     }
   };
 
@@ -40,11 +42,18 @@ export default function PurchaseFailedPage() {
           {getErrorMessage()}
         </p>
 
+        {/* Error Code */}
+        {error && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-600 mb-2">Error Code</p>
+            <p className="font-mono text-sm text-red-600 uppercase">{error}</p>
+          </div>
+        )}
+
         {/* Support Notice */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <p className="text-sm text-yellow-800">
-            If you believe this is an error or if the amount was deducted from your account, 
-            please contact our support team with your transaction details.
+            <strong>Important:</strong> If you were charged but the purchase failed, please contact our support team with your transaction details.
           </p>
         </div>
 
@@ -57,11 +66,28 @@ export default function PurchaseFailedPage() {
             Try Again
           </button>
           <Link
-            href="/"
+            href="/links"
             className="block w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg transition duration-200"
           >
-            Return to Home
+            Back to Products
           </Link>
+          <Link
+            href="/dashboard"
+            className="block w-full text-gray-600 hover:text-gray-900 font-medium py-3 transition duration-200"
+          >
+            Go to Dashboard
+          </Link>
+        </div>
+
+        {/* Support Contact */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <p className="text-sm text-gray-600 mb-2">Need help?</p>
+          <a
+            href="mailto:support@affiliatehub.com"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Contact Support
+          </a>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './useAuth';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api').replace(/\/$/, '');
+const API_BASE = '/api';
 
 export type AdminDashboardMetrics = {
   app_gross_revenue: number;
@@ -91,7 +91,7 @@ export function useAdminDashboard() {
   return { data, isLoading, error, refetch: fetchMetrics };
 }
 
-export function useAdminUsers() {
+export function useAdminUsers(filters?: { status?: string }) {
   const { token } = useAuth();
   const [data, setData] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,7 +107,10 @@ export function useAdminUsers() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/admin/users`, {
+      const params = new URLSearchParams();
+      if (filters?.status) params.set('status', filters.status);
+
+      const res = await fetch(`${API_BASE}/admin/users${params.toString() ? `?${params.toString()}` : ''}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -123,7 +126,7 @@ export function useAdminUsers() {
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, filters?.status]);
 
   useEffect(() => {
     fetchUsers();

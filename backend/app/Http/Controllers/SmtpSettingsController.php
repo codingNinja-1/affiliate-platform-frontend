@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Setting;
 use App\Services\DynamicMailService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Mail;
+
 
 class SmtpSettingsController extends Controller
 {
@@ -54,7 +57,7 @@ class SmtpSettingsController extends Controller
         }
 
         // Clear config cache
-        \Artisan::call('config:clear');
+        Artisan::call('config:clear');
 
         return response()->json([
             'success' => true,
@@ -74,7 +77,7 @@ class SmtpSettingsController extends Controller
             // Load settings from database and configure mail transport
             DynamicMailService::configure();
 
-            \Mail::raw('This is a test email from your AffiliateHub platform. If you received this, your SMTP configuration is working correctly!', function ($message) use ($testEmail) {
+            Mail::raw('This is a test email from your AffiliateHub platform. If you received this, your SMTP configuration is working correctly!', function ($message) use ($testEmail) {
                 $message->to($testEmail)
                     ->subject('Test Email - AffiliateHub');
             });

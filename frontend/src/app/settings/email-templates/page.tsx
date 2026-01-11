@@ -68,7 +68,7 @@ export default function EmailTemplatesPage() {
     const token = localStorage.getItem('auth_token');
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/settings/email-templates/${key}`, {
+      const res = await fetch(`/api/settings/email-templates/${key}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -94,7 +94,7 @@ export default function EmailTemplatesPage() {
     const token = localStorage.getItem('auth_token');
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/settings/email-templates/${selectedTemplate}`, {
+      const res = await fetch(`/api/settings/email-templates/${selectedTemplate}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -199,7 +199,7 @@ export default function EmailTemplatesPage() {
                     disabled={loading}
                     placeholder="Enter email body..."
                     rows={12}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-mono focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-mono text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
                   />
                   <p className="mt-1 text-xs text-gray-500">
                     You can use HTML tags for formatting

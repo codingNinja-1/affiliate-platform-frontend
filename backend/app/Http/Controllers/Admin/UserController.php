@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\UserApprovedNotification;
+use App\Notifications\UserDeniedNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
@@ -94,7 +96,27 @@ class UserController extends Controller
             'user_type' => 'sometimes|in:customer,vendor,affiliate,admin',
         ]);
 
+        $oldStatus = $targetUser->status;
         $targetUser->update($validated);
+        $newStatus = $targetUser->status;
+
+        // Send notifications on status change
+        \Log::info('User status change check', [
+            'userId' => $targetUser->id,
+            'oldStatus' => $oldStatus,
+            'newStatus' => $newStatus,
+            'changed' => $oldStatus !== $newStatus,
+        ]);
+
+        if ($oldStatus !== $newStatus) {
+            if ($newStatus === 'active') {
+                \Log::info('Sending UserApprovedNotification', ['userId' => $targetUser->id]);
+                $targetUser->notify(new UserApprovedNotification($targetUser));
+            } elseif ($newStatus === 'suspended') {
+                \Log::info('Sending UserDeniedNotification', ['userId' => $targetUser->id]);
+                $targetUser->notify(new UserDeniedNotification($targetUser));
+            }
+        }
 
         return response()->json([
             'success' => true,

@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\Withdrawal;
+use App\Models\Affiliate;
+use App\Models\Vendor;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -35,9 +37,10 @@ class DashboardController extends Controller
             ->where('status', 'completed')
             ->sum('commission_amount') ?? 0;
 
-        $unpaidAffiliateBalance = Withdrawal::where('status', 'pending')->sum('amount') ?? 0;
+        // Use live balances instead of pending withdrawals so numbers match user dashboards
+        $unpaidAffiliateBalance = Affiliate::sum('balance') ?? 0;
 
-        $unpaidVendorBalance = Withdrawal::where('status', 'pending')->sum('amount') ?? 0;
+        $unpaidVendorBalance = Vendor::sum('balance') ?? 0;
 
         $activeAffiliates = User::where('user_type', 'affiliate')
             ->where('status', 'active')
@@ -51,7 +54,8 @@ class DashboardController extends Controller
 
         $pendingWithdrawals = Withdrawal::where('status', 'pending')->count() ?? 0;
 
-        $totalPaidOut = Withdrawal::where('status', 'paid')->sum('amount') ?? 0;
+        // We mark withdrawals as approved; sum total_withdrawn to represent payouts
+        $totalPaidOut = (Affiliate::sum('total_withdrawn') + Vendor::sum('total_withdrawn')) ?? 0;
 
         return response()->json([
             'success' => true,

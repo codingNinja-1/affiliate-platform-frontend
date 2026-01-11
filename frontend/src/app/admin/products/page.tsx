@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { Home, Users, Package, CreditCard, DollarSign, Building2, TrendingUp, Settings, Mail, Plug, ChevronLeft } from 'lucide-react';
+import { Home, Users, Package, CreditCard, DollarSign, Building2, TrendingUp, Settings, Mail, Plug, ChevronLeft, Menu, X } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -15,7 +15,7 @@ interface Product {
   created_at: string;
 }
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (open: boolean) => void }) => {
   const router = useRouter();
   
   const menuItems = [
@@ -35,7 +35,11 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="fixed left-0 top-0 h-screen w-60 bg-white border-r border-gray-200 flex flex-col">
+    <>
+      <button onClick={() => setIsOpen(!isOpen)} className="fixed left-4 top-4 z-50 md:hidden rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700 shadow-lg">
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+      <div className={`w-60 bg-white h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 shadow-sm transition-transform duration-300 z-40 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="p-6 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-900">AffiliateHub</h1>
         <p className="text-xs text-gray-500 mt-1">Admin Panel</p>
@@ -86,12 +90,15 @@ const Sidebar = () => {
         </div>
       </div>
     </div>
+    {isOpen && <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={() => setIsOpen(false)} />}
+    </>
   );
 };
 
 export default function AdminProductsPage() {
   const router = useRouter();
   const { user, isAuthenticated, token } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -120,7 +127,7 @@ export default function AdminProductsPage() {
     setError('');
 
     try {
-      const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.134:8000/api').replace(/\/$/, '');
+      const API_BASE = '/api';
       const statusParam = filter === 'all' ? '' : `?status=${filter}`;
 
       const res = await fetch(`${API_BASE}/admin/products${statusParam}`, {
@@ -143,7 +150,7 @@ export default function AdminProductsPage() {
     setError('');
 
     try {
-      const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.134:8000/api').replace(/\/$/, '');
+      const API_BASE = '/api';
       const res = await fetch(`${API_BASE}/admin/products/${id}/approve`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -168,7 +175,7 @@ export default function AdminProductsPage() {
     setError('');
 
     try {
-      const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.134:8000/api').replace(/\/$/, '');
+      const API_BASE = '/api';
       const res = await fetch(`${API_BASE}/admin/products/${id}/reject`, {
         method: 'POST',
         headers: {
@@ -191,9 +198,9 @@ export default function AdminProductsPage() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar />
+      <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
 
-      <div className="ml-60 flex-1 overflow-auto p-8">
+      <div className="w-full md:ml-60 flex-1 overflow-auto p-4 sm:p-6 md:p-8">
         {/* Header */}
         <div className="mb-8">
           <button 

@@ -6,7 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Affiliate;
 use App\Models\Commission;
+use App\Mail\AffiliateApprovedMail;
+use App\Mail\AffiliateDeclinedMail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class AffiliateController extends Controller
 {
@@ -112,6 +116,20 @@ class AffiliateController extends Controller
             'status' => 'approved',
         ]);
 
+        // Send approval email
+        try {
+            if ($affiliate->email) {
+                Mail::to($affiliate->email)->send(new AffiliateApprovedMail($affiliate));
+                Log::info('Affiliate approval email sent', ['affiliate_id' => $affiliate->id]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to send affiliate approval email', [
+                'affiliate_id' => $affiliate->id,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't fail the approval if email fails
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Affiliate approved successfully',
@@ -133,9 +151,25 @@ class AffiliateController extends Controller
             ], 404);
         }
 
+        $reason = $request->input('reason');
+
         $affiliate->update([
             'status' => 'declined',
         ]);
+
+        // Send rejection email
+        try {
+            if ($affiliate->email) {
+                Mail::to($affiliate->email)->send(new AffiliateDeclinedMail($affiliate, $reason));
+                Log::info('Affiliate rejection email sent', ['affiliate_id' => $affiliate->id]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to send affiliate rejection email', [
+                'affiliate_id' => $affiliate->id,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't fail the rejection if email fails
+        }
 
         return response()->json([
             'success' => true,

@@ -13,7 +13,7 @@ export default function PurchaseSuccessPage() {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          window.location.href = '/';
+          window.location.href = '/dashboard';
           return 0;
         }
         return prev - 1;
@@ -60,16 +60,33 @@ export default function PurchaseSuccessPage() {
           </p>
         </div>
 
+        {/* Auto-redirect Notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <p className="text-sm text-blue-800">
+            Redirecting to dashboard in <span className="font-bold">{countdown}</span> seconds...
+          </p>
+        </div>
+
         {/* Actions */}
         <div className="space-y-3">
           <Link
-            href="/"
-            className="block w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200"
+            href="/dashboard"
+            className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200"
           >
-            Return to Home
+            Go to Dashboard
           </Link>
+          <Link
+            href="/links"
+            className="block w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg transition duration-200"
+          >
+            View Affiliate Links
+          </Link>
+        </div>
+
+        {/* Support Info */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
           <p className="text-sm text-gray-500">
-            Redirecting in {countdown} seconds...
+            Thank you for your purchase! If you have any questions, please contact our support team.
           </p>
         </div>
       </div>

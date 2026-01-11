@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useLayoutEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
-import AdminSidebar from './AdminSidebar';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -15,6 +15,7 @@ interface AppState {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
+  const pathname = usePathname();
   const [state, setState] = useState<AppState>({ 
     isAuthenticated: false, 
     userType: 'customer',
@@ -54,12 +55,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
     return <main className="w-full">{children}</main>;
   }
 
-  // Admin users get admin sidebar
+  // Let admin routes manage their own layout to avoid double sidebars
+  if (pathname?.startsWith('/admin')) {
+    return <main className="w-full">{children}</main>;
+  }
+
+  // Admin users use responsive Sidebar
   if (state.userType?.toLowerCase() === 'admin' || state.userType?.toLowerCase() === 'superadmin') {
     return (
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-        <main className="ml-64 flex-1">
+      <div className="flex flex-col md:flex-row min-h-screen">
+        <Sidebar userType={state.userType} />
+        <main className="w-full md:ml-60 flex-1">
           {children}
         </main>
       </div>
@@ -68,9 +74,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   // Regular users get regular sidebar
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar userType={state.userType} />
-      <main className="ml-64 flex-1">
+      <main className="w-full md:ml-60 flex-1">
         {children}
       </main>
     </div>

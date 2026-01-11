@@ -9,6 +9,9 @@ use App\Models\Withdrawal;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WithdrawalApprovedMail;
+use App\Mail\WithdrawalRejectedMail;
 
 class WithdrawalController extends Controller
 {
@@ -98,6 +101,21 @@ class WithdrawalController extends Controller
                 }
             }
 
+            // Send approval email to user
+            try {
+                if ($withdrawal->user && $withdrawal->user->email) {
+                    Mail::to($withdrawal->user->email)->send(
+                        new WithdrawalApprovedMail($withdrawal)
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to send withdrawal approval email', [
+                    'withdrawal_id' => $withdrawal->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't fail the approval if email fails
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => $withdrawal,
@@ -145,6 +163,21 @@ class WithdrawalController extends Controller
                 'rejected_at' => now(),
                 'rejected_by' => $user->id,
             ]);
+
+            // Send rejection email to user (non-blocking)
+            try {
+                if ($withdrawal->user && $withdrawal->user->email) {
+                    Mail::to($withdrawal->user->email)->send(
+                        new WithdrawalRejectedMail($withdrawal, $validated['reason'])
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to send withdrawal rejection email', [
+                    'withdrawal_id' => $withdrawal->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't fail the rejection if email fails
+            }
 
             // Restore balance to user's profile since withdrawal was rejected
             if ($withdrawal->user_type === 'affiliate') {

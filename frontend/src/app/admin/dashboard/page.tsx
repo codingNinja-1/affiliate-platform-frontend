@@ -5,7 +5,7 @@ import { Home, ShoppingBag, Users, CreditCard, TrendingUp, BarChart3, DollarSign
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.134:8000/api').replace(/\/$/, '');
+const API_BASE = '/api';
 
 interface DashboardStats {
   totalRevenue: number;
