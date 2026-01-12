@@ -16,6 +16,7 @@ type AffiliateLink = {
   product_id: number;
   product_name: string;
   referral_link: string;
+  sales_page_url: string;
   clicks: number;
   sales: number;
 };
@@ -73,13 +74,18 @@ export default function LinksPage() {
 
       // Generate affiliate links using the referral code
       const affiliateLinks = (productsData.data || []).map((product: Product) => {
-        // Use centralized checkout with product and affiliate IDs
-        const checkoutUrl = `${window.location.origin}/checkout?p=${product.id}&a=${affiliateId || ''}`;
+        const salesUrl = product.sales_page_url?.trim() || `${window.location.origin}/products/${product.slug}`;
+
+        // Build referral link: append ?pid=PRODUCT_ID&a=AFFILIATE_ID to sales page
+        // so the sales page snippet can read params and build checkout URL
+        const separator = salesUrl.includes('?') ? '&' : '?';
+        const referralLink = `${salesUrl}${separator}pid=${product.id}&a=${affiliateId || ''}`;
 
         return {
           product_id: product.id,
           product_name: product.name,
-          referral_link: checkoutUrl,
+          referral_link: referralLink,
+          sales_page_url: salesUrl,
           clicks: 0,
           sales: 0,
         };
@@ -169,19 +175,29 @@ export default function LinksPage() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-3 flex items-center gap-2">
+                <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-center">
                   <input
                     type="text"
                     value={link.referral_link}
                     readOnly
                     className="flex-1 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300"
                   />
-                  <button
-                    onClick={() => copyToClipboard(link.referral_link)}
-                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
-                  >
-                    {copiedLink === link.referral_link ? 'Copied!' : 'Copy'}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => copyToClipboard(link.referral_link)}
+                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
+                    >
+                      {copiedLink === link.referral_link ? 'Copied!' : 'Copy'}
+                    </button>
+                    <a
+                      href={link.referral_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-md bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-600"
+                    >
+                      Sales page
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}

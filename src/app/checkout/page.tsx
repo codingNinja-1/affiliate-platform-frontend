@@ -31,7 +31,7 @@ interface Affiliate {
 
 export default function CheckoutPage() {
   const searchParams = useSearchParams();
-  const productId = searchParams.get('p');
+  const productId = searchParams.get('pid') || searchParams.get('p');
   const affiliateId = searchParams.get('a');
   const referralCodeParam = searchParams.get('r') || searchParams.get('ref');
 
