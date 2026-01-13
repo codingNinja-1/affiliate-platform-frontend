@@ -30,7 +30,8 @@ Route::get('/track/{referralCode}/{productId}', [\App\Http\Controllers\TrackingC
 
 // Payment routes (public)
 Route::post('/payment/initialize', [\App\Http\Controllers\PurchaseController::class, 'initializePayment']);
-Route::get('/payment/callback', [\App\Http\Controllers\PurchaseController::class, 'handleCallback']);
+// Point callback to the new CheckoutController so transactions started via /checkout/initialize are completed
+Route::get('/payment/callback', [\App\Http\Controllers\CheckoutController::class, 'handleCallback']);
 Route::post('/payment/webhook', [\App\Http\Controllers\PurchaseController::class, 'handleWebhook']);
 Route::get('/payment/public-key', [\App\Http\Controllers\PurchaseController::class, 'getPublicKey']);
 

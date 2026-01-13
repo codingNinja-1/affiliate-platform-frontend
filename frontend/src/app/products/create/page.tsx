@@ -155,13 +155,36 @@ export default function CreateProductPage() {
 
       // Generate pixel code
       const pixelCode = `<script>
-(function() {
-  var productId = '${product.id}';
-  var referralCode = new URLSearchParams(window.location.search).get('ref');
-  if (referralCode) {
-    fetch('/api/track/' + referralCode + '/' + productId);
-  }
-})();
+  (function () {
+    // CONFIG: set your API + frontend base URLs and product ID
+    var API_BASE = '/api';
+    var FRONTEND_BASE = '${typeof window !== 'undefined' ? window.location.origin : 'https://your-frontend-domain.com'}';
+    var PRODUCT_ID = '${product.id}'; // e.g. 123
+
+    var params = new URLSearchParams(location.search);
+    var affiliateId = params.get('a');       // preferred if present
+    var referralCode = params.get('ref') || params.get('r'); // fallback
+
+    // Track the page view/click for analytics (non-blocking)
+    if (referralCode) {
+      // Tracks a click against an affiliate referral code for this product
+      fetch(API_BASE + '/track/' + encodeURIComponent(referralCode) + '/' + PRODUCT_ID)
+        .catch(function(){ /* ignore */ });
+    }
+
+    // Expose a helper for your Buy Now button
+    window.startCheckout = function () {
+      var checkoutUrl = FRONTEND_BASE + '/checkout?p=' + PRODUCT_ID;
+      if (affiliateId) {
+        checkoutUrl += '&a=' + encodeURIComponent(affiliateId);
+      } else if (referralCode) {
+        // Our checkout now accepts 'r' (referral code) and passes it through to Paystack metadata
+        checkoutUrl += '&r=' + encodeURIComponent(referralCode);
+      }
+      location.href = checkoutUrl;
+      return false; // prevent default if used on <a href="#">
+    };
+  })();
 </script>`;
 
       setIntegrationData({
@@ -183,12 +206,16 @@ export default function CreateProductPage() {
   const generateButtonCode = (buttonId: string) => {
     if (!integrationData) return '';
 
-    const button = BUTTON_STYLES.find((b) => b.id === buttonId);
-    if (!button) return '';
+    return `<!-- Image-style button -->
+<a href="#" onclick="return startCheckout()">
+  <img src="https://path-to-your-button-image.png" alt="Buy Now">
+</a>
 
-    return `<a href="${integrationData.sales_page_url}" style="display: inline-block; padding: 12px 24px; background-color: ${button.color}; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
-  ${button.text}
-</a>`;
+<!-- Or a styled button -->
+<button style="background:#fbbf24;color:#1f2937;padding:10px 20px;border-radius:6px;font-weight:bold;border:none;cursor:pointer"
+        onclick="return startCheckout()">
+  Buy Now
+</button>`;
   };
 
   if (step === 'form') {

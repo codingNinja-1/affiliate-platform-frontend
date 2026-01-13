@@ -37,7 +37,7 @@ return [
 
     'allowed_origins_patterns' => [
         // Allow any local LAN origin on 192.168.1.x with optional port
-        '^https?:\/\/192\.168\.1\.\d{1,3}(?::\d+)?$'
+        '#^https?://192\.168\.1\.\d{1,3}(?::\d+)?$#'
     ],
 
     'allowed_headers' => ['*'],

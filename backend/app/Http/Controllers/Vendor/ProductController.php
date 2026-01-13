@@ -49,7 +49,7 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:products,name,NULL,id,vendor_id,' . Auth::user()->vendor->id,
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'commission_rate' => 'required|numeric|min:0|max:100',
@@ -136,7 +136,7 @@ class ProductController extends Controller
         $product = Product::where('vendor_id', $vendor->id)->findOrFail($id);
 
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
+            'name' => 'sometimes|string|max:255|unique:products,name,' . $product->id . ',id,vendor_id,' . $vendor->id,
             'description' => 'nullable|string',
             'price' => 'sometimes|numeric|min:0',
             'commission_rate' => 'sometimes|numeric|min:0|max:100',
