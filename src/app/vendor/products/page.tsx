@@ -49,29 +49,57 @@ export default function VendorProductsPage() {
     load();
   }, []);
 
-  const buildSnippet = (productId: number) => {
+  const buildPixelScript = (productId: number) => {
     const FRONTEND_BASE = typeof window !== 'undefined' ? window.location.origin : 'https://your-frontend-domain.com';
+    const API_BASE = '/api'; // Adjust if backend is on different domain
     return [
-      '<!-- Stakecut-style pixel + checkout helper -->',
       '<script>',
-      '(function(){',
-      `  var FRONTEND_BASE = ${JSON.stringify(FRONTEND_BASE)};`,
-      '  var params = new URLSearchParams(location.search);',
-      '  var productId = params.get("pid");',
-      '  var affiliateId = params.get("a");',
-      '  window.startCheckout = function(){',
-      '    if (!productId) { alert("Product ID missing"); return false; }',
-      '    var url = FRONTEND_BASE + "/checkout?pid=" + productId;',
-      '    if (affiliateId) url += "&a=" + encodeURIComponent(affiliateId);',
-      '    location.href = url; return false;',
-      '  };',
-      '})();',
-      '</script>',
+      '  (function () {',
+      '    // CONFIG: set your API + frontend base URLs and product ID',
+      `    var API_BASE = '${API_BASE}';`,
+      `    var FRONTEND_BASE = '${FRONTEND_BASE}';`,
+      `    var PRODUCT_ID = '${productId}'; // e.g. 123`,
       '',
-      '<!-- Buy button example -->',
-      '<a href="#" onclick="return startCheckout()" style="display:inline-block;background:#10b981;color:#fff;padding:12px 18px;border-radius:8px;font-weight:600;text-decoration:none">',
+      '    var params = new URLSearchParams(location.search);',
+      '    var affiliateId = params.get(\'a\');       // preferred if present',
+      '    var referralCode = params.get(\'ref\') || params.get(\'r\'); // fallback',
+      '',
+      '    // Track the page view/click for analytics (non-blocking)',
+      '    if (referralCode) {',
+      '      // Tracks a click against an affiliate referral code for this product',
+      '      fetch(API_BASE + \'/track/\' + encodeURIComponent(referralCode) + \'/\' + PRODUCT_ID)',
+      '        .catch(function(){ /* ignore */ });',
+      '    }',
+      '',
+      '    // Expose a helper for your Buy Now button',
+      '    window.startCheckout = function () {',
+      '      var checkoutUrl = FRONTEND_BASE + \'/checkout?p=\' + PRODUCT_ID;',
+      '      if (affiliateId) {',
+      '        checkoutUrl += \'&a=\' + encodeURIComponent(affiliateId);',
+      '      } else if (referralCode) {',
+      '        // Our checkout now accepts \'r\' (referral code) and passes it through to Paystack metadata',
+      '        checkoutUrl += \'&r=\' + encodeURIComponent(referralCode);',
+      '      }',
+      '      location.href = checkoutUrl;',
+      '      return false; // prevent default if used on <a href="#">',
+      '    };',
+      '  })();',
+      '</script>'
+    ].join('\n');
+  };
+
+  const buildButtonCode = (productId: number) => {
+    return [
+      '<!-- Image-style button -->',
+      '<a href="#" onclick="return startCheckout()">',
+      '  <img src="https://path-to-your-button-image.png" alt="Buy Now">',
+      '</a>',
+      '',
+      '<!-- Or a styled button -->',
+      '<button style="background:#fbbf24;color:#1f2937;padding:10px 20px;border-radius:6px;font-weight:bold;border:none;cursor:pointer"',
+      '        onclick="return startCheckout()">',
       '  Buy Now',
-      '</a>'
+      '</button>'
     ].join('\n');
   };
 
@@ -113,13 +141,52 @@ export default function VendorProductsPage() {
                   </div>
                 </div>
 
-                <div className="mt-4">
-                  <p className="text-xs font-semibold text-slate-500 uppercase">Sales Page Snippet</p>
-                  <textarea
-                    readOnly
-                    value={buildSnippet(p.id)}
-                    className="mt-2 w-full min-h-[180px] rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-mono"
-                  />
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-slate-700 uppercase">1. Pixel Code (Header Script)</p>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(buildPixelScript(p.id));
+                          alert('Pixel script copied!');
+                        }}
+                        className="rounded-md bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-500"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-500 mb-2">
+                      Kindly copy this pixel code below and insert it in your sales page header as a custom script.
+                    </p>
+                    <textarea
+                      readOnly
+                      value={buildPixelScript(p.id)}
+                      className="w-full min-h-[120px] rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-slate-700 uppercase">2. Pay Button (CTA)</p>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(buildButtonCode(p.id));
+                          alert('Button code copied!');
+                        }}
+                        className="rounded-md bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-500"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-500 mb-2">
+                      Select from the button options below that best suits your Website/sales page and then copy the code generated and insert in your website
+                    </p>
+                    <textarea
+                      readOnly
+                      value={buildButtonCode(p.id)}
+                      className="w-full min-h-[180px] rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-mono"
+                    />
+                  </div>
                 </div>
               </div>
             ))}
