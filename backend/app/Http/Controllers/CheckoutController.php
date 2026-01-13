@@ -259,4 +259,27 @@ class CheckoutController extends Controller
             'amount' => $transaction->vendor_amount,
         ]);
     }
+
+    /**
+     * Get transaction details by reference (for purchase success page)
+     */
+    public function getTransactionByReference($reference)
+    {
+        $transaction = Transaction::with(['product', 'customer', 'affiliate', 'vendor'])
+            ->where('payment_reference', $reference)
+            ->orWhere('transaction_ref', $reference)
+            ->first();
+
+        if (!$transaction) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $transaction,
+        ]);
+    }
 }

@@ -43,6 +43,9 @@ Route::get('/pixel/conversion', [\App\Http\Controllers\PixelController::class, '
 // Purchase recording (legacy demo endpoint)
 Route::post('/purchases', [\App\Http\Controllers\PurchaseController::class, 'store']);
 
+// Transaction lookup by reference (public - for purchase success page)
+Route::get('/transactions/{reference}', [\App\Http\Controllers\CheckoutController::class, 'getTransactionByReference']);
+
 // Protected routes (conditionally registered to avoid missing controller errors during development)
 Route::middleware('auth:sanctum')->group(function () {
     // Dashboard
