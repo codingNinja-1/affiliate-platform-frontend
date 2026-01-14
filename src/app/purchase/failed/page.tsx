@@ -18,8 +18,6 @@ function FailedLoading() {
 }
 
 export default function PurchaseFailedPage() {
-
-export default function PurchaseFailedPage() {
   return (
     <Suspense fallback={<FailedLoading />}>
       <FailedContent />
