@@ -3,15 +3,11 @@
 namespace App\Notifications;
 
 use App\Models\Transaction;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class PurchaseConfirmationNotification extends Notification implements ShouldQueue
+class PurchaseConfirmationNotification extends Notification
 {
-    use Queueable;
-
     protected $transaction;
     protected $product;
 

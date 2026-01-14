@@ -189,7 +189,7 @@ class CheckoutController extends Controller
                 if ($transaction && $transaction->product && $transaction->product->thank_you_page_url) {
                     $redirectUrl = $transaction->product->thank_you_page_url . '?reference=' . $reference;
                 }
-                
+
                 return redirect($redirectUrl);
             }
 
