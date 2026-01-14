@@ -184,7 +184,13 @@ class CheckoutController extends Controller
                     }
                 }
 
-                return redirect($frontendUrl . '/purchase/success?reference=' . $reference);
+                // Redirect to vendor's thank you page if available, otherwise to success page
+                $redirectUrl = $frontendUrl . '/purchase/success?reference=' . $reference;
+                if ($transaction && $transaction->product && $transaction->product->thank_you_page_url) {
+                    $redirectUrl = $transaction->product->thank_you_page_url . '?reference=' . $reference;
+                }
+                
+                return redirect($redirectUrl);
             }
 
             return redirect($frontendUrl . '/purchase/failed?error=verification_failed');
