@@ -102,23 +102,23 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('products', \App\Http\Controllers\Vendor\ProductController::class);
         Route::apiResource('withdrawals', \App\Http\Controllers\Vendor\WithdrawalController::class);
         Route::get('/transactions', [\App\Http\Controllers\Vendor\TransactionController::class, 'index']);
-        Route::get('/reports', \App\Http\Controllers\Vendor\ReportController::class . '@index');
+        Route::get('/reports', [\App\Http\Controllers\Vendor\ReportController::class, 'index']);
     });
 
     // Affiliate routes
     Route::prefix('affiliate')->middleware('role:affiliate')->group(function () {
-        Route::get('/products', \App\Http\Controllers\Affiliate\ProductController::class . '@index');
-        Route::get('/products/{product}', \App\Http\Controllers\Affiliate\ProductController::class . '@show');
+        Route::get('/products', [\App\Http\Controllers\Affiliate\ProductController::class, 'index']);
+        Route::get('/products/{product}', [\App\Http\Controllers\Affiliate\ProductController::class, 'show']);
         Route::apiResource('withdrawals', \App\Http\Controllers\Affiliate\WithdrawalController::class);
         Route::get('/commissions', [\App\Http\Controllers\Affiliate\CommissionController::class, 'index']);
-        Route::get('/reports', \App\Http\Controllers\Affiliate\ReportController::class . '@index');
+        Route::get('/reports', [\App\Http\Controllers\Affiliate\ReportController::class, 'index']);
     });
 
     // Customer routes
     if (class_exists('App\\Http\\Controllers\\Customer\\OrderController')) {
         Route::prefix('customer')->middleware('role:customer')->group(function () {
-            Route::get('/orders', 'Customer\OrderController@index');
-            Route::get('/orders/{transaction}', 'Customer\OrderController@show');
+            Route::get('/orders', [\App\Http\Controllers\Customer\OrderController::class, 'index']);
+            Route::get('/orders/{transaction}', [\App\Http\Controllers\Customer\OrderController::class, 'show']);
         });
     }
 
@@ -128,9 +128,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Shared routes
     if (class_exists('App\\Http\\Controllers\\ProfileController')) {
-        Route::get('/profile', 'ProfileController@show');
-        Route::put('/profile', 'ProfileController@update');
-        Route::post('/profile/avatar', 'ProfileController@updateAvatar');
+        Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show']);
+        Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update']);
+        Route::post('/profile/avatar', [\App\Http\Controllers\ProfileController::class, 'updateAvatar']);
     }
 
     // Settings routes
