@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useWithdrawals, useCreateWithdrawal, type Withdrawal } from '@/hooks/useWithdrawals';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api';
+const API_BASE = '/api'; // Always use relative path for client-side requests
 
 type BankDetails = {
   bank_name: string;

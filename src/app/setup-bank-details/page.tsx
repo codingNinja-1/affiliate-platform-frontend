@@ -46,7 +46,7 @@ export default function BankDetailsSetupPage() {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const apiUrl = '/api'; // Always use relative path for client-side requests
       const res = await fetch(`${apiUrl}/settings/bank-details`, {
         method: 'POST',
         headers: {

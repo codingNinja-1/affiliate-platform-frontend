@@ -22,7 +22,7 @@ export default function DemoPage() {
   // loading state not needed currently
   const [results, setResults] = useState<TestResult[]>([]);
   const [testRunning, setTestRunning] = useState(false);
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const apiBase = '/api'; // Always use relative path for client-side requests
 
   const addResult = (step: string, success: boolean, message: string) => {
     setResults((prev) => [

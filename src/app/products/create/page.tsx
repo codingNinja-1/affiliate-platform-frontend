@@ -15,7 +15,7 @@ const CATEGORIES = ['Software', 'Course', 'E-book', 'Service', 'Physical Product
 const PRODUCT_TYPES = ['Digital', 'Physical', 'Subscription', 'Service'];
 const CURRENCIES = ['USD', 'NGN', 'EUR', 'GBP'];
 const APPROVAL_METHODS = ['Auto Approve', 'Manual Review Required', 'Whitelist Only'];
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? '/api').replace(/\/$/, '');
+const API_BASE = '/api'; // Always use relative path for client-side requests
 
 interface FormData {
   name: string;
