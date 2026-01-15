@@ -76,10 +76,10 @@ export default function LinksPage() {
       const affiliateLinks = (productsData.data || []).map((product: Product) => {
         const salesUrl = product.sales_page_url?.trim() || `${window.location.origin}/products/${product.slug}`;
 
-        // Build referral link: append ?pid=PRODUCT_ID&a=AFFILIATE_ID to sales page
-        // so the sales page snippet can read params and build checkout URL
+        // Build referral link: append ?pid=PRODUCT_ID&ref=REFERRAL_CODE to sales page
+        // Using 'ref' parameter which is what the checkout expects for commission tracking
         const separator = salesUrl.includes('?') ? '&' : '?';
-        const referralLink = `${salesUrl}${separator}pid=${product.id}&a=${affiliateId || ''}`;
+        const referralLink = `${salesUrl}${separator}pid=${product.id}&ref=${referralCode}`;
 
         return {
           product_id: product.id,
