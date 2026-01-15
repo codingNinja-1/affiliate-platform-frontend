@@ -13,7 +13,7 @@ const getApiBase = () => {
     return `${protocol}//${hostname}:8000/api`;
   }
 
-  return 'http://127.0.0.1:8000/api';
+  return process.env.NEXT_PUBLIC_API_URL || '/api';
 };
 
 export default function LoginPage() {

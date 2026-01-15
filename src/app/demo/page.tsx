@@ -22,9 +22,7 @@ export default function DemoPage() {
   // loading state not needed currently
   const [results, setResults] = useState<TestResult[]>([]);
   const [testRunning, setTestRunning] = useState(false);
-  const apiBase = typeof window !== 'undefined' 
-    ? (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api')
-    : 'http://127.0.0.1:8000/api';
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
 
   const addResult = (step: string, success: boolean, message: string) => {
     setResults((prev) => [
