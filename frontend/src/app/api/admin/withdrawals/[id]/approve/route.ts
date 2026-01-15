@@ -2,10 +2,11 @@ import type { NextRequest } from 'next/server';
 
 const BACKEND_BASE = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const auth = req.headers.get('authorization') ?? '';
-    const res = await fetch(`${BACKEND_BASE}/api/admin/withdrawals/${params.id}/approve`, {
+    const res = await fetch(`${BACKEND_BASE}/api/admin/withdrawals/${id}/approve`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
