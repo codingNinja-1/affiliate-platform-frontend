@@ -169,7 +169,7 @@ export default function AdminWithdrawalsPage() {
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      alert(`Error approving withdrawal: ${error instanceof Error ? error.message : 'Network error'}. Make sure the backend server is running at http://127.0.0.1:8000`);
+      alert(`Error approving withdrawal: ${error instanceof Error ? error.message : 'Network error'}`);
     } finally {
       setApproving(null);
     }
@@ -218,7 +218,7 @@ export default function AdminWithdrawalsPage() {
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      alert(`Error denying withdrawal: ${error instanceof Error ? error.message : 'Network error'}. Make sure the backend server is running at http://127.0.0.1:8000`);
+      alert(`Error denying withdrawal: ${error instanceof Error ? error.message : 'Network error'}`);
     } finally {
       setDenying(null);
     }

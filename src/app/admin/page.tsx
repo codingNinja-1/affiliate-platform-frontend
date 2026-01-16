@@ -54,9 +54,9 @@ const Sidebar = ({ currentPage, setCurrentPage, isOpen, setIsOpen }: { currentPa
   ];
 
   const preferences = [
-    { id: 'settings', icon: Settings, label: 'Settings' },
+    { id: 'settings', icon: Settings, label: 'Settings', path: '/admin/settings/payment' },
     { id: 'integrations', icon: Link2, label: 'Integrations' },
-    { id: 'email', icon: Mail, label: 'Email' },
+    { id: 'email', icon: Mail, label: 'Email', path: '/admin/email' },
   ];
 
   return (
@@ -111,7 +111,7 @@ const Sidebar = ({ currentPage, setCurrentPage, isOpen, setIsOpen }: { currentPa
           {preferences.map(item => (
             <button
               key={item.id}
-              onClick={() => setCurrentPage(item.id)}
+              onClick={() => handleNavigation(item.id, item.path)}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg mb-1 transition-colors ${
                 currentPage === item.id 
                   ? 'bg-blue-50 text-blue-600 font-medium' 
