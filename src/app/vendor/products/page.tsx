@@ -50,7 +50,7 @@ export default function VendorProductsPage() {
   }, []);
 
   const buildPixelScript = (productId: number) => {
-    const FRONTEND_BASE = process.env.NEXT_PUBLIC_FRONTEND_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'https://www.affiliatehub.tech');
+    const FRONTEND_BASE = process.env.NEXT_PUBLIC_FRONTEND_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'https://affiliatehub.tech');
     const API_BASE = '/api'; // Adjust if backend is on different domain
     return [
       '<script>',
