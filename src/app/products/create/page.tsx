@@ -158,7 +158,7 @@ export default function CreateProductPage() {
   (function () {
     // CONFIG: set your API + frontend base URLs and product ID
     var API_BASE = '/api';
-    var FRONTEND_BASE = '${typeof window !== 'undefined' ? window.location.origin : 'https://your-frontend-domain.com'}';
+    var FRONTEND_BASE = '${process.env.NEXT_PUBLIC_FRONTEND_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'https://www.affiliatehub.tech')}';
     var PRODUCT_ID = '${product.id}'; // e.g. 123
 
     var params = new URLSearchParams(location.search);
