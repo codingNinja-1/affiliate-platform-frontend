@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\Vendor;
 use App\Models\Withdrawal;
+use App\Models\EmailLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -104,11 +105,33 @@ class WithdrawalController extends Controller
             // Send approval email to user
             try {
                 if ($withdrawal->user && $withdrawal->user->email) {
-                    Mail::to($withdrawal->user->email)->send(
-                        new WithdrawalApprovedMail($withdrawal)
+                    $mail = new WithdrawalApprovedMail($withdrawal);
+                    Mail::to($withdrawal->user->email)->send($mail);
+
+                    EmailLog::log(
+                        $withdrawal->user->email,
+                        $mail->subject ?? null,
+                        'withdrawal_approved',
+                        'sent',
+                        [
+                            'withdrawal_id' => $withdrawal->id,
+                            'user_type' => $withdrawal->user_type,
+                        ]
                     );
                 }
             } catch (\Exception $e) {
+                EmailLog::log(
+                    $withdrawal->user->email ?? '',
+                    null,
+                    'withdrawal_approved',
+                    'failed',
+                    [
+                        'withdrawal_id' => $withdrawal->id,
+                        'user_type' => $withdrawal->user_type,
+                    ],
+                    $e->getMessage()
+                );
+
                 Log::warning('Failed to send withdrawal approval email', [
                     'withdrawal_id' => $withdrawal->id,
                     'error' => $e->getMessage(),
@@ -167,11 +190,33 @@ class WithdrawalController extends Controller
             // Send rejection email to user (non-blocking)
             try {
                 if ($withdrawal->user && $withdrawal->user->email) {
-                    Mail::to($withdrawal->user->email)->send(
-                        new WithdrawalRejectedMail($withdrawal, $validated['reason'])
+                    $mail = new WithdrawalRejectedMail($withdrawal, $validated['reason']);
+                    Mail::to($withdrawal->user->email)->send($mail);
+
+                    EmailLog::log(
+                        $withdrawal->user->email,
+                        $mail->subject ?? null,
+                        'withdrawal_rejected',
+                        'sent',
+                        [
+                            'withdrawal_id' => $withdrawal->id,
+                            'user_type' => $withdrawal->user_type,
+                        ]
                     );
                 }
             } catch (\Exception $e) {
+                EmailLog::log(
+                    $withdrawal->user->email ?? '',
+                    null,
+                    'withdrawal_rejected',
+                    'failed',
+                    [
+                        'withdrawal_id' => $withdrawal->id,
+                        'user_type' => $withdrawal->user_type,
+                    ],
+                    $e->getMessage()
+                );
+
                 Log::warning('Failed to send withdrawal rejection email', [
                     'withdrawal_id' => $withdrawal->id,
                     'error' => $e->getMessage(),

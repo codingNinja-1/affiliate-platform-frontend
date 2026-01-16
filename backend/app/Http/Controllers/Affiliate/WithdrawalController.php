@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Affiliate;
 use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
 use App\Models\Commission;
+use App\Models\EmailLog;
+use App\Notifications\WithdrawalProcessingNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -112,6 +114,40 @@ class WithdrawalController extends Controller
             ]);
 
             DB::commit();
+
+            $notification = new WithdrawalProcessingNotification([
+                'name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? $user->email),
+                'amount' => number_format((float) $withdrawal->amount, 2),
+                'reference' => $withdrawal->withdrawal_ref ?? $withdrawal->uuid,
+                'bank_name' => $withdrawal->bank_name,
+                'account_number' => $withdrawal->account_number,
+            ]);
+
+            try {
+                $user->notify($notification);
+                EmailLog::log(
+                    $user->email,
+                    $notification->resolvedSubject($user),
+                    $notification->templateKey(),
+                    'sent',
+                    [
+                        'withdrawal_id' => $withdrawal->id,
+                        'user_type' => 'affiliate',
+                    ]
+                );
+            } catch (\Exception $e) {
+                EmailLog::log(
+                    $user->email,
+                    null,
+                    $notification->templateKey(),
+                    'failed',
+                    [
+                        'withdrawal_id' => $withdrawal->id,
+                        'user_type' => 'affiliate',
+                    ],
+                    $e->getMessage()
+                );
+            }
 
             return response()->json([
                 'success' => true,

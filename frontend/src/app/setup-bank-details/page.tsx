@@ -46,7 +46,8 @@ export default function BankDetailsSetupPage() {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch('http://127.0.0.1:8000/api/settings/bank-details', {
+      const apiUrl = '/api'; // Always use relative path for client-side requests
+      const res = await fetch(`${apiUrl}/settings/bank-details`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

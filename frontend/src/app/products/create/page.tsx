@@ -15,7 +15,7 @@ const CATEGORIES = ['Software', 'Course', 'E-book', 'Service', 'Physical Product
 const PRODUCT_TYPES = ['Digital', 'Physical', 'Subscription', 'Service'];
 const CURRENCIES = ['USD', 'NGN', 'EUR', 'GBP'];
 const APPROVAL_METHODS = ['Auto Approve', 'Manual Review Required', 'Whitelist Only'];
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api').replace(/\/$/, '');
+const API_BASE = '/api'; // Always use relative path for client-side requests
 
 interface FormData {
   name: string;
@@ -158,7 +158,7 @@ export default function CreateProductPage() {
   (function () {
     // CONFIG: set your API + frontend base URLs and product ID
     var API_BASE = '/api';
-    var FRONTEND_BASE = '${typeof window !== 'undefined' ? window.location.origin : 'https://your-frontend-domain.com'}';
+    var FRONTEND_BASE = '${process.env.NEXT_PUBLIC_FRONTEND_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'https://affiliatehub.tech')}';
     var PRODUCT_ID = '${product.id}'; // e.g. 123
 
     var params = new URLSearchParams(location.search);

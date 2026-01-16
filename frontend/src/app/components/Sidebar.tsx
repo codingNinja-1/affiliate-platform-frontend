@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, X, Users, ShoppingBag, Mail } from 'lucide-react';
+import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, X, Users, ShoppingBag, Mail, CreditCard, FileText } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
@@ -31,7 +31,9 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
     { href: '/admin/products', label: 'Products', icon: Package },
     { href: '/admin/payouts', label: 'Payouts', icon: DollarSign },
     { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
+    { href: '/admin/settings/payment', label: 'Payment Settings', icon: CreditCard },
     { href: '/admin/email', label: 'Email Settings', icon: Mail },
+    { href: '/admin/email/logs', label: 'Email Logs', icon: FileText },
   ];
 
   const vendorNav: NavItem[] = [
@@ -123,11 +125,11 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
         {/* Footer */}
         <div className="border-t border-gray-100 p-4 space-y-2">
           <Link
-            href="/settings"
+            href={isAdmin ? '/admin/settings/payment' : '/settings'}
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <SettingsIcon size={20} className="text-gray-500" />
-            <span className="text-sm font-medium">Settings</span>
+            <span className="text-sm font-medium">{isAdmin ? 'Payment Settings' : 'Settings'}</span>
           </Link>
           <button
             onClick={handleLogout}

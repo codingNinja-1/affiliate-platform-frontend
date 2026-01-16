@@ -7,14 +7,13 @@ use App\Models\Commission;
 use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Services\PaystackService;
 use App\Notifications\PurchaseConfirmationNotification;
-use App\Mail\NewSaleMail;
+use App\Services\PaystackService;
+use App\Services\SaleNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 
 class PurchaseController extends Controller
 {
@@ -134,8 +133,10 @@ class PurchaseController extends Controller
 
                     // Process commissions
                     $metadata = $response['data']['metadata'];
+                    $commission = null;
+
                     if (!empty($metadata['referral_code'])) {
-                        $this->recordAffiliateCommission(
+                        $commission = $this->recordAffiliateCommission(
                             $transaction->product,
                             $transaction,
                             $metadata['referral_code'],
@@ -150,9 +151,12 @@ class PurchaseController extends Controller
                         );
                     }
 
+                    $transaction->refresh();
+
+                    app(SaleNotificationService::class)->send($transaction, $commission);
+
                     // Send purchase confirmation email to customer
                     try {
-                        $transaction->refresh();
                         $transaction->customer->notify(new PurchaseConfirmationNotification($transaction));
                         Log::info('Purchase confirmation email sent', [
                             'transaction_id' => $transaction->id,
@@ -207,8 +211,10 @@ class PurchaseController extends Controller
 
                 // Process commissions
                 $metadata = $data['metadata'] ?? [];
+                $commission = null;
+
                 if (!empty($metadata['referral_code'])) {
-                    $this->recordAffiliateCommission(
+                    $commission = $this->recordAffiliateCommission(
                         $transaction->product,
                         $transaction,
                         $metadata['referral_code'],
@@ -223,9 +229,12 @@ class PurchaseController extends Controller
                     );
                 }
 
+                $transaction->refresh();
+
+                app(SaleNotificationService::class)->send($transaction, $commission);
+
                 // Send purchase confirmation email to customer
                 try {
-                    $transaction->refresh();
                     $transaction->customer->notify(new PurchaseConfirmationNotification($transaction));
                     Log::info('Purchase confirmation email sent via webhook', [
                         'transaction_id' => $transaction->id,
@@ -325,12 +334,16 @@ class PurchaseController extends Controller
         ]);
 
         // Handle affiliate commission if referral code provided
+        $commission = null;
+
         if (!empty($validated['ref'])) {
-            $this->recordAffiliateCommission($product, $transaction, $validated['ref'], $commissionAmount, $vendorAmount);
+            $commission = $this->recordAffiliateCommission($product, $transaction, $validated['ref'], $commissionAmount, $vendorAmount);
         } else {
             // Even without referral, credit vendor earnings
             $this->recordVendorEarnings($product, $transaction, $vendorAmount);
         }
+
+        app(SaleNotificationService::class)->send($transaction, $commission);
 
         return response()->json([
             'success' => true,
@@ -342,7 +355,7 @@ class PurchaseController extends Controller
     /**
      * Record affiliate click conversion and commission
      */
-    private function recordAffiliateCommission($product, $transaction, $referralCode, $commissionAmount = null, $vendorAmount = null)
+    private function recordAffiliateCommission($product, $transaction, $referralCode, $commissionAmount = null, $vendorAmount = null): ?Commission
     {
         // Find the affiliate click record if it exists
         $click = AffiliateClick::where('product_id', $product->id)
@@ -362,7 +375,7 @@ class PurchaseController extends Controller
                 'product_id' => $product->id,
                 'transaction_id' => $transaction->id,
             ]);
-            return;
+            return null;
         }
 
         // Mark click as converted when a tracked click exists
@@ -402,25 +415,6 @@ class PurchaseController extends Controller
             'rate' => $commissionRate,
         ]);
 
-        // Send sale notification email to affiliate
-        try {
-            $affiliateUser = $affiliate->user;
-            if ($affiliateUser && $affiliateUser->email) {
-                Mail::to($affiliateUser->email)->send(
-                    new NewSaleMail($affiliateUser, $commission, $product)
-                );
-                Log::info('New sale notification email sent to affiliate', [
-                    'affiliate_id' => $affiliate->id,
-                    'commission_id' => $commission->id,
-                ]);
-            }
-        } catch (\Exception $e) {
-            Log::warning('Failed to send new sale notification email', [
-                'affiliate_id' => $affiliate->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
         // Update affiliate stats and balance
         $affiliate->increment('total_sales');
         $affiliate->increment('total_clicks'); // Basic conversion count
@@ -431,6 +425,8 @@ class PurchaseController extends Controller
         // Always credit the vendor for their share
         $vendorShare = $vendorAmount ?? $transaction->vendor_amount ?? ($transaction->amount - $commissionAmount);
         $this->recordVendorEarnings($product, $transaction, $vendorShare);
+
+        return $commission;
     }
 
     /**

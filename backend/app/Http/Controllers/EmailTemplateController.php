@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class EmailTemplateController extends Controller
 {
-    private $defaultTemplates = [
+    public array $defaultTemplates = [
         'affiliate_approved' => [
             'subject' => 'Welcome to AffiliateHub - Your Application Has Been Approved!',
             'body' => '<html><body style="font-family: Arial, sans-serif; padding: 20px;">
@@ -69,6 +69,22 @@ class EmailTemplateController extends Controller
 <p>Best regards,<br>The AffiliateHub Team</p>
 </body></html>'
         ],
+    'withdrawal_processing' => [
+        'subject' => 'Your withdrawal request is being processed',
+        'body' => '<html><body style="font-family: Arial, sans-serif; padding: 20px;">
+<h2>Hello {name},</h2>
+<p>We received your withdrawal request and it is now being processed.</p>
+<p><strong>Withdrawal Details:</strong></p>
+<ul>
+<li>Amount: {amount}</li>
+<li>Reference: {withdrawal_ref}</li>
+<li>Bank: {bank_name}</li>
+<li>Account: {account_number}</li>
+</ul>
+<p>We will notify you once it is approved and sent. If any issues arise, we will reach out.</p>
+<p>Best regards,<br>The AffiliateHub Team</p>
+</body></html>'
+    ],
         'new_sale' => [
             'subject' => 'New Sale! You Earned a Commission',
             'body' => '<html><body style="font-family: Arial, sans-serif; padding: 20px;">
@@ -85,6 +101,36 @@ class EmailTemplateController extends Controller
 <p>Best regards,<br>The AffiliateHub Team</p>
 </body></html>'
         ],
+    'sale_affiliate' => [
+        'subject' => 'New commission earned!',
+        'body' => '<html><body style="font-family: Arial, sans-serif; padding: 20px;">
+<h2>Congrats {name}!</h2>
+<p>You just earned a commission.</p>
+<ul>
+<li>Product: {product_name}</li>
+<li>Sale Amount: {amount}</li>
+<li>Your Commission: {commission}</li>
+<li>Customer: {customer_email}</li>
+</ul>
+<p>Great job! Your earnings are updated and available per payout schedule.</p>
+<p>Best regards,<br>The AffiliateHub Team</p>
+</body></html>'
+    ],
+    'sale_vendor' => [
+        'subject' => 'New sale received',
+        'body' => '<html><body style="font-family: Arial, sans-serif; padding: 20px;">
+<h2>Hello {name},</h2>
+<p>You have a new sale.</p>
+<ul>
+<li>Product: {product_name}</li>
+<li>Sale Amount: {amount}</li>
+<li>Affiliate Commission Paid: {commission}</li>
+<li>Customer: {customer_email}</li>
+</ul>
+<p>Your vendor balance has been updated.</p>
+<p>Best regards,<br>The AffiliateHub Team</p>
+</body></html>'
+    ],
         'password_reset' => [
             'subject' => 'Reset Your AffiliateHub Password',
             'body' => '<html><body style="font-family: Arial, sans-serif; padding: 20px;">

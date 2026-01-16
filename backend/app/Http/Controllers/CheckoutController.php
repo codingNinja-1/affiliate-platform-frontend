@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Affiliate;
+use App\Models\Commission;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\PaystackService;
+use App\Services\SaleNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
@@ -162,15 +164,20 @@ class CheckoutController extends Controller
                     ]);
 
                     // Process commissions and payouts
+                    $commission = null;
+
                     if ($transaction->affiliate_id) {
-                        $this->recordAffiliateCommission($transaction);
+                        $commission = $this->recordAffiliateCommission($transaction);
                     } else {
                         $this->recordVendorEarnings($transaction);
                     }
 
+                    $transaction->refresh();
+
+                    app(SaleNotificationService::class)->send($transaction, $commission);
+
                     // Send purchase confirmation email
                     try {
-                        $transaction->refresh();
                         $transaction->customer->notify(new \App\Notifications\PurchaseConfirmationNotification($transaction));
                         Log::info('Purchase confirmation email sent', [
                             'transaction_id' => $transaction->id,
@@ -207,17 +214,17 @@ class CheckoutController extends Controller
     /**
      * Record affiliate commission
      */
-    private function recordAffiliateCommission($transaction)
+    private function recordAffiliateCommission($transaction): ?Commission
     {
         $affiliate = $transaction->affiliate;
         $product = $transaction->product;
 
         if (!$affiliate) {
-            return;
+            return null;
         }
 
         // Create commission record
-        \App\Models\Commission::create([
+        $commission = Commission::create([
             'uuid' => Str::uuid(),
             'user_id' => $affiliate->user_id,
             'user_type' => 'affiliate',
@@ -243,6 +250,8 @@ class CheckoutController extends Controller
 
         // Record vendor earnings too
         $this->recordVendorEarnings($transaction);
+
+        return $commission;
     }
 
     /**
