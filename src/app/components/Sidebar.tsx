@@ -124,11 +124,11 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
         {/* Footer */}
         <div className="border-t border-gray-100 p-4 space-y-2">
           <Link
-            href="/settings"
+            href={isAdmin ? '/admin/settings/payment' : '/settings'}
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <SettingsIcon size={20} className="text-gray-500" />
-            <span className="text-sm font-medium">Settings</span>
+            <span className="text-sm font-medium">{isAdmin ? 'Payment Settings' : 'Settings'}</span>
           </Link>
           <button
             onClick={handleLogout}
