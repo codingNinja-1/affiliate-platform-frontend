@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, X, Users, ShoppingBag, Mail, CreditCard } from 'lucide-react';
+import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, X, Users, ShoppingBag, Mail, CreditCard, FileText } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
@@ -33,6 +33,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
     { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
     { href: '/admin/settings/payment', label: 'Payment Settings', icon: CreditCard },
     { href: '/admin/email', label: 'Email Settings', icon: Mail },
+    { href: '/admin/email/logs', label: 'Email Logs', icon: FileText },
   ];
 
   const vendorNav: NavItem[] = [
