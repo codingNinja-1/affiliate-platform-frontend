@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 type Product = {
@@ -10,6 +10,7 @@ type Product = {
   price: number;
   commission_rate: number;
   sales_page_url?: string | null;
+  image?: string | null;
 };
 
 type AffiliateLink = {
@@ -27,6 +28,14 @@ export default function LinksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [copiedLink, setCopiedLink] = useState('');
+  const [query, setQuery] = useState('');
+
+  // Quick lookup for product details by id
+  const productById = useMemo(() => {
+    const map: Record<number, Product> = {};
+    for (const p of products) map[p.id] = p;
+    return map;
+  }, [products]);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -131,13 +140,13 @@ export default function LinksPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 bg-slate-950 px-6 py-10 text-white">
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 bg-white px-6 py-10 text-slate-900">
       <header>
-        <Link href="/dashboard" className="text-sm text-blue-400 hover:text-blue-300">
+        <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-500">
           ← Back to dashboard
         </Link>
         <h1 className="mt-2 text-3xl font-semibold">Referral links</h1>
-        <p className="text-sm text-slate-400">Generate and manage your affiliate links</p>
+        <p className="text-sm text-slate-600">Generate and manage your affiliate links</p>
       </header>
 
       {error && (
@@ -146,32 +155,60 @@ export default function LinksPage() {
         </div>
       )}
 
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl">
-        <h2 className="mb-4 text-xl font-semibold">Your affiliate links</h2>
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <h2 className="text-xl font-semibold">Your affiliate links</h2>
+          <div className="flex w-full max-w-md items-center gap-2">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search products..."
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500"
+            />
+          </div>
+        </div>
         {loading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-20 animate-pulse rounded-lg bg-slate-800" />
+              <div key={i} className="h-20 animate-pulse rounded-lg bg-slate-200" />
             ))}
           </div>
         ) : links.length === 0 ? (
-          <div className="py-12 text-center text-slate-400">
+          <div className="py-12 text-center text-slate-600">
             <p>No products available yet</p>
             <p className="mt-2 text-sm">Check back later for products to promote</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {links.map((link) => (
+            {links
+              .filter((l) => !query || l.product_name.toLowerCase().includes(query.toLowerCase()))
+              .map((link) => (
               <div
                 key={link.product_id}
-                className="rounded-lg border border-slate-800 bg-slate-900/40 p-4"
+                  className="rounded-lg border border-slate-200 bg-white p-4"
               >
                 <div className="mb-2 flex items-start justify-between">
-                  <div>
-                    <h3 className="font-medium">{link.product_name}</h3>
-                    <div className="mt-1 flex gap-4 text-sm text-slate-400">
-                      <span>{link.clicks} clicks</span>
-                      <span>{link.sales} sales</span>
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 overflow-hidden rounded-md bg-slate-200">
+                      {productById[link.product_id]?.image ? (
+                        <img
+                          src={productById[link.product_id]?.image as string}
+                          alt={link.product_name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
+                          IMG
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-slate-900">{link.product_name}</h3>
+                      <div className="mt-1 flex gap-4 text-sm text-slate-600">
+                        <span>{link.clicks} clicks</span>
+                        <span>{link.sales} sales</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -180,12 +217,12 @@ export default function LinksPage() {
                     type="text"
                     value={link.referral_link}
                     readOnly
-                    className="flex-1 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300"
+                    className="flex-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
                   />
                   <div className="flex gap-2">
                     <button
                       onClick={() => copyToClipboard(link.referral_link)}
-                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
+                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
                     >
                       {copiedLink === link.referral_link ? 'Copied!' : 'Copy'}
                     </button>
@@ -193,9 +230,9 @@ export default function LinksPage() {
                       href={link.referral_link}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-md bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-600"
+                      className="rounded-md bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200"
                     >
-                      Sales page
+                      Open
                     </a>
                   </div>
                 </div>
@@ -205,23 +242,23 @@ export default function LinksPage() {
         )}
       </section>
 
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl">
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-semibold">Available products</h2>
         {loading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-800" />
+              <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-200" />
             ))}
           </div>
         ) : products.length === 0 ? (
-          <div className="py-8 text-center text-slate-400">
+          <div className="py-8 text-center text-slate-600">
             <p>No products available</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-800">
-                <tr className="text-left text-slate-400">
+              <thead className="border-b border-slate-200">
+                <tr className="text-left text-slate-600">
                   <th className="pb-3">Product</th>
                   <th className="pb-3">Price</th>
                   <th className="pb-3">Commission</th>
@@ -229,8 +266,8 @@ export default function LinksPage() {
               </thead>
               <tbody>
                 {products.map((product) => (
-                  <tr key={product.id} className="border-b border-slate-800/50">
-                    <td className="py-4 font-medium">{product.name}</td>
+                  <tr key={product.id} className="border-b border-slate-200/50">
+                    <td className="py-4 font-medium text-slate-900">{product.name}</td>
                     <td className="py-4">₦{product.price.toLocaleString()}</td>
                     <td className="py-4">{product.commission_rate}%</td>
                   </tr>
