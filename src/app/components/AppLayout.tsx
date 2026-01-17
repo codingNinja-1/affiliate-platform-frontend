@@ -63,9 +63,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Admin users use responsive Sidebar
   if (state.userType?.toLowerCase() === 'admin' || state.userType?.toLowerCase() === 'superadmin') {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
+      <div className="flex flex-col md:flex-row min-h-screen bg-white">
         <Sidebar userType={state.userType} />
-        <main className="w-full md:ml-60 flex-1">
+        <main className="w-full md:ml-60 flex-1 bg-white">
           {children}
         </main>
       </div>
@@ -74,9 +74,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   // Regular users get regular sidebar
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white">
       <Sidebar userType={state.userType} />
-      <main className="w-full md:ml-60 flex-1">
+      <main className="w-full md:ml-60 flex-1 bg-white">
         {children}
       </main>
     </div>
