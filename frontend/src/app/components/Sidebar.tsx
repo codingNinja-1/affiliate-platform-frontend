@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, X, Users, ShoppingBag, Mail, CreditCard, FileText } from 'lucide-react';
+import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, X, Users, ShoppingBag, Mail, CreditCard, FileText, ChevronDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
@@ -13,25 +13,43 @@ type NavItem = {
   visible?: boolean;
 };
 
+type SubmenuItem = {
+  href: string;
+  label: string;
+};
+
+type NavItemWithSubmenu = NavItem & {
+  submenu?: SubmenuItem[];
+};
+
 interface SidebarProps {
   userType?: string | null;
 }
 
 export default function Sidebar({ userType = 'customer' }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const pathname = usePathname();
 
   const isAdmin = userType === 'admin' || userType === 'superadmin';
   const isVendor = userType === 'vendor';
   const isAffiliate = userType === 'affiliate';
 
-  const adminNav: NavItem[] = [
+  const adminNav: NavItemWithSubmenu[] = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/products', label: 'Products', icon: Package },
     { href: '/admin/payouts', label: 'Payouts', icon: DollarSign },
     { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
-    { href: '/admin/settings/payment', label: 'Payment Settings', icon: CreditCard },
+    {
+      href: '/admin/settings/payment',
+      label: 'Settings',
+      icon: SettingsIcon,
+      submenu: [
+        { href: '/admin/settings/payment', label: 'Payment Settings' },
+        { href: '/admin/currency-rates', label: 'Currency Rates' },
+      ],
+    },
     { href: '/admin/email', label: 'Email Settings', icon: Mail },
     { href: '/admin/email/logs', label: 'Email Logs', icon: FileText },
   ];
@@ -62,6 +80,10 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
   else if (isAffiliate) navItems = affiliateNav;
 
   const isActive = (href: string) => pathname === href;
+
+  const toggleSubmenu = (label: string) => {
+    setExpandedMenu(expandedMenu === label ? null : label);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
@@ -110,34 +132,86 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
         <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 mb-3">Menu</p>
           {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => {
-                if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                  setIsOpen(false);
-                }
-              }}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
-                isActive(item.href)
-                  ? 'bg-blue-50 text-blue-600 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <item.icon size={20} className={isActive(item.href) ? 'text-blue-600' : 'text-gray-500'} />
-              <span className="text-sm font-medium">{item.label}</span>
-            </Link>
+            <div key={item.href}>
+              {(item as NavItemWithSubmenu).submenu ? (
+                <>
+                  <button
+                    onClick={() => toggleSubmenu(item.label)}
+                    className={`w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 transition-colors ${
+                      expandedMenu === item.label || (item as NavItemWithSubmenu).submenu?.some(sub => isActive(sub.href))
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon size={20} className={expandedMenu === item.label || (item as NavItemWithSubmenu).submenu?.some(sub => isActive(sub.href)) ? 'text-blue-600' : 'text-gray-500'} />
+                      <span className="text-sm font-medium">{item.label}</span>
+                    </div>
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform ${
+                        expandedMenu === item.label ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                  {expandedMenu === item.label && (
+                    <div className="mt-1 ml-9 space-y-1 border-l border-gray-200 pl-3">
+                      {(item as NavItemWithSubmenu).submenu?.map((subitem) => (
+                        <Link
+                          key={subitem.href}
+                          href={subitem.href}
+                          onClick={() => {
+                            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                              setIsOpen(false);
+                            }
+                          }}
+                          className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
+                            isActive(subitem.href)
+                              ? 'text-blue-600 font-medium'
+                              : 'text-gray-600 hover:text-gray-900'
+                          }`}
+                        >
+                          {subitem.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link
+                  href={item.href}
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                      setIsOpen(false);
+                    }
+                  }}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
+                    isActive(item.href)
+                      ? 'bg-blue-50 text-blue-600 font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <item.icon size={20} className={isActive(item.href) ? 'text-blue-600' : 'text-gray-500'} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </Link>
+              )}
+            </div>
           ))}
         </nav>
 
         {/* Footer */}
         <div className="border-t border-gray-100 p-4 space-y-2">
           <Link
-            href={isAdmin ? '/admin/settings/payment' : '/settings'}
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+            href={isAdmin ? '#' : '/settings'}
+            onClick={(e) => {
+              if (isAdmin) {
+                e.preventDefault();
+              }
+            }}
+            className={isAdmin ? 'opacity-0 pointer-events-none' : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors'}
           >
             <SettingsIcon size={20} className="text-gray-500" />
-            <span className="text-sm font-medium">{isAdmin ? 'Payment Settings' : 'Settings'}</span>
+            <span className="text-sm font-medium">Settings</span>
           </Link>
           <button
             onClick={handleLogout}
