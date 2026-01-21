@@ -20,7 +20,7 @@ class SettingsController extends Controller
     }
 
     /**
-     * Get affiliate settings including currency preference
+     * Get affiliate settings including currency preference and bank details
      */
     public function index(Request $request): JsonResponse
     {
@@ -40,6 +40,12 @@ class SettingsController extends Controller
                 'preferred_currency' => $affiliate->preferred_currency ?? 'NGN',
                 'available_currencies' => $this->currencyService->getSupportedCurrencies(),
                 'settings' => $affiliate->settings,
+                'bank_details' => [
+                    'bank_name' => $affiliate->bank_name ?? '',
+                    'account_name' => $affiliate->account_name ?? '',
+                    'account_number' => $affiliate->account_number ?? '',
+                    'bank_code' => $affiliate->bank_code ?? '',
+                ],
             ],
         ]);
     }

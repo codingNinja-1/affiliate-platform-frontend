@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Affiliate;
+use App\Models\Country;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Vendor;
@@ -20,6 +21,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Get or create Nigeria country
+        $nigeria = Country::firstOrCreate(
+            ['code' => 'NG'],
+            [
+                'name' => 'Nigeria',
+                'code3' => 'NGA',
+                'phone_code' => '+234',
+                'currency' => 'NGN',
+                'currency_symbol' => '₦',
+                'is_active' => true,
+            ]
+        );
+
         // Seed a default platform admin for immediate access to admin routes.
         $admin = User::create([
             'uuid' => Str::uuid(),
@@ -66,10 +80,15 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('Affiliate@123'),
         ]);
 
-        // Create affiliate profile
+        // Create affiliate profile with bank details
         $affiliate = new Affiliate();
         $affiliate->user_id = $affiliate_user->id;
         $affiliate->referral_code = 'AFFILIATE001'; // Set specific code for testing
+        $affiliate->country_id = $nigeria->id;
+        $affiliate->bank_name = 'Access Bank';
+        $affiliate->account_name = 'Demo Affiliate';
+        $affiliate->account_number = '1234567890';
+        $affiliate->bank_code = '044';
         $affiliate->save();
 
         // Create sample products (pre-approved)

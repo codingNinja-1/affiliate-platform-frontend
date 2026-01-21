@@ -79,7 +79,7 @@ export default function LoginPage() {
           if (checkRes.ok) {
             const checkData = await checkRes.json();
             if (checkData.success && checkData.data.requires_setup) {
-              window.location.href = '/setup-bank-details';
+              window.location.href = '/settings';
               return;
             }
           }
