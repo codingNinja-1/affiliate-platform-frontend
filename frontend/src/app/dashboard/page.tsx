@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import CurrencySelector from '../components/CurrencySelector';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 type User = {
   id: number;
@@ -194,6 +196,7 @@ function RoleSections({
   loading: boolean;
 }) {
   const type = userType?.toLowerCase();
+  const { amounts, loading: conversionLoading, refresh: refreshConversion, formatAmount } = useCurrencyConversion();
 
   if (type === 'vendor') {
     return (
@@ -215,21 +218,44 @@ function RoleSections({
   }
 
   if (type === 'affiliate') {
+    // Use converted amounts if available, otherwise fall back to summary
+    const displayBalance = amounts?.balance ?? summary?.balance ?? 0;
+    const displayEarnings = amounts?.total_earnings ?? summary?.totalEarnings ?? 0;
+    const displayWithdrawn = amounts?.total_withdrawn ?? summary?.totalWithdrawn ?? 0;
+    const displayCurrency = amounts?.currency || 'NGN';
+    const currencySymbol = displayCurrency === 'NGN' ? '₦' : 
+                          displayCurrency === 'USD' ? '$' :
+                          displayCurrency === 'GBP' ? '£' :
+                          displayCurrency === 'EUR' ? '€' :
+                          displayCurrency + ' ';
+
     return (
       <>
+        <div className="mb-4 flex justify-between items-center flex-wrap gap-3">
+          <CurrencySelector 
+            onCurrencyChange={refreshConversion}
+            showLabel={false}
+          />
+          {amounts?.original_currency && amounts.original_currency !== displayCurrency && (
+            <p className="text-xs text-gray-500">
+              Conversion rate: 1 {amounts.original_currency} = {amounts.conversion_rate?.toFixed(6)} {displayCurrency}
+            </p>
+          )}
+        </div>
+        
         <StatsGrid
           items={[
-            { title: 'Balance', value: summary?.balance ?? 0, prefix: '₦' },
+            { title: 'Balance', value: displayBalance, prefix: currencySymbol },
             { title: 'Pending balance', value: summary?.pendingBalance ?? 0, prefix: '₦' },
-            { title: 'Total earnings', value: summary?.totalEarnings ?? 0, prefix: '₦' },
-            { title: 'Total withdrawn', value: summary?.totalWithdrawn ?? 0, prefix: '₦' },
+            { title: 'Total earnings', value: displayEarnings, prefix: currencySymbol },
+            { title: 'Total withdrawn', value: displayWithdrawn, prefix: currencySymbol },
             { title: 'Total sales', value: summary?.totalSales ?? 0 },
             { title: 'Total clicks', value: summary?.totalClicks ?? 0 },
           ]}
-          loading={loading}
+          loading={loading || conversionLoading}
         />
 
-        <AffiliatePerformance />
+        <AffiliatePerformance formatAmount={formatAmount} />
       </>
     );
   }
@@ -483,7 +509,7 @@ function VendorSalesPayouts() {
   );
 }
 
-function AffiliatePerformance() {
+function AffiliatePerformance({ formatAmount }: { formatAmount?: (amount: number, currency?: string) => string } = {}) {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);

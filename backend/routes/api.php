@@ -92,6 +92,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/withdrawals/{withdrawal}/approve', [\App\Http\Controllers\Admin\WithdrawalController::class, 'approve'])->name('admin.withdrawals.approve');
         Route::post('/withdrawals/{withdrawal}/reject', [\App\Http\Controllers\Admin\WithdrawalController::class, 'reject'])->name('admin.withdrawals.reject');
 
+        // Currency rates
+        Route::apiResource('currency-rates', \App\Http\Controllers\Admin\CurrencyRateController::class)->names('admin.currency-rates');
+        Route::post('/currency/convert', [\App\Http\Controllers\Admin\CurrencyRateController::class, 'convert'])->name('admin.currency.convert');
+        Route::get('/currencies', [\App\Http\Controllers\Admin\CurrencyRateController::class, 'currencies'])->name('admin.currencies');
+
         // Settings
         Route::get('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'getPaymentSettings']);
         Route::post('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePaymentSettings']);
@@ -113,6 +118,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('withdrawals', \App\Http\Controllers\Affiliate\WithdrawalController::class)->names('affiliate.withdrawals');
         Route::get('/commissions', [\App\Http\Controllers\Affiliate\CommissionController::class, 'index']);
         Route::get('/reports', [\App\Http\Controllers\Affiliate\ReportController::class, 'index']);
+        
+        // Affiliate settings and currency
+        Route::get('/settings', [\App\Http\Controllers\Affiliate\SettingsController::class, 'index']);
+        Route::post('/settings/currency', [\App\Http\Controllers\Affiliate\SettingsController::class, 'updateCurrency']);
+        Route::get('/converted-amounts', [\App\Http\Controllers\Affiliate\SettingsController::class, 'getConvertedAmounts']);
     });
 
     // Customer routes
