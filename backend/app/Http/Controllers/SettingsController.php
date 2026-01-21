@@ -146,7 +146,20 @@ class SettingsController extends Controller
             ], 422);
         }
 
+        // Validate account number is numeric
+        if (!preg_match('/^\d+$/', $validated['account_number'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Account number must contain only digits.',
+            ], 422);
+        }
+
         try {
+            \Log::info('Resolving account via Paystack', [
+                'account' => $validated['account_number'],
+                'bank_code' => $validated['bank_code'],
+            ]);
+
             $resolved = $paystack->resolveAccountNumber(
                 $validated['account_number'],
                 $validated['bank_code']
@@ -162,9 +175,16 @@ class SettingsController extends Controller
                 'message' => 'Account verified successfully',
             ]);
         } catch (\Throwable $e) {
+            \Log::error('Account resolution error', [
+                'message' => $e->getMessage(),
+                'account' => $validated['account_number'],
+                'bank_code' => $validated['bank_code'],
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage() ?: 'Unable to verify account at this time',
+                'message' => $e->getMessage() ?: 'Unable to verify account. Please check bank code and account number are correct.',
             ], 422);
         }
     }

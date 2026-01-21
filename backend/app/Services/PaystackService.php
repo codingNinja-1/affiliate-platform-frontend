@@ -147,18 +147,51 @@ class PaystackService
      */
     public function resolveAccountNumber(string $accountNumber, string $bankCode): array
     {
-        $response = Http::withHeaders([
+        if (!$this->secretKey) {
+            throw new \Exception('Paystack API keys not configured');
+        }
+
+        // Validate inputs
+        if (strlen($accountNumber) < 10) {
+            throw new \Exception('Account number must be at least 10 digits');
+        }
+
+        Log::info('Attempting Paystack account resolution', [
+            'account_number' => $accountNumber,
+            'bank_code' => $bankCode,
+        ]);
+
+        $response = Http::timeout(10)->withHeaders([
             'Authorization' => 'Bearer ' . $this->secretKey,
         ])->get($this->baseUrl . '/bank/resolve', [
             'account_number' => $accountNumber,
             'bank_code' => $bankCode,
         ]);
 
+        Log::info('Paystack response received', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ]);
+
         if (!$response->successful()) {
-            throw new \Exception('Could not resolve account details');
+            $errorMsg = $response->json('message') ?? $response->json('error') ?? 'Could not resolve account details';
+            Log::error('Paystack account resolution failed', [
+                'account_number' => $accountNumber,
+                'bank_code' => $bankCode,
+                'status' => $response->status(),
+                'error' => $errorMsg,
+                'response' => $response->json(),
+            ]);
+            throw new \Exception($errorMsg);
         }
 
-        return $response->json('data');
+        $data = $response->json('data');
+        
+        if (!$data || !isset($data['account_name'])) {
+            throw new \Exception('Invalid response from Paystack - account name not found');
+        }
+
+        return $data;
     }
 
     /**
