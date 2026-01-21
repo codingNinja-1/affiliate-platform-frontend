@@ -1,16 +1,33 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProducts, type Product } from '@/hooks/useProducts';
+import CurrencySelector from '../components/CurrencySelector';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 export default function ProductsPage() {
   const { user } = useAuth();
   const { data: products = [], isLoading, error: queryError } = useProducts(user?.user_type);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { amounts, formatAmount } = useCurrencyConversion(refreshTrigger);
 
   const isAffiliate = user?.user_type === 'affiliate';
   const isCustomer = user?.user_type === 'customer';
   const isVendor = user?.user_type === 'vendor';
+
+  const handleCurrencyChange = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const displayCurrency = amounts?.currency || 'NGN';
+  const currencySymbol = displayCurrency === 'NGN' ? '₦' : 
+                        displayCurrency === 'USD' ? '$' :
+                        displayCurrency === 'GBP' ? '£' :
+                        displayCurrency === 'EUR' ? '€' :
+                        displayCurrency + ' ';
+  const conversionRate = amounts?.conversion_rate || 1;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 bg-gray-50 px-6 py-10">
@@ -24,14 +41,22 @@ export default function ProductsPage() {
             {isAffiliate ? 'Browse products to promote' : 'Manage your product catalog'}
           </p>
         </div>
-        {!isAffiliate && !isCustomer && (
-          <Link
-            href="/products/create"
-            className="inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
-          >
-            Add product
-          </Link>
-        )}
+        <div className="flex items-center gap-4">
+          {isAffiliate && (
+            <CurrencySelector 
+              onCurrencyChange={handleCurrencyChange}
+              showLabel={false}
+            />
+          )}
+          {!isAffiliate && !isCustomer && (
+            <Link
+              href="/products/create"
+              className="inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
+            >
+              Add product
+            </Link>
+          )}
+        </div>
       </header>
 
       {queryError && (
@@ -72,7 +97,12 @@ export default function ProductsPage() {
                 {products.map((product: Product) => (
                   <tr key={product.id} className="border-b border-gray-100">
                     <td className="py-4 font-medium text-gray-900">{product.name}</td>
-                    <td className="py-4 text-gray-700">₦{product.price.toLocaleString()}</td>
+                    <td className="py-4 text-gray-700">
+                      {isAffiliate && amounts
+                        ? `${currencySymbol}${((product.price * conversionRate) as unknown as number).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : `₦${product.price.toLocaleString()}`
+                      }
+                    </td>
                     <td className="py-4 text-gray-700">{product.commission_rate}%</td>
                     <td className="py-4">
                       <span
