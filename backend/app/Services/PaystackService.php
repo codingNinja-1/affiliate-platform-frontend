@@ -186,7 +186,7 @@ class PaystackService
         }
 
         $data = $response->json('data');
-        
+
         if (!$data || !isset($data['account_name'])) {
             throw new \Exception('Invalid response from Paystack - account name not found');
         }

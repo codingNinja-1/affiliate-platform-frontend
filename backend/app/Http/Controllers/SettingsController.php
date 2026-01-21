@@ -181,7 +181,7 @@ class SettingsController extends Controller
                 'bank_code' => $validated['bank_code'],
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage() ?: 'Unable to verify account. Please check bank code and account number are correct.',
