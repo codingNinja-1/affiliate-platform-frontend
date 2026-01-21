@@ -11,7 +11,7 @@ interface ConvertedAmounts {
   original_currency?: string;
 }
 
-export function useCurrencyConversion() {
+export function useCurrencyConversion(triggerRefresh?: number) {
   const [amounts, setAmounts] = useState<ConvertedAmounts | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -40,7 +40,7 @@ export function useCurrencyConversion() {
 
   useEffect(() => {
     loadConvertedAmounts();
-  }, []);
+  }, [triggerRefresh]);
 
   const refresh = () => {
     setLoading(true);
