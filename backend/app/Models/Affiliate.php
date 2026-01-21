@@ -26,6 +26,7 @@ class Affiliate extends Model
         'referred_by',
         'country_id',
         'settings',
+        'preferred_currency',
     ];
 
     protected $casts = [
