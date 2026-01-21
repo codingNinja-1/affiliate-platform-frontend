@@ -92,7 +92,7 @@ export default function DashboardPage() {
           .then((res) => res.json())
           .then((data) => {
             if (data.success && data.data.requires_setup) {
-              window.location.href = '/setup-bank-details';
+              window.location.href = '/settings';
             }
           })
           .catch((err) => {
