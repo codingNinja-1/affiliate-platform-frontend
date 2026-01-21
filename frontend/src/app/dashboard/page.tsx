@@ -196,7 +196,13 @@ function RoleSections({
   loading: boolean;
 }) {
   const type = userType?.toLowerCase();
-  const { amounts, loading: conversionLoading, refresh: refreshConversion, formatAmount } = useCurrencyConversion();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  const handleCurrencyChange = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const { amounts, loading: conversionLoading, formatAmount } = useCurrencyConversion(refreshTrigger);
 
   if (type === 'vendor') {
     return (
@@ -233,7 +239,7 @@ function RoleSections({
       <>
         <div className="mb-4 flex justify-between items-center flex-wrap gap-3">
           <CurrencySelector 
-            onCurrencyChange={refreshConversion}
+            onCurrencyChange={handleCurrencyChange}
             showLabel={false}
           />
           {amounts?.original_currency && amounts.original_currency !== displayCurrency && (
