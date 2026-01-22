@@ -26,7 +26,8 @@ class PurchaseController extends Controller
             'product_id' => 'required|exists:products,id',
             'customer_email' => 'required|email',
             'customer_name' => 'required|string',
-            'ref' => 'nullable|string', // Referral code
+            'affiliate_id' => 'nullable|integer|exists:affiliates,id',
+            'ref' => 'nullable|string', // Referral code (legacy support)
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
@@ -45,6 +46,7 @@ class PurchaseController extends Controller
                     'product_id' => $product->id,
                     'product_name' => $product->name,
                     'customer_name' => $validated['customer_name'],
+                    'affiliate_id' => $validated['affiliate_id'] ?? null,
                     'referral_code' => $validated['ref'] ?? null,
                 ],
             ]);
@@ -135,7 +137,16 @@ class PurchaseController extends Controller
                     $metadata = $response['data']['metadata'];
                     $commission = null;
 
-                    if (!empty($metadata['referral_code'])) {
+                    // Support both affiliate_id and referral_code
+                    if (!empty($metadata['affiliate_id'])) {
+                        $commission = $this->recordAffiliateCommissionById(
+                            $transaction->product,
+                            $transaction,
+                            $metadata['affiliate_id'],
+                            $transaction->commission_amount,
+                            $transaction->vendor_amount
+                        );
+                    } elseif (!empty($metadata['referral_code'])) {
                         $commission = $this->recordAffiliateCommission(
                             $transaction->product,
                             $transaction,
@@ -213,7 +224,16 @@ class PurchaseController extends Controller
                 $metadata = $data['metadata'] ?? [];
                 $commission = null;
 
-                if (!empty($metadata['referral_code'])) {
+                // Support both affiliate_id and referral_code
+                if (!empty($metadata['affiliate_id'])) {
+                    $commission = $this->recordAffiliateCommissionById(
+                        $transaction->product,
+                        $transaction,
+                        $metadata['affiliate_id'],
+                        $transaction->commission_amount,
+                        $transaction->vendor_amount
+                    );
+                } elseif (!empty($metadata['referral_code'])) {
                     $commission = $this->recordAffiliateCommission(
                         $transaction->product,
                         $transaction,
@@ -273,6 +293,7 @@ class PurchaseController extends Controller
             'customer_email' => 'required|email',
             'customer_name' => 'required|string',
             'amount' => 'nullable|numeric|min:0',
+            'affiliate_id' => 'nullable|integer|exists:affiliates,id',
             'ref' => 'nullable|string', // Referral code
             'payment_method' => 'nullable|string',
             'payment_reference' => 'nullable|string',
@@ -333,10 +354,12 @@ class PurchaseController extends Controller
             'has_referral' => !empty($validated['ref']),
         ]);
 
-        // Handle affiliate commission if referral code provided
+        // Handle affiliate commission if affiliate_id or referral code provided
         $commission = null;
 
-        if (!empty($validated['ref'])) {
+        if (!empty($validated['affiliate_id'])) {
+            $commission = $this->recordAffiliateCommissionById($product, $transaction, $validated['affiliate_id'], $commissionAmount, $vendorAmount);
+        } elseif (!empty($validated['ref'])) {
             $commission = $this->recordAffiliateCommission($product, $transaction, $validated['ref'], $commissionAmount, $vendorAmount);
         } else {
             // Even without referral, credit vendor earnings
@@ -419,6 +442,78 @@ class PurchaseController extends Controller
         $affiliate->increment('total_sales');
         $affiliate->increment('total_clicks'); // Basic conversion count
         $affiliate->updateBalance($commissionAmount, 'add'); // Add commission to balance
+        $affiliate->updateConversionRate();
+        $affiliate->updateTier();
+
+        // Always credit the vendor for their share
+        $vendorShare = $vendorAmount ?? $transaction->vendor_amount ?? ($transaction->amount - $commissionAmount);
+        $this->recordVendorEarnings($product, $transaction, $vendorShare);
+
+        return $commission;
+    }
+
+    /**
+     * Record affiliate commission by affiliate ID
+     */
+    private function recordAffiliateCommissionById($product, $transaction, $affiliateId, $commissionAmount = null, $vendorAmount = null): ?Commission
+    {
+        $affiliate = \App\Models\Affiliate::find($affiliateId);
+
+        if (!$affiliate) {
+            Log::stack(['single', 'stderr'])->warning('Affiliate not found', [
+                'affiliate_id' => $affiliateId,
+                'product_id' => $product->id,
+                'transaction_id' => $transaction->id,
+            ]);
+            return null;
+        }
+
+        // Find recent click for this affiliate and product
+        $click = AffiliateClick::where('product_id', $product->id)
+            ->where('affiliate_id', $affiliateId)
+            ->latest()
+            ->first();
+
+        // Mark click as converted if it exists
+        if ($click) {
+            $click->update([
+                'converted' => true,
+                'transaction_id' => $transaction->id,
+            ]);
+        }
+
+        // Link transaction to affiliate
+        $transaction->update([
+            'affiliate_id' => $affiliate->id,
+        ]);
+
+        // Calculate commission
+        $commissionAmount = $commissionAmount ?? ($transaction->amount * $product->commission_rate) / 100;
+        $commissionRate = $product->commission_rate;
+
+        // Create commission record
+        $commission = Commission::create([
+            'uuid' => Str::uuid(),
+            'user_id' => $affiliate->user_id,
+            'user_type' => 'affiliate',
+            'product_id' => $product->id,
+            'transaction_id' => $transaction->id,
+            'amount' => $commissionAmount,
+            'rate' => $commissionRate,
+            'status' => 'approved', // Auto-approve commissions
+            'approved_at' => now(),
+        ]);
+
+        Log::stack(['single', 'stderr'])->info('Commission recorded for affiliate by ID', [
+            'affiliate_id' => $affiliate->id,
+            'transaction_id' => $transaction->id,
+            'amount' => $commissionAmount,
+            'rate' => $commissionRate,
+        ]);
+
+        // Update affiliate stats and balance
+        $affiliate->increment('total_sales');
+        $affiliate->updateBalance($commissionAmount, 'add');
         $affiliate->updateConversionRate();
         $affiliate->updateTier();
 
