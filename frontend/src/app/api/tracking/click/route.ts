@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const BACKEND_BASE =
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://127.0.0.1:8000';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -12,9 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    
-    const response = await fetch(`${backendUrl}/api/tracking/click`, {
+    const response = await fetch(`${BACKEND_BASE}/api/tracking/click`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -24,9 +28,13 @@ export async function POST(request: NextRequest) {
         affiliate_id,
         product_id,
       }),
+      cache: 'no-store',
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(async () => {
+      const text = await response.text().catch(() => '');
+      return { message: text, success: response.ok };
+    });
 
     if (!response.ok) {
       return NextResponse.json(
@@ -35,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Error tracking click:', error);
     return NextResponse.json(
