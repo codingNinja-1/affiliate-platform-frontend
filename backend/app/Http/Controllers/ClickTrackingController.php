@@ -35,8 +35,7 @@ class ClickTrackingController extends Controller
                 'product_id' => $validated['product_id'],
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
-                'referer' => $request->header('referer'),
-                'clicked_at' => now(),
+                'referrer' => $request->header('referer'),
             ]);
 
             Log::info('Affiliate click tracked', [
