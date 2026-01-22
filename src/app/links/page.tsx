@@ -83,12 +83,11 @@ export default function LinksPage() {
       const user = userStr ? JSON.parse(userStr) : null;
       const affiliateId = user?.affiliate?.id;
 
-      // Generate affiliate links using the referral code
+      // Generate affiliate links using the affiliate ID
       const affiliateLinks = (productsData.data || []).map((product: Product) => {
         const salesUrl = product.sales_page_url?.trim() || `${window.location.origin}/products/${product.slug}`;
 
         // Build referral link: append ?pid=PRODUCT_ID&a=AFFILIATE_ID to sales page
-        // Using affiliate ID parameter for legacy tracking
         const separator = salesUrl.includes('?') ? '&' : '?';
         const referralLink = `${salesUrl}${separator}pid=${product.id}&a=${affiliateId ?? ''}`;
 

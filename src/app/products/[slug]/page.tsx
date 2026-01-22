@@ -29,6 +29,7 @@ export default function ProductSalesPage() {
   const [purchasing, setPurchasing] = useState(false);
   const [error, setError] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [affiliateId, setAffiliateId] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [paystackKey, setPaystackKey] = useState('');
@@ -42,10 +43,29 @@ export default function ProductSalesPage() {
       return;
     }
 
-    // Get referral code from URL query params
+    // Get affiliate tracking info from URL query params
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('ref') || '';
+    const affId = urlParams.get('a') || '';
+    const pid = urlParams.get('pid') || '';
+    
     setReferralCode(code);
+    setAffiliateId(affId);
+
+    // Track click if we have affiliate ID and product ID
+    if (affId && pid) {
+      fetch(`${apiBase}/tracking/click`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          affiliate_id: affId,
+          product_id: pid,
+        }),
+      }).catch(err => console.error('Error tracking click:', err));
+    }
 
     // Fetch Paystack public key
     const fetchPaystackKey = async () => {
@@ -137,6 +157,7 @@ export default function ProductSalesPage() {
           product_id: product.id,
           customer_email: customerEmail,
           customer_name: customerName,
+          affiliate_id: affiliateId || null,
           ref: referralCode || null,
         }),
       });
@@ -171,6 +192,7 @@ export default function ProductSalesPage() {
         customer_email: customerEmail,
         customer_name: customerName,
         amount: product.price,
+        affiliate_id: affiliateId || null,
         ref: referralCode || null,
         payment_method: 'demo',
       };
@@ -293,12 +315,19 @@ export default function ProductSalesPage() {
           </div>
 
           {/* Referral Code Display */}
-          {referralCode && (
+          {(referralCode || affiliateId) && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
-              <p className="text-sm text-gray-600 mb-2">Referral Code</p>
-              <p className="text-lg font-mono font-bold text-blue-600">
-                {referralCode}
-              </p>
+              <p className="text-sm text-gray-600 mb-2">Affiliate Tracking</p>
+              {referralCode && (
+                <p className="text-lg font-mono font-bold text-blue-600">
+                  Code: {referralCode}
+                </p>
+              )}
+              {affiliateId && (
+                <p className="text-sm font-mono text-blue-600">
+                  ID: {affiliateId}
+                </p>
+              )}
               <p className="text-xs text-gray-500 mt-2">
                 This purchase will be attributed to your affiliate account
               </p>
