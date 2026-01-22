@@ -27,6 +27,7 @@ Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController:
 
 // Affiliate tracking (public - no auth required)
 Route::get('/track/{referralCode}/{productId}', [\App\Http\Controllers\TrackingController::class, 'trackClick']);
+Route::post('/tracking/click', [\App\Http\Controllers\ClickTrackingController::class, 'trackClick']);
 
 // Payment routes (public)
 Route::post('/payment/initialize', [\App\Http\Controllers\PurchaseController::class, 'initializePayment']);
