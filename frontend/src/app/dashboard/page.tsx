@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import CurrencySelector from '../components/CurrencySelector';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { useVendorCurrencyConversion } from '@/hooks/useVendorCurrencyConversion';
 
 type User = {
   id: number;
@@ -203,19 +204,44 @@ function RoleSections({
   };
 
   const { amounts, loading: conversionLoading, formatAmount } = useCurrencyConversion(refreshTrigger);
+  const { amounts: vendorAmounts, loading: vendorConversionLoading, formatAmount: vendorFormatAmount } = useVendorCurrencyConversion(refreshTrigger);
 
   if (type === 'vendor') {
+    // Use converted amounts if available, otherwise fall back to summary
+    const displayBalance = vendorAmounts?.balance ?? summary?.balance ?? 0;
+    const displayEarnings = vendorAmounts?.total_earnings ?? summary?.totalEarnings ?? 0;
+    const displayWithdrawn = vendorAmounts?.total_withdrawn ?? summary?.totalWithdrawn ?? 0;
+    const displayCurrency = vendorAmounts?.currency || 'NGN';
+    const currencySymbol = displayCurrency === 'NGN' ? '₦' : 
+                          displayCurrency === 'USD' ? '$' :
+                          displayCurrency === 'GBP' ? '£' :
+                          displayCurrency === 'EUR' ? '€' :
+                          displayCurrency + ' ';
+
     return (
       <>
+        <div className="mb-4 flex justify-between items-center flex-wrap gap-3">
+          <CurrencySelector 
+            onCurrencyChange={handleCurrencyChange}
+            isVendor={true}
+            showLabel={false}
+          />
+          {vendorAmounts?.original_currency && vendorAmounts.original_currency !== displayCurrency && (
+            <p className="text-xs text-gray-500">
+              Conversion rate: 1 {vendorAmounts.original_currency} = {vendorAmounts.conversion_rate?.toFixed(6)} {displayCurrency}
+            </p>
+          )}
+        </div>
+
         <StatsGrid
           items={[
-            { title: 'Balance', value: summary?.balance ?? 0, prefix: '₦' },
-            { title: 'Total earnings', value: summary?.totalEarnings ?? 0, prefix: '₦' },
-            { title: 'Total withdrawn', value: summary?.totalWithdrawn ?? 0, prefix: '₦' },
+            { title: 'Balance', value: displayBalance, prefix: currencySymbol },
+            { title: 'Total earnings', value: displayEarnings, prefix: currencySymbol },
+            { title: 'Total withdrawn', value: displayWithdrawn, prefix: currencySymbol },
             { title: 'Total sales', value: summary?.totalSales ?? 0 },
-            { title: 'Pending payouts', value: summary?.pendingBalance ?? 0, prefix: '₦' },
+            { title: 'Pending payouts', value: vendorAmounts?.pending_balance ?? 0, prefix: currencySymbol },
           ]}
-          loading={loading}
+          loading={loading || vendorConversionLoading}
         />
 
         <VendorSalesPayouts />
