@@ -34,7 +34,7 @@ try {
         ->orderBy('created_at', 'desc')
         ->limit(5)
         ->get(['id', 'affiliate_id', 'product_id', 'created_at']);
-    
+
     echo "Recent clicks for Affiliate 2, Product 1:\n";
     foreach ($clicks as $click) {
         echo "  - ID: {$click->id}, Created: {$click->created_at}\n";
