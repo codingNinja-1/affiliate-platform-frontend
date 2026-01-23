@@ -141,6 +141,11 @@ class SettingsController extends Controller
         $preferredCurrency = $affiliate->preferred_currency ?? 'NGN';
         $baseCurrency = 'NGN'; // All amounts are stored in NGN
 
+        // Calculate pending balance
+        $pendingBalance = (float) $affiliate->withdrawals()
+            ->where('status', 'pending')
+            ->sum('amount');
+
         // If preferred currency is NGN, no conversion needed
         if ($preferredCurrency === $baseCurrency) {
             return response()->json([
@@ -150,6 +155,7 @@ class SettingsController extends Controller
                     'balance' => (float) $affiliate->balance,
                     'total_earnings' => (float) $affiliate->total_earnings,
                     'total_withdrawn' => (float) $affiliate->total_withdrawn,
+                    'pending_balance' => $pendingBalance,
                     'conversion_rate' => 1.0,
                 ],
             ]);
@@ -167,6 +173,7 @@ class SettingsController extends Controller
                     'balance' => (float) $affiliate->balance,
                     'total_earnings' => (float) $affiliate->total_earnings,
                     'total_withdrawn' => (float) $affiliate->total_withdrawn,
+                    'pending_balance' => $pendingBalance,
                     'conversion_rate' => 1.0,
                 ],
             ], 200);
@@ -179,6 +186,7 @@ class SettingsController extends Controller
                 'balance' => $this->currencyService->convert($affiliate->balance, $baseCurrency, $preferredCurrency),
                 'total_earnings' => $this->currencyService->convert($affiliate->total_earnings, $baseCurrency, $preferredCurrency),
                 'total_withdrawn' => $this->currencyService->convert($affiliate->total_withdrawn, $baseCurrency, $preferredCurrency),
+                'pending_balance' => $this->currencyService->convert($pendingBalance, $baseCurrency, $preferredCurrency),
                 'conversion_rate' => $conversionRate,
                 'original_currency' => $baseCurrency,
             ],
