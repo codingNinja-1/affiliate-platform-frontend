@@ -17,7 +17,7 @@ jobs:
       - name: Push frontend to affiliate-platform-frontend
         uses: cpina/github-action-push-to-another-repository@main
         env:
-          API_TOKEN_GITHUB: ${{ secrets.GITHUB_TOKEN }}
+          API_TOKEN_GITHUB: ${{ secrets.GH_PAT_SYNC }}
         with:
           source-directory: 'frontend'
           destination-github-username: 'codingNinja-1'
