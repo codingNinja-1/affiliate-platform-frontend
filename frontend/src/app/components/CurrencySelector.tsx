@@ -63,9 +63,17 @@ export default function CurrencySelector({ onCurrencyChange, showLabel = true }:
       });
 
       if (res.ok) {
-        setCurrentCurrency(currency);
-        if (onCurrencyChange) {
-          onCurrencyChange(currency);
+        const responseData = await res.json();
+        if (responseData.success) {
+          setCurrentCurrency(currency);
+          // Add small delay to ensure DB is updated before fetching converted amounts
+          setTimeout(() => {
+            if (onCurrencyChange) {
+              onCurrencyChange(currency);
+            }
+          }, 300);
+        } else {
+          alert(responseData.message || 'Failed to update currency');
         }
       } else {
         const data = await res.json();
