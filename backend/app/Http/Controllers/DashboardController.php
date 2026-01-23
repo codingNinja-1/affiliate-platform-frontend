@@ -8,9 +8,17 @@ use App\Models\Affiliate;
 use App\Models\AffiliateClick;
 use App\Models\Commission;
 use App\Models\Vendor;
+use App\Services\CurrencyConversionService;
 
 class DashboardController extends Controller
 {
+    protected $currencyService;
+
+    public function __construct(CurrencyConversionService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
+
     public function summary(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -27,6 +35,112 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'data' => $data
+        ]);
+    }
+
+    public function affiliateConverted(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user || $user->user_type !== 'affiliate') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        $affiliate = Affiliate::where('user_id', $user->id)->first();
+
+        if (!$affiliate) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Affiliate not found'
+            ], 404);
+        }
+
+        // Get the affiliate's preferred currency
+        $preferredCurrency = $affiliate->preferred_currency ?? 'NGN';
+
+        // Get original amounts in NGN
+        $approvedCommissions = Commission::where('user_id', $user->id)
+            ->where('user_type', 'affiliate')
+            ->whereIn('status', ['approved', 'paid']);
+        $totalEarnings = (float) $approvedCommissions->sum('amount');
+
+        $totalWithdrawn = (float) $affiliate->withdrawals()
+            ->where('status', 'approved')
+            ->sum('amount');
+
+        $pendingBalance = (float) $affiliate->withdrawals()
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        $balance = max($totalEarnings - $totalWithdrawn, 0);
+
+        // Convert amounts
+        $conversionRate = $this->currencyService->getRate('NGN', $preferredCurrency) ?? 1;
+
+        $convertedData = [
+            'balance' => $this->currencyService->convert($balance, 'NGN', $preferredCurrency) ?? $balance,
+            'pending_balance' => $this->currencyService->convert($pendingBalance, 'NGN', $preferredCurrency) ?? $pendingBalance,
+            'total_earnings' => $this->currencyService->convert($totalEarnings, 'NGN', $preferredCurrency) ?? $totalEarnings,
+            'total_withdrawn' => $this->currencyService->convert($totalWithdrawn, 'NGN', $preferredCurrency) ?? $totalWithdrawn,
+            'currency' => $preferredCurrency,
+            'original_currency' => 'NGN',
+            'conversion_rate' => $conversionRate,
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $convertedData
+        ]);
+    }
+
+    public function vendorConverted(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user || $user->user_type !== 'vendor') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        $vendor = Vendor::where('user_id', $user->id)->first();
+
+        if (!$vendor) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vendor not found'
+            ], 404);
+        }
+
+        // Get the vendor's preferred currency
+        $preferredCurrency = $vendor->preferred_currency ?? 'NGN';
+
+        // Get original amounts in NGN
+        $balance = (float) $vendor->balance;
+        $totalEarnings = (float) $vendor->total_earnings;
+        $totalWithdrawn = (float) $vendor->total_withdrawn;
+        $pendingBalance = (float) $vendor->pending_balance;
+
+        // Convert amounts
+        $conversionRate = $this->currencyService->getRate('NGN', $preferredCurrency) ?? 1;
+
+        $convertedData = [
+            'balance' => $this->currencyService->convert($balance, 'NGN', $preferredCurrency) ?? $balance,
+            'pending_balance' => $this->currencyService->convert($pendingBalance, 'NGN', $preferredCurrency) ?? $pendingBalance,
+            'total_earnings' => $this->currencyService->convert($totalEarnings, 'NGN', $preferredCurrency) ?? $totalEarnings,
+            'total_withdrawn' => $this->currencyService->convert($totalWithdrawn, 'NGN', $preferredCurrency) ?? $totalWithdrawn,
+            'currency' => $preferredCurrency,
+            'original_currency' => 'NGN',
+            'conversion_rate' => $conversionRate,
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $convertedData
         ]);
     }
 
