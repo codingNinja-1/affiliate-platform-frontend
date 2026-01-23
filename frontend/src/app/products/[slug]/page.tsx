@@ -45,7 +45,7 @@ export default function ProductSalesPage() {
 
     // Get affiliate tracking info from URL query params
     const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('ref') || urlParams.get('r') || '';
+    const code = urlParams.get('ref') || '';
     const affId = urlParams.get('a') || '';
     const pid = urlParams.get('pid') || '';
     
@@ -61,17 +61,10 @@ export default function ProductSalesPage() {
           Accept: 'application/json',
         },
         body: JSON.stringify({
-          affiliate_id: parseInt(affId, 10),
-          product_id: parseInt(pid, 10),
+          affiliate_id: affId,
+          product_id: pid,
         }),
       }).catch(err => console.error('Error tracking click:', err));
-    }
-    
-    // Also track click via referral code if no affiliate ID
-    if (code && !affId && pid) {
-      fetch(`${apiBase}/track/${encodeURIComponent(code)}/${pid}`, {
-        method: 'GET',
-      }).catch(err => console.error('Error tracking via referral code:', err));
     }
 
     // Fetch Paystack public key
