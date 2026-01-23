@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProducts, type Product } from '@/hooks/useProducts';
 import CurrencySelector from '../components/CurrencySelector';

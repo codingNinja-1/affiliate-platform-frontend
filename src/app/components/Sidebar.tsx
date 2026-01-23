@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, X, Users, ShoppingBag, Mail, CreditCard, FileText, ChevronDown } from 'lucide-react';
+import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, Users, ShoppingBag, Mail, FileText, ChevronDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {

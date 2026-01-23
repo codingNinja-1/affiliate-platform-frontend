@@ -158,7 +158,7 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
-      <header className="mb-4 sm:mb-4 sm:mb-6">
+      <header className="mb-4 sm:mb-6">
         <div className="flex flex-col gap-3 sm:gap-4">
           <div>
             <p className="text-xs sm:text-sm text-gray-600">{greeting}, {fullName ?? 'there'}</p>
