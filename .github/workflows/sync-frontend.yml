@@ -1,0 +1,50 @@
+name: Sync Frontend to affiliate-platform-frontend
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'frontend/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout affiliate-platform
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Clone affiliate-platform-frontend
+        run: |
+          git clone https://${{ secrets.GH_TOKEN }}@github.com/codingNinja-1/affiliate-platform-frontend.git frontend-repo
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Sync frontend directory
+        run: |
+          # Remove everything from frontend-repo except .git
+          cd frontend-repo
+          git rm -r --cached . || true
+          cd ..
+          
+          # Copy frontend contents to frontend-repo
+          cp -r frontend/* frontend-repo/
+          
+          # Go to frontend-repo and commit/push
+          cd frontend-repo
+          git add -A
+          
+          # Only commit and push if there are changes
+          if ! git diff-index --quiet --cached HEAD; then
+            git commit -m "chore: sync from affiliate-platform [skip ci]"
+            git push
+          else
+            echo "No changes to sync"
+          fi
