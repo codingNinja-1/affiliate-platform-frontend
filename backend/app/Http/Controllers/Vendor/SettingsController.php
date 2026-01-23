@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Vendor;
+use App\Models\Withdrawal;
 use App\Models\CurrencyRate;
 use App\Services\CurrencyConversionService;
 use Illuminate\Http\JsonResponse;
@@ -124,6 +125,12 @@ class SettingsController extends Controller
         $preferredCurrency = $vendor->preferred_currency ?? 'NGN';
         $baseCurrency = 'NGN';
 
+        // Calculate pending balance (pending withdrawals)
+        $pendingBalance = (float) Withdrawal::where('user_id', $user->id)
+            ->where('user_type', 'vendor')
+            ->where('status', 'pending')
+            ->sum('amount');
+
         if ($preferredCurrency === $baseCurrency) {
             return response()->json([
                 'success' => true,
@@ -132,6 +139,7 @@ class SettingsController extends Controller
                     'balance' => (float) $vendor->balance,
                     'total_earnings' => (float) $vendor->total_earnings,
                     'total_withdrawn' => (float) $vendor->total_withdrawn,
+                    'pending_balance' => $pendingBalance,
                     'conversion_rate' => 1.0,
                 ],
             ]);
@@ -148,6 +156,7 @@ class SettingsController extends Controller
                     'balance' => (float) $vendor->balance,
                     'total_earnings' => (float) $vendor->total_earnings,
                     'total_withdrawn' => (float) $vendor->total_withdrawn,
+                    'pending_balance' => $pendingBalance,
                     'conversion_rate' => 1.0,
                 ],
             ], 200);
@@ -160,6 +169,7 @@ class SettingsController extends Controller
                 'balance' => $this->currencyService->convert($vendor->balance, $baseCurrency, $preferredCurrency),
                 'total_earnings' => $this->currencyService->convert($vendor->total_earnings, $baseCurrency, $preferredCurrency),
                 'total_withdrawn' => $this->currencyService->convert($vendor->total_withdrawn, $baseCurrency, $preferredCurrency),
+                'pending_balance' => $this->currencyService->convert($pendingBalance, $baseCurrency, $preferredCurrency),
                 'conversion_rate' => $conversionRate,
                 'original_currency' => $baseCurrency,
             ],
