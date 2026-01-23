@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
 use App\Models\Commission;
 use App\Models\EmailLog;
+use App\Models\Affiliate;
+use App\Models\CurrencyRate;
+use App\Services\CurrencyConversionService;
 use App\Notifications\WithdrawalProcessingNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -178,6 +181,66 @@ class WithdrawalController extends Controller
         return response()->json([
             'success' => true,
             'data' => $withdrawal,
+        ]);
+    }
+
+    /**
+     * Get withdrawals with converted amounts based on affiliate's preferred currency
+     */
+    public function getConvertedWithdrawals(Request $request)
+    {
+        $user = Auth::user();
+        $affiliate = Affiliate::where('user_id', $user->id)->first();
+
+        if (!$affiliate) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Affiliate not found',
+            ], 404);
+        }
+
+        $withdrawals = Withdrawal::where('user_id', $user->id)
+            ->where('user_type', 'affiliate')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $preferredCurrency = $affiliate->preferred_currency ?? 'NGN';
+        $baseCurrency = 'NGN';
+
+        // If preferred currency is NGN, no conversion needed
+        if ($preferredCurrency === $baseCurrency) {
+            return response()->json([
+                'success' => true,
+                'data' => $withdrawals,
+                'currency' => 'NGN',
+                'conversion_rate' => 1.0,
+            ]);
+        }
+
+        // Get conversion rate
+        $conversionRate = CurrencyRate::getRate($baseCurrency, $preferredCurrency);
+
+        if ($conversionRate === null) {
+            return response()->json([
+                'success' => false,
+                'message' => "Unable to convert to {$preferredCurrency}",
+                'data' => $withdrawals,
+                'currency' => 'NGN',
+            ], 200);
+        }
+
+        // Convert each withdrawal amount
+        $converted = $withdrawals->map(function ($withdrawal) use ($conversionRate, $preferredCurrency) {
+            $withdrawal->converted_amount = (float) $withdrawal->amount * $conversionRate;
+            $withdrawal->converted_currency = $preferredCurrency;
+            return $withdrawal;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $converted,
+            'currency' => $preferredCurrency,
+            'conversion_rate' => $conversionRate,
         ]);
     }
 }

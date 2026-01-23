@@ -90,19 +90,35 @@ class SettingsController extends Controller
             ], 422);
         }
 
-        // Update the affiliate's preferred currency
-        $updated = $affiliate->update(['preferred_currency' => $currency]);
-        
-        // Refresh to get updated values from database
-        $affiliate->refresh();
+        // Log before update
+        \Log::info('Currency update attempt', [
+            'affiliate_id' => $affiliate->id,
+            'user_id' => $user->id,
+            'current' => $affiliate->preferred_currency,
+            'new' => $currency,
+        ]);
+
+        // Direct SQL update to bypass any issues
+        $rowsAffected = \DB::table('affiliates')
+            ->where('id', $affiliate->id)
+            ->update(['preferred_currency' => $currency]);
+
+        // Fetch fresh copy
+        $freshAffiliate = Affiliate::find($affiliate->id);
+
+        \Log::info('Currency update result', [
+            'rows_affected' => $rowsAffected,
+            'affiliate_id' => $freshAffiliate->id,
+            'preferred_currency' => $freshAffiliate->preferred_currency,
+        ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Currency preference updated successfully',
             'data' => [
-                'preferred_currency' => $affiliate->preferred_currency,
-                'debug_updated' => $updated,
-                'debug_currency' => $currency,
+                'preferred_currency' => $freshAffiliate->preferred_currency,
+                'affiliate_id' => $freshAffiliate->id,
+                'rows_affected' => $rowsAffected,
             ],
         ]);
     }

@@ -108,8 +108,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('vendor')->middleware('role:vendor')->group(function () {
         Route::apiResource('products', \App\Http\Controllers\Vendor\ProductController::class)->names('vendor.products');
         Route::apiResource('withdrawals', \App\Http\Controllers\Vendor\WithdrawalController::class)->names('vendor.withdrawals');
+        Route::get('/withdrawals/converted', [\App\Http\Controllers\Vendor\WithdrawalController::class, 'getConvertedWithdrawals']);
         Route::get('/transactions', [\App\Http\Controllers\Vendor\TransactionController::class, 'index']);
         Route::get('/reports', [\App\Http\Controllers\Vendor\ReportController::class, 'index']);
+        
+        // Vendor settings and currency
+        Route::get('/settings', [\App\Http\Controllers\Vendor\SettingsController::class, 'index']);
+        Route::post('/settings/currency', [\App\Http\Controllers\Vendor\SettingsController::class, 'updateCurrency']);
+        Route::get('/converted-amounts', [\App\Http\Controllers\Vendor\SettingsController::class, 'getConvertedAmounts']);
     });
 
     // Affiliate routes
@@ -117,6 +123,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/products', [\App\Http\Controllers\Affiliate\ProductController::class, 'index']);
         Route::get('/products/{product}', [\App\Http\Controllers\Affiliate\ProductController::class, 'show']);
         Route::apiResource('withdrawals', \App\Http\Controllers\Affiliate\WithdrawalController::class)->names('affiliate.withdrawals');
+        Route::get('/withdrawals/converted', [\App\Http\Controllers\Affiliate\WithdrawalController::class, 'getConvertedWithdrawals']);
         Route::get('/commissions', [\App\Http\Controllers\Affiliate\CommissionController::class, 'index']);
         Route::get('/reports', [\App\Http\Controllers\Affiliate\ReportController::class, 'index']);
         
