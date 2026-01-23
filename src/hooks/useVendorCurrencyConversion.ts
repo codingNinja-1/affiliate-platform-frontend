@@ -1,73 +1,61 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 
-interface ConvertedAmounts {
-  currency: string;
+interface VendorConvertedAmounts {
   balance: number;
+  pending_balance: number;
   total_earnings: number;
   total_withdrawn: number;
-  pending_balance: number;
-  conversion_rate: number;
+  currency: string;
   original_currency?: string;
+  conversion_rate?: number;
 }
 
-export function useVendorCurrencyConversion(triggerRefresh?: number) {
-  const [amounts, setAmounts] = useState<ConvertedAmounts | null>(null);
+export function useVendorCurrencyConversion(refreshTrigger = 0) {
+  const [amounts, setAmounts] = useState<VendorConvertedAmounts | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadConvertedAmounts = async () => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/vendor/converted-amounts', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setAmounts(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to load converted amounts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadConvertedAmounts();
-  }, [triggerRefresh]);
+    const loadConvertedAmounts = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-  const refresh = () => {
-    setLoading(true);
+      try {
+        const res = await fetch('/api/vendor/dashboard/converted', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data) {
+            setAmounts(data.data);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load vendor converted amounts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadConvertedAmounts();
-  };
+  }, [refreshTrigger]);
 
   const formatAmount = (amount: number, currency?: string) => {
     const curr = currency || amounts?.currency || 'NGN';
-    const symbols: { [key: string]: string } = {
-      NGN: '₦',
-      USD: '$',
-      GBP: '£',
-      EUR: '€',
-      JPY: '¥',
-      CNY: '¥',
-    };
-    const symbol = symbols[curr] || curr + ' ';
-    return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const symbol = curr === 'NGN' ? '₦' : 
+                   curr === 'USD' ? '$' :
+                   curr === 'GBP' ? '£' :
+                   curr === 'EUR' ? '€' :
+                   curr + ' ';
+    
+    return `${symbol}${amount.toLocaleString(undefined, { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    })}`;
   };
 
-  return {
-    amounts,
-    loading,
-    refresh,
-    formatAmount,
-    currency: amounts?.currency || 'NGN',
-    conversionRate: amounts?.conversion_rate || 1,
-  };
+  return { amounts, loading, formatAmount };
 }
