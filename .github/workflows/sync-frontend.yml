@@ -19,9 +19,10 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.GH_PAT_SYNC }}
         with:
-          source-directory: 'frontend'
+          source-directory: 'frontend/'
           destination-github-username: 'codingNinja-1'
           destination-repository-name: 'affiliate-platform-frontend'
           user-email: github-actions[bot]@users.noreply.github.com
           user-name: github-actions[bot]
           commit-message: 'chore: sync from affiliate-platform monorepo [skip ci]'
+          target-directory: '.'
