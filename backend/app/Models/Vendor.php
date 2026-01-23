@@ -27,6 +27,7 @@ class Vendor extends Model
         'total_sales',
         'country_id',
         'settings',
+        'preferred_currency',
     ];
 
     protected $casts = [

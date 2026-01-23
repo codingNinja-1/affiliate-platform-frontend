@@ -30,7 +30,7 @@ if ($transactions->count() === 0) {
 // 2. Check recent commissions
 echo "\n2. Recent Commissions:\n";
 $commissions = \App\Models\Commission::latest()
-    ->with(['affiliate.user', 'product'])
+    ->with(['user', 'product', 'transaction'])
     ->limit(5)
     ->get();
 
@@ -40,7 +40,7 @@ if ($commissions->count() === 0) {
     foreach ($commissions as $c) {
         echo "   Amount: ₦" . $c->amount . "\n";
         echo "   Status: {$c->status}\n";
-        echo "   Affiliate: " . ($c->affiliate?->user?->email ?? 'MISSING') . "\n";
+        echo "   User: " . ($c->user?->email ?? 'MISSING') . "\n";
         echo "   Transaction: " . ($c->transaction?->transaction_ref ?? 'MISSING') . "\n";
         echo "   ---\n";
     }
