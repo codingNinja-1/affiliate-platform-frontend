@@ -155,7 +155,7 @@ class SettingsController extends Controller
         }
 
         try {
-            \Log::info('Resolving account via Paystack', [
+            \Illuminate\Support\Facades\Log::info('Resolving account via Paystack', [
                 'account' => $validated['account_number'],
                 'bank_code' => $validated['bank_code'],
             ]);
@@ -175,7 +175,7 @@ class SettingsController extends Controller
                 'message' => 'Account verified successfully',
             ]);
         } catch (\Throwable $e) {
-            \Log::error('Account resolution error', [
+            \Illuminate\Support\Facades\Log::error('Account resolution error', [
                 'message' => $e->getMessage(),
                 'account' => $validated['account_number'],
                 'bank_code' => $validated['bank_code'],
