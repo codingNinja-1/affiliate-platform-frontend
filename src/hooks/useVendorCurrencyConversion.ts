@@ -12,7 +12,7 @@ interface ConvertedAmounts {
   original_currency?: string;
 }
 
-export function useCurrencyConversion(triggerRefresh?: number) {
+export function useVendorCurrencyConversion(triggerRefresh?: number) {
   const [amounts, setAmounts] = useState<ConvertedAmounts | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +24,7 @@ export function useCurrencyConversion(triggerRefresh?: number) {
     }
 
     try {
-      const res = await fetch('/api/affiliate/converted-amounts', {
+      const res = await fetch('/api/vendor/converted-amounts', {
         headers: { Authorization: `Bearer ${token}` },
       });
 

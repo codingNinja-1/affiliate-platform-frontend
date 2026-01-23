@@ -6,9 +6,10 @@ import { DollarSign, Check, RefreshCw } from 'lucide-react';
 interface CurrencySelectorProps {
   onCurrencyChange?: (currency: string) => void;
   showLabel?: boolean;
+  isVendor?: boolean;
 }
 
-export default function CurrencySelector({ onCurrencyChange, showLabel = true }: CurrencySelectorProps) {
+export default function CurrencySelector({ onCurrencyChange, showLabel = true, isVendor = false }: CurrencySelectorProps) {
   const [currencies, setCurrencies] = useState<string[]>(['NGN']);
   const [currentCurrency, setCurrentCurrency] = useState('NGN');
   const [loading, setLoading] = useState(false);
@@ -16,14 +17,16 @@ export default function CurrencySelector({ onCurrencyChange, showLabel = true }:
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [loadSettings]);
 
   const loadSettings = async () => {
     const token = localStorage.getItem('auth_token');
     if (!token) return;
 
+    const endpoint = isVendor ? '/api/vendor/settings' : '/api/affiliate/settings';
+
     try {
-      const res = await fetch('/api/affiliate/settings', {
+      const res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -52,8 +55,10 @@ export default function CurrencySelector({ onCurrencyChange, showLabel = true }:
       return;
     }
 
+    const endpoint = isVendor ? '/api/vendor/settings/currency' : '/api/affiliate/settings/currency';
+
     try {
-      const res = await fetch('/api/affiliate/settings/currency', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
