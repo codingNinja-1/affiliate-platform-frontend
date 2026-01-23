@@ -7,6 +7,7 @@ interface ConvertedAmounts {
   balance: number;
   total_earnings: number;
   total_withdrawn: number;
+  pending_balance: number;
   conversion_rate: number;
   original_currency?: string;
 }

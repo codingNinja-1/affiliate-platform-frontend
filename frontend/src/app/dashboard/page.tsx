@@ -252,7 +252,7 @@ function RoleSections({
         <StatsGrid
           items={[
             { title: 'Balance', value: displayBalance, prefix: currencySymbol },
-            { title: 'Pending balance', value: summary?.pendingBalance ?? 0, prefix: '₦' },
+            { title: 'Pending balance', value: amounts?.pending_balance ?? 0, prefix: currencySymbol },
             { title: 'Total earnings', value: displayEarnings, prefix: currencySymbol },
             { title: 'Total withdrawn', value: displayWithdrawn, prefix: currencySymbol },
             { title: 'Total sales', value: summary?.totalSales ?? 0 },
