@@ -90,13 +90,19 @@ class SettingsController extends Controller
             ], 422);
         }
 
-        $affiliate->update(['preferred_currency' => $currency]);
+        // Update the affiliate's preferred currency
+        $updated = $affiliate->update(['preferred_currency' => $currency]);
+        
+        // Refresh to get updated values from database
+        $affiliate->refresh();
 
         return response()->json([
             'success' => true,
             'message' => 'Currency preference updated successfully',
             'data' => [
                 'preferred_currency' => $affiliate->preferred_currency,
+                'debug_updated' => $updated,
+                'debug_currency' => $currency,
             ],
         ]);
     }
