@@ -234,7 +234,7 @@ function RoleSections({
         </div>
 
         <StatsGrid
-          items={[
+          items={[ 
             { title: 'Balance', value: displayBalance, prefix: currencySymbol },
             { title: 'Total earnings', value: displayEarnings, prefix: currencySymbol },
             { title: 'Total withdrawn', value: displayWithdrawn, prefix: currencySymbol },
@@ -244,7 +244,10 @@ function RoleSections({
           loading={loading || vendorConversionLoading}
         />
 
-        <VendorSalesPayouts />
+        <VendorSalesPayouts 
+          formatAmount={vendorFormatAmount}
+          currency={displayCurrency}
+        />
       </>
     );
   }
@@ -276,7 +279,7 @@ function RoleSections({
         </div>
         
         <StatsGrid
-          items={[
+          items={[ 
             { title: 'Balance', value: displayBalance, prefix: currencySymbol },
             { title: 'Pending balance', value: amounts?.pending_balance ?? 0, prefix: currencySymbol },
             { title: 'Total earnings', value: displayEarnings, prefix: currencySymbol },
@@ -287,7 +290,7 @@ function RoleSections({
           loading={loading || conversionLoading}
         />
 
-        <AffiliatePerformance formatAmount={formatAmount} />
+        <AffiliatePerformance formatAmount={formatAmount} currency={displayCurrency} />
       </>
     );
   }
@@ -404,7 +407,7 @@ function StatCard({
   );
 }
 
-function VendorSalesPayouts() {
+function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount: number, currency?: string) => string, currency?: string }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -476,8 +479,8 @@ function VendorSalesPayouts() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">₦{transaction.vendor_amount.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500">from ₦{transaction.amount.toLocaleString()}</p>
+                  <p className="font-semibold text-gray-900">{formatAmount ? formatAmount(transaction.vendor_amount, currency) : transaction.vendor_amount.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">from {formatAmount ? formatAmount(transaction.amount, currency) : transaction.amount.toLocaleString()}</p>
                 </div>
               </div>
             ))}
@@ -518,7 +521,7 @@ function VendorSalesPayouts() {
                 className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0"
               >
                 <div>
-                  <p className="text-sm font-medium text-gray-900">₦{withdrawal.amount.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-900">{formatAmount ? formatAmount(withdrawal.amount, currency) : withdrawal.amount.toLocaleString()}</p>
                   <p className="text-xs text-gray-500">{withdrawal.withdrawal_ref}</p>
                 </div>
                 <span
@@ -541,7 +544,7 @@ function VendorSalesPayouts() {
   );
 }
 
-function AffiliatePerformance({ formatAmount }: { formatAmount?: (amount: number, currency?: string) => string } = {}) {
+function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amount: number, currency?: string) => string, currency?: string } = {}) {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -613,7 +616,7 @@ function AffiliatePerformance({ formatAmount }: { formatAmount?: (amount: number
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">₦{commission.amount.toLocaleString()}</p>
+                  <p className="font-semibold text-gray-900">{formatAmount ? formatAmount(commission.amount, currency) : commission.amount.toLocaleString()}</p>
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                       commission.status === 'pending'
@@ -665,7 +668,7 @@ function AffiliatePerformance({ formatAmount }: { formatAmount?: (amount: number
                 className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0"
               >
                 <div>
-                  <p className="text-sm font-medium text-gray-900">₦{withdrawal.amount.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-900">{formatAmount ? formatAmount(withdrawal.amount, currency) : withdrawal.amount.toLocaleString()}</p>
                   <p className="text-xs text-gray-500">{withdrawal.withdrawal_ref}</p>
                 </div>
                 <span

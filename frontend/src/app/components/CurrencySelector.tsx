@@ -16,34 +16,34 @@ export default function CurrencySelector({ onCurrencyChange, showLabel = true, i
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
+    const loadSettings = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
 
-  const loadSettings = async () => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) return;
+      const endpoint = isVendor ? '/api/vendor/settings' : '/api/affiliate/settings';
 
-    const endpoint = isVendor ? '/api/vendor/settings' : '/api/affiliate/settings';
+      try {
+        const res = await fetch(endpoint, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-    try {
-      const res = await fetch(endpoint, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const availableCurrencies = data.data?.available_currencies || ['NGN'];
-        // Ensure NGN is always available
-        if (!availableCurrencies.includes('NGN')) {
-          availableCurrencies.unshift('NGN');
+        if (res.ok) {
+          const data = await res.json();
+          const availableCurrencies = data.data?.available_currencies || ['NGN'];
+          // Ensure NGN is always available
+          if (!availableCurrencies.includes('NGN')) {
+            availableCurrencies.unshift('NGN');
+          }
+          setCurrencies(availableCurrencies);
+          setCurrentCurrency(data.data?.preferred_currency || 'NGN');
         }
-        setCurrencies(availableCurrencies);
-        setCurrentCurrency(data.data?.preferred_currency || 'NGN');
+      } catch (error) {
+        console.error('Failed to load currency settings:', error);
       }
-    } catch (error) {
-      console.error('Failed to load currency settings:', error);
-    }
-  };
+    };
+
+    loadSettings();
+  }, [isVendor]); // Only re-run if isVendor changes
 
   const handleCurrencyChange = async (currency: string) => {
     setLoading(true);
