@@ -24,17 +24,20 @@ jobs:
 
       - name: Clone affiliate-platform-frontend
         run: |
-          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/codingNinja-1/affiliate-platform-frontend.git temp-frontend
+          git clone https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/codingNinja-1/affiliate-platform-frontend.git temp-frontend
 
       - name: Copy frontend files
         run: |
           cd temp-frontend
-          rm -rf *
+          # Remove all files EXCEPT .git
+          find . -maxdepth 1 -not -name '.git' -exec rm -rf {} +
+          # Copy new files
           cp -r ../frontend/* .
+          # Stage and commit
           git add -A
-          git commit -m "chore: sync frontend from affiliate-platform monorepo [skip ci]" || echo "No changes to commit"
-          git push
-
-      - name: Cleanup
-        if: always()
-        run: rm -rf temp-frontend
+          if ! git diff --quiet --cached; then
+            git commit -m "chore: sync frontend from affiliate-platform monorepo [skip ci]"
+            git push
+          else
+            echo "No changes to sync"
+          fi
