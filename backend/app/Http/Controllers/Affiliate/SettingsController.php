@@ -91,7 +91,7 @@ class SettingsController extends Controller
         }
 
         // Log before update
-        \Log::info('Currency update attempt', [
+        \Illuminate\Support\Facades\Log::info('Currency update attempt', [
             'affiliate_id' => $affiliate->id,
             'user_id' => $user->id,
             'current' => $affiliate->preferred_currency,
@@ -99,14 +99,14 @@ class SettingsController extends Controller
         ]);
 
         // Direct SQL update to bypass any issues
-        $rowsAffected = \DB::table('affiliates')
+        $rowsAffected = \Illuminate\Support\Facades\DB::table('affiliates')
             ->where('id', $affiliate->id)
             ->update(['preferred_currency' => $currency]);
 
         // Fetch fresh copy
         $freshAffiliate = Affiliate::find($affiliate->id);
 
-        \Log::info('Currency update result', [
+        \Illuminate\Support\Facades\Log::info('Currency update result', [
             'rows_affected' => $rowsAffected,
             'affiliate_id' => $freshAffiliate->id,
             'preferred_currency' => $freshAffiliate->preferred_currency,

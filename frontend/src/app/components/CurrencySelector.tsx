@@ -17,7 +17,7 @@ export default function CurrencySelector({ onCurrencyChange, showLabel = true, i
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [loadSettings]);
 
   const loadSettings = async () => {
     const token = localStorage.getItem('auth_token');

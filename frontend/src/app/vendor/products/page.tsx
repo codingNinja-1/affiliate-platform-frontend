@@ -161,7 +161,7 @@ export default function VendorProductsPage() {
                     <textarea
                       readOnly
                       value={buildPixelScript(p.id)}
-                      className="w-full min-h-[120px] rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-mono"
+                      className="w-full min-h-30 rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-mono"
                     />
                   </div>
 
@@ -184,7 +184,7 @@ export default function VendorProductsPage() {
                     <textarea
                       readOnly
                       value={buildButtonCode(p.id)}
-                      className="w-full min-h-[180px] rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-mono"
+                      className="w-full min-h-45 rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-mono"
                     />
                   </div>
                 </div>

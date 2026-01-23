@@ -151,14 +151,14 @@ class Product extends Model
         if (!$this->images || !is_array($this->images) || count($this->images) === 0) {
             return null;
         }
-        
+
         $imagePath = $this->images[0];
-        
+
         // If it's already a full URL, return as is
         if (str_starts_with($imagePath, 'http')) {
             return $imagePath;
         }
-        
+
         // Convert relative path to full URL
         return asset('storage/' . $imagePath);
     }

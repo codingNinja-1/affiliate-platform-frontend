@@ -85,14 +85,14 @@ class SettingsController extends Controller
         }
 
         // Direct SQL update
-        $rowsAffected = \DB::table('vendors')
+        $rowsAffected = \Illuminate\Support\Facades\DB::table('vendors')
             ->where('id', $vendor->id)
             ->update(['preferred_currency' => $currency]);
 
         // Fetch fresh copy
         $freshVendor = Vendor::find($vendor->id);
 
-        \Log::info('Vendor currency update', [
+        \Illuminate\Support\Facades\Log::info('Vendor currency update', [
             'vendor_id' => $freshVendor->id,
             'preferred_currency' => $freshVendor->preferred_currency,
             'rows_affected' => $rowsAffected,
