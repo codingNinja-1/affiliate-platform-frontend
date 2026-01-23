@@ -74,6 +74,8 @@ class PurchaseController extends Controller
                 'transaction_ref' => $reference,
                 'product_id' => $product->id,
                 'customer_id' => $customer->id,
+                // Preserve affiliate linkage at creation so callbacks can award commissions
+                'affiliate_id' => $validated['affiliate_id'] ?? null,
                 'vendor_id' => $product->vendor_id,
                 'customer_email' => $validated['customer_email'],
                 'amount' => $product->price,
