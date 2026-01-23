@@ -155,7 +155,8 @@
 
                 if ($response['data']['status'] === 'success') {
                     // Find transaction and complete it
-                    $transaction = Transaction::where('payment_reference', $reference)->first();
+                    $transaction = Transaction::where('transaction_ref', $reference)
+                        ->orWhere('payment_reference', $reference)->first();
 
                     if ($transaction && $transaction->status === 'pending') {
                         $metadata = $response['data']['metadata'] ?? [];
@@ -240,6 +241,17 @@
             if (!$affiliate) {
                 return null;
             }
+
+            // Mark any recent unconverted clicks as converted
+            \App\Models\AffiliateClick::where('affiliate_id', $affiliate->id)
+                ->where('product_id', $product->id)
+                ->where('converted', false)
+                ->latest()
+                ->first()
+                ?->update([
+                    'converted' => true,
+                    'transaction_id' => $transaction->id,
+                ]);
 
             // Create commission record
             $commission = Commission::create([
