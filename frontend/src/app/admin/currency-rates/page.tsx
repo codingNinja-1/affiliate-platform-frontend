@@ -140,7 +140,7 @@ export default function AdminCurrencyRatesPage() {
 
     try {
       const API_BASE = '/api';
-      const res = await fetch(`${API_BASE}/admin/currency-rates`, {
+      const res = await fetch(`${API_BASE}/admin/settings/currencies`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
