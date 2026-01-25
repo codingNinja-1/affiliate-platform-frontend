@@ -13,7 +13,7 @@ const getApiBase = () => {
     return `${protocol}//${hostname}:8000/api`;
   }
 
-  return process.env.NEXT_PUBLIC_API_URL || '/api';
+  return 'http://127.0.0.1:8000/api';
 };
 
 export default function LoginPage() {
@@ -79,7 +79,7 @@ export default function LoginPage() {
           if (checkRes.ok) {
             const checkData = await checkRes.json();
             if (checkData.success && checkData.data.requires_setup) {
-              window.location.href = '/settings';
+              window.location.href = '/setup-bank-details';
               return;
             }
           }
