@@ -1,253 +1,158 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| Auth Controllers
-|--------------------------------------------------------------------------
-*/
-use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
-
-/*
-|--------------------------------------------------------------------------
-| Core Controllers
-|--------------------------------------------------------------------------
-*/
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\TrackingController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\NotificationSettingsController;
-use App\Http\Controllers\SmtpSettingsController;
-use App\Http\Controllers\EmailTemplateController;
-use App\Http\Controllers\PurchaseController;
-use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\PixelController;
 
 /*
 |--------------------------------------------------------------------------
-| Affiliate Controllers
+| API Routes
 |--------------------------------------------------------------------------
 */
-use App\Http\Controllers\Affiliate\AffiliateController;
-use App\Http\Controllers\Affiliate\ProductController as AffiliateProductController;
-use App\Http\Controllers\Affiliate\WithdrawalController as AffiliateWithdrawalController;
-use App\Http\Controllers\Affiliate\CommissionController as AffiliateCommissionController;
-use App\Http\Controllers\Affiliate\ReportController as AffiliateReportController;
 
-/*
-|--------------------------------------------------------------------------
-| Vendor Controllers
-|--------------------------------------------------------------------------
-*/
-use App\Http\Controllers\Vendor\VendorController;
-use App\Http\Controllers\Vendor\ProductController as VendorProductController;
-use App\Http\Controllers\Vendor\WithdrawalController as VendorWithdrawalController;
-use App\Http\Controllers\Vendor\TransactionController as VendorTransactionController;
-use App\Http\Controllers\Vendor\ReportController as VendorReportController;
+// Public routes (no authentication required)
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [RegisterController::class, 'register']);
+    Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword']);
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
+    Route::post('/verify-email', [RegisterController::class, 'verifyEmail']);
+});
 
-/*
-|--------------------------------------------------------------------------
-| Admin Controllers
-|--------------------------------------------------------------------------
-*/
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\WithdrawalController as AdminWithdrawalController;
-use App\Http\Controllers\Admin\ProductController as AdminProductController;
-use App\Http\Controllers\Admin\CurrencyController as AdminCurrencyController;
-use App\Http\Controllers\Admin\ReportsController as AdminReportsController;
-use App\Http\Controllers\Admin\AffiliateController as AdminAffiliateController;
-use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
-use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
+// ...existing code...
 
-/*
-|--------------------------------------------------------------------------
-| API Routes - Version 1
-|--------------------------------------------------------------------------
-*/
-Route::prefix('api/v1')->group(function () {
+// Public product routes (no auth required)
+Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index']);
+Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Public Routes
-    |--------------------------------------------------------------------------
-    */
+// Affiliate tracking (public - no auth required)
+Route::get('/track/{referralCode}/{productId}', [\App\Http\Controllers\TrackingController::class, 'trackClick']);
 
-    // Authentication Routes (with rate limiting)
-    Route::prefix('auth')->middleware('throttle:6,1')->group(function () {
-        Route::post('/register', [RegisterController::class, 'register'])->name('auth.register');
-        Route::post('/login', [LoginController::class, 'login'])->name('auth.login');
-        Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])->name('auth.forgot-password');
-        Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('auth.reset-password');
-        Route::post('/verify-email', [RegisterController::class, 'verifyEmail'])->name('auth.verify-email');
+// Payment routes (public)
+Route::post('/payment/initialize', [\App\Http\Controllers\PurchaseController::class, 'initializePayment']);
+// Point callback to the new CheckoutController so transactions started via /checkout/initialize are completed
+Route::get('/payment/callback', [\App\Http\Controllers\CheckoutController::class, 'handleCallback']);
+Route::post('/payment/webhook', [\App\Http\Controllers\PurchaseController::class, 'handleWebhook']);
+Route::get('/payment/public-key', [\App\Http\Controllers\PurchaseController::class, 'getPublicKey']);
+
+// Centralized checkout (public - new Stakecut-style endpoint)
+Route::post('/checkout/initialize', [\App\Http\Controllers\CheckoutController::class, 'initialize']);
+
+// Conversion pixel tracking (public)
+Route::get('/pixel/conversion', [\App\Http\Controllers\PixelController::class, 'trackConversion']);
+// Purchase recording (legacy demo endpoint)
+Route::post('/purchases', [\App\Http\Controllers\PurchaseController::class, 'store']);
+
+// Transaction lookup by reference (public - for purchase success page)
+Route::get('/transactions/{reference}', [\App\Http\Controllers\CheckoutController::class, 'getTransactionByReference']);
+
+// Protected routes (conditionally registered to avoid missing controller errors during development)
+Route::middleware('auth:sanctum')->group(function () {
+        // Vendor currency update endpoint (must be authenticated)
+        Route::post('/vendor/settings/currency', [\App\Http\Controllers\Vendor\SettingsController::class, 'updateCurrency']);
+    // Dashboard
+    Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
+
+    // Auth routes
+    Route::prefix('auth')->group(function () {
+        Route::get('/me', [LoginController::class, 'me']);
+        Route::post('/logout', [LoginController::class, 'logout']);
+        Route::post('/logout-all', [LoginController::class, 'logoutAll']);
+        Route::post('/refresh', [LoginController::class, 'refreshToken']);
+        Route::post('/change-password', [PasswordResetController::class, 'changePassword']);
     });
 
-    // Public Product Routes
-    Route::prefix('products')->group(function () {
-        Route::get('/', [ProductController::class, 'index'])->name('products.index');
-        Route::get('/{product:slug}', [ProductController::class, 'show'])->name('products.show');
+    // Settings routes
+    Route::prefix('settings')->group(function () {
+        Route::get('/notifications', [\App\Http\Controllers\NotificationSettingsController::class, 'index']);
+        Route::post('/notifications', [\App\Http\Controllers\NotificationSettingsController::class, 'update']);
+
+        // SMTP settings
+        Route::get('/smtp', [\App\Http\Controllers\SmtpSettingsController::class, 'index']);
+        Route::post('/smtp', [\App\Http\Controllers\SmtpSettingsController::class, 'update']);
+        Route::post('/smtp/test', [\App\Http\Controllers\SmtpSettingsController::class, 'test']);
+
+        // Email templates
+        Route::get('/email-templates/{templateKey}', [\App\Http\Controllers\EmailTemplateController::class, 'show']);
+        Route::post('/email-templates/{templateKey}', [\App\Http\Controllers\EmailTemplateController::class, 'update']);
     });
 
-    // Tracking & Analytics (with rate limiting)
-    Route::middleware('throttle:60,1')->group(function () {
-        Route::get('/track/{referralCode}/{productId}', [TrackingController::class, 'trackClick'])->name('tracking.click');
-        Route::get('/pixel/conversion', [PixelController::class, 'trackConversion'])->name('pixel.conversion');
+    // Admin routes
+    Route::prefix('admin')->middleware('role:admin')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index']);
+        Route::get('/reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index']);
+        Route::get('/affiliates', [\App\Http\Controllers\Admin\AffiliateController::class, 'index']);
+        Route::post('/affiliates/{id}/approve', [\App\Http\Controllers\Admin\AffiliateController::class, 'approve']);
+        Route::post('/affiliates/{id}/reject', [\App\Http\Controllers\Admin\AffiliateController::class, 'reject']);
+            // Currency rates settings
+            Route::get('/settings/currencies', [\App\Http\Controllers\Admin\CurrencyController::class, 'index']);
+        Route::apiResource('users', \App\Http\Controllers\Admin\UserController::class)->only(['index', 'show', 'update']);
+        Route::apiResource('products', \App\Http\Controllers\Admin\ProductController::class)->only(['index', 'show']);
+        Route::apiResource('transactions', \App\Http\Controllers\Admin\TransactionController::class)->only(['index', 'show']);
+        Route::apiResource('withdrawals', \App\Http\Controllers\Admin\WithdrawalController::class)->only(['index']);
+        Route::post('/products/{product}/approve', [\App\Http\Controllers\Admin\ProductController::class, 'approve'])->name('admin.products.approve');
+        Route::post('/products/{product}/reject', [\App\Http\Controllers\Admin\ProductController::class, 'reject'])->name('admin.products.reject');
+        Route::post('/products/{product}/activate', [\App\Http\Controllers\Admin\ProductController::class, 'setActive'])->name('admin.products.activate');
+        Route::post('/withdrawals/{withdrawal}/approve', [\App\Http\Controllers\Admin\WithdrawalController::class, 'approve'])->name('admin.withdrawals.approve');
+        Route::post('/withdrawals/{withdrawal}/reject', [\App\Http\Controllers\Admin\WithdrawalController::class, 'reject'])->name('admin.withdrawals.reject');
+
+        // Settings
+        Route::get('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'getPaymentSettings']);
+        Route::post('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePaymentSettings']);
     });
 
-    // Payment & Checkout Routes
-    Route::prefix('payment')->group(function () {
-        Route::post('/initialize', [PurchaseController::class, 'initializePayment'])->name('payment.initialize');
-        Route::get('/callback', [CheckoutController::class, 'handleCallback'])->name('payment.callback');
-        Route::post('/webhook', [PurchaseController::class, 'handleWebhook'])->name('payment.webhook');
-        Route::get('/public-key', [PurchaseController::class, 'getPublicKey'])->name('payment.public-key');
+    // Vendor dashboard converted endpoint
+    Route::get('/vendor/dashboard/converted', [\App\Http\Controllers\Vendor\DashboardController::class, 'converted']);
+    // Vendor settings endpoint
+    Route::get('/vendor/settings', [\App\Http\Controllers\Vendor\SettingsController::class, 'index']);
+
+    // Vendor routes
+    Route::prefix('vendor')->middleware('role:vendor')->group(function () {
+        Route::apiResource('products', \App\Http\Controllers\Vendor\ProductController::class);
+        Route::apiResource('withdrawals', \App\Http\Controllers\Vendor\WithdrawalController::class);
+        Route::get('/transactions', [\App\Http\Controllers\Vendor\TransactionController::class, 'index']);
+        Route::get('/reports', \App\Http\Controllers\Vendor\ReportController::class . '@index');
     });
 
-    Route::prefix('checkout')->group(function () {
-        Route::post('/initialize', [CheckoutController::class, 'initialize'])->name('checkout.initialize');
+    // Affiliate dashboard converted endpoint
+    Route::get('/affiliate/dashboard/converted', [\App\Http\Controllers\Affiliate\DashboardController::class, 'converted']);
+
+    // Affiliate routes
+    Route::prefix('affiliate')->middleware('role:affiliate')->group(function () {
+        Route::get('/products', \App\Http\Controllers\Affiliate\ProductController::class . '@index');
+        Route::get('/products/{product}', \App\Http\Controllers\Affiliate\ProductController::class . '@show');
+        Route::apiResource('withdrawals', \App\Http\Controllers\Affiliate\WithdrawalController::class);
+        Route::get('/commissions', [\App\Http\Controllers\Affiliate\CommissionController::class, 'index']);
+        Route::get('/reports', \App\Http\Controllers\Affiliate\ReportController::class . '@index');
     });
 
-    Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
-    Route::get('/transactions/{reference}', [CheckoutController::class, 'getTransactionByReference'])->name('transactions.by-reference');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Protected Routes (Authenticated Users)
-    |--------------------------------------------------------------------------
-    */
-    Route::middleware('auth:sanctum')->group(function () {
-
-        // Dashboard Routes
-        Route::prefix('dashboard')->group(function () {
-            Route::get('/summary', [DashboardController::class, 'summary'])->name('dashboard.summary');
-            Route::get('/affiliate/converted', [DashboardController::class, 'affiliateConverted'])->name('dashboard.affiliate.converted');
-            Route::get('/vendor/converted', [DashboardController::class, 'vendorConverted'])->name('dashboard.vendor.converted');
+    // Customer routes
+    if (class_exists('App\\Http\\Controllers\\Customer\\OrderController')) {
+        Route::prefix('customer')->middleware('role:customer')->group(function () {
+            Route::get('/orders', 'Customer\OrderController@index');
+            Route::get('/orders/{transaction}', 'Customer\OrderController@show');
         });
+    }
 
-        // Auth Management Routes
-        Route::prefix('auth')->group(function () {
-            Route::get('/me', [LoginController::class, 'me'])->name('auth.me');
-            Route::post('/logout', [LoginController::class, 'logout'])->name('auth.logout');
-            Route::post('/logout-all', [LoginController::class, 'logoutAll'])->name('auth.logout-all');
-            Route::post('/refresh', [LoginController::class, 'refreshToken'])->name('auth.refresh');
-            Route::post('/change-password', [PasswordResetController::class, 'changePassword'])->name('auth.change-password');
-        });
+    // Customer/Authenticated user product routes
+    Route::get('/products-auth', [\App\Http\Controllers\ProductController::class, 'index']);
+    Route::get('/products-auth/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show']);
 
-        // Profile Routes
-        Route::prefix('profile')->group(function () {
-            Route::get('/', [ProfileController::class, 'show'])->name('profile.show');
-            Route::put('/', [ProfileController::class, 'update'])->name('profile.update');
-            Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
-        });
+    // Shared routes
+    if (class_exists('App\\Http\\Controllers\\ProfileController')) {
+        Route::get('/profile', 'ProfileController@show');
+        Route::put('/profile', 'ProfileController@update');
+        Route::post('/profile/avatar', 'ProfileController@updateAvatar');
+    }
 
-        // Settings Routes
-        Route::prefix('settings')->group(function () {
-            Route::get('/', [SettingsController::class, 'index'])->name('settings.index');
-            Route::post('/bank-details', [SettingsController::class, 'updateBankDetails'])->name('settings.bank-details');
-            Route::get('/check-bank-details', [SettingsController::class, 'checkBankDetails'])->name('settings.check-bank-details');
-
-            // Notification Settings
-            Route::get('/notifications', [NotificationSettingsController::class, 'index'])->name('settings.notifications.index');
-            Route::post('/notifications', [NotificationSettingsController::class, 'update'])->name('settings.notifications.update');
-
-            // SMTP Settings (Admin only recommended)
-            Route::get('/smtp', [SmtpSettingsController::class, 'index'])->name('settings.smtp.index');
-            Route::post('/smtp', [SmtpSettingsController::class, 'update'])->name('settings.smtp.update');
-            Route::post('/smtp/test', [SmtpSettingsController::class, 'test'])->name('settings.smtp.test');
-
-            // Email Templates
-            Route::get('/email-templates/{templateKey}', [EmailTemplateController::class, 'show'])->name('settings.email-templates.show');
-            Route::post('/email-templates/{templateKey}', [EmailTemplateController::class, 'update'])->name('settings.email-templates.update');
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Vendor Routes
-        |--------------------------------------------------------------------------
-        */
-        Route::prefix('vendor')->middleware('role:vendor')->name('vendor.')->group(function () {
-            Route::apiResource('products', VendorProductController::class);
-            Route::apiResource('withdrawals', VendorWithdrawalController::class);
-            Route::get('/transactions', [VendorTransactionController::class, 'index'])->name('transactions.index');
-            Route::get('/reports', [VendorReportController::class, 'index'])->name('reports.index');
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Affiliate Routes
-        |--------------------------------------------------------------------------
-        */
-        Route::prefix('affiliate')->middleware('role:affiliate')->name('affiliate.')->group(function () {
-            // Products
-            Route::get('/products', [AffiliateProductController::class, 'index'])->name('products.index');
-            Route::get('/products/{product}', [AffiliateProductController::class, 'show'])->name('products.show');
-
-            // Withdrawals
-            Route::apiResource('withdrawals', AffiliateWithdrawalController::class);
-
-            // Commissions & Reports
-            Route::get('/commissions', [AffiliateCommissionController::class, 'index'])->name('commissions.index');
-            Route::get('/reports', [AffiliateReportController::class, 'index'])->name('reports.index');
-
-            // Settings
-            Route::get('/settings', [AffiliateController::class, 'getSettings'])->name('settings.show');
-            Route::post('/settings/currency', [AffiliateController::class, 'updateCurrency'])->name('settings.currency');
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Admin Routes
-        |--------------------------------------------------------------------------
-        */
-        Route::prefix('admin')->middleware('role:admin')->name('admin.')->group(function () {
-
-            // Dashboard & Reports
-            Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-            Route::get('/reports', [AdminReportsController::class, 'index'])->name('reports.index');
-
-            // Affiliate Management
-            Route::prefix('affiliates')->name('affiliates.')->group(function () {
-                Route::get('/', [AdminAffiliateController::class, 'index'])->name('index');
-                Route::post('/{id}/approve', [AdminAffiliateController::class, 'approve'])->name('approve');
-                Route::post('/{id}/reject', [AdminAffiliateController::class, 'reject'])->name('reject');
-            });
-
-            // User Management
-            Route::apiResource('users', AdminUserController::class)->only(['index', 'show', 'update']);
-
-            // Product Management
-            Route::apiResource('products', AdminProductController::class)->only(['index', 'show']);
-            Route::prefix('products')->name('products.')->group(function () {
-                Route::post('/{product}/approve', [AdminProductController::class, 'approve'])->name('approve');
-                Route::post('/{product}/reject', [AdminProductController::class, 'reject'])->name('reject');
-                Route::post('/{product}/activate', [AdminProductController::class, 'setActive'])->name('activate');
-            });
-
-            // Transaction Management
-            Route::apiResource('transactions', AdminTransactionController::class)->only(['index', 'show']);
-
-            // Withdrawal Management
-            Route::apiResource('withdrawals', AdminWithdrawalController::class)->only(['index']);
-            Route::prefix('withdrawals')->name('withdrawals.')->group(function () {
-                Route::post('/{withdrawal}/approve', [AdminWithdrawalController::class, 'approve'])->name('approve');
-                Route::post('/{withdrawal}/reject', [AdminWithdrawalController::class, 'reject'])->name('reject');
-            });
-
-            // Settings Management
-            Route::prefix('settings')->name('settings.')->group(function () {
-                // Payment Settings
-                Route::get('/payment', [AdminSettingsController::class, 'getPaymentSettings'])->name('payment.show');
-                Route::post('/payment', [AdminSettingsController::class, 'updatePaymentSettings'])->name('payment.update');
-
-                // Currency Management
-                Route::apiResource('currencies', AdminCurrencyController::class)->except(['show']);
-                    Route::apiResource('currency-rates', AdminCurrencyController::class)->except(['show']);
-
-            });
-        });
+    // Settings routes
+    Route::prefix('settings')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SettingsController::class, 'index']);
+        Route::post('/bank-details', [\App\Http\Controllers\SettingsController::class, 'updateBankDetails']);
+        Route::get('/check-bank-details', [\App\Http\Controllers\SettingsController::class, 'checkBankDetails']);
     });
 });
+
+// Note: Public product routes are defined above without auth middleware
