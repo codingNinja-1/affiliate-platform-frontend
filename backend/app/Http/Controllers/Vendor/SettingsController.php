@@ -50,6 +50,12 @@ class SettingsController extends Controller
      */
     public function updateCurrency(Request $request): JsonResponse
     {
+        \Log::info('updateCurrency called', [
+            'user' => $request->user(),
+            'token' => $request->bearerToken(),
+            'headers' => $request->headers->all(),
+            'body' => $request->all(),
+        ]);
         $validator = Validator::make($request->all(), [
             'currency' => 'required|string|size:3',
         ]);

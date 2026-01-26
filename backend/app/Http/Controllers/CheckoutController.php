@@ -1,18 +1,18 @@
-    <?php
+<?php
 
 namespace App\Http\Controllers;
 
-    use App\Models\Product;
-    use App\Models\Affiliate;
-    use App\Models\Commission;
-    use App\Models\Transaction;
-    use App\Models\User;
-    use App\Services\PaystackService;
-    use App\Services\SaleNotificationService;
-    use Illuminate\Http\Request;
-    use Illuminate\Support\Str;
-    use Illuminate\Support\Facades\Log;
-    use Illuminate\Support\Facades\Hash;
+use App\Models\Product;
+use App\Models\Affiliate;
+use App\Models\Commission;
+use App\Models\Transaction;
+use App\Models\User;
+use App\Services\PaystackService;
+use App\Services\SaleNotificationService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
     class CheckoutController extends Controller
     {
