@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-interface VendorConvertedAmounts {
+interface ConvertedAmounts {
   balance: number;
   pending_balance: number;
   total_earnings: number;
@@ -10,8 +10,8 @@ interface VendorConvertedAmounts {
   conversion_rate?: number;
 }
 
-export function useVendorCurrencyConversion(refreshTrigger = 0) {
-  const [amounts, setAmounts] = useState<VendorConvertedAmounts | null>(null);
+export function useVendorCurrencyConversion(refreshTrigger = 0, selectedCurrency?: string) {
+  const [amounts, setAmounts] = useState<ConvertedAmounts | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,7 +23,11 @@ export function useVendorCurrencyConversion(refreshTrigger = 0) {
       }
 
       try {
-        const res = await fetch('/api/vendor/dashboard/converted', {
+        let url = '/api/vendor/dashboard/converted';
+        if (selectedCurrency) {
+          url += `?currency=${selectedCurrency}`;
+        }
+        const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -34,14 +38,14 @@ export function useVendorCurrencyConversion(refreshTrigger = 0) {
           }
         }
       } catch (error) {
-        console.error('Failed to load vendor converted amounts:', error);
+        console.error('Failed to load converted amounts:', error);
       } finally {
         setLoading(false);
       }
     };
 
     loadConvertedAmounts();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, selectedCurrency]);
 
   const formatAmount = (amount: number, currency?: string) => {
     const curr = currency || amounts?.currency || 'NGN';
