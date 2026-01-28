@@ -10,7 +10,7 @@ interface ConvertedAmounts {
   conversion_rate?: number;
 }
 
-export function useCurrencyConversion(refreshTrigger = 0) {
+export function useCurrencyConversion(refreshTrigger = 0, selectedCurrency?: string) {
   const [amounts, setAmounts] = useState<ConvertedAmounts | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +23,11 @@ export function useCurrencyConversion(refreshTrigger = 0) {
       }
 
       try {
-        const res = await fetch('/api/affiliate/dashboard/converted', {
+        let url = '/api/affiliate/dashboard/converted';
+        if (selectedCurrency) {
+          url += `?currency=${selectedCurrency}`;
+        }
+        const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -41,7 +45,7 @@ export function useCurrencyConversion(refreshTrigger = 0) {
     };
 
     loadConvertedAmounts();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, selectedCurrency]);
 
   const formatAmount = (amount: number, currency?: string) => {
     const curr = currency || amounts?.currency || 'NGN';
