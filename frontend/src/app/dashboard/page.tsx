@@ -198,20 +198,21 @@ function RoleSections({
 }) {
   const type = userType?.toLowerCase();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
-  const handleCurrencyChange = () => {
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('NGN');
+
+  const handleCurrencyChange = (currency: string) => {
+    setSelectedCurrency(currency);
     setRefreshTrigger(prev => prev + 1);
   };
 
-  const { amounts, loading: conversionLoading, formatAmount } = useCurrencyConversion(refreshTrigger);
+  const { amounts, loading: conversionLoading, formatAmount } = useCurrencyConversion(refreshTrigger, selectedCurrency);
   const { amounts: vendorAmounts, loading: vendorConversionLoading, formatAmount: vendorFormatAmount } = useVendorCurrencyConversion(refreshTrigger);
 
   if (type === 'vendor') {
-    // Use converted amounts if available, otherwise fall back to summary
     const displayBalance = vendorAmounts?.balance ?? summary?.balance ?? 0;
     const displayEarnings = vendorAmounts?.total_earnings ?? summary?.totalEarnings ?? 0;
     const displayWithdrawn = vendorAmounts?.total_withdrawn ?? summary?.totalWithdrawn ?? 0;
-    const displayCurrency = vendorAmounts?.currency || 'NGN';
+    const displayCurrency = vendorAmounts?.currency || selectedCurrency || 'NGN';
     const currencySymbol = displayCurrency === 'NGN' ? '₦' : 
                           displayCurrency === 'USD' ? '$' :
                           displayCurrency === 'GBP' ? '£' :
@@ -253,11 +254,10 @@ function RoleSections({
   }
 
   if (type === 'affiliate') {
-    // Use converted amounts if available, otherwise fall back to summary
     const displayBalance = amounts?.balance ?? summary?.balance ?? 0;
     const displayEarnings = amounts?.total_earnings ?? summary?.totalEarnings ?? 0;
     const displayWithdrawn = amounts?.total_withdrawn ?? summary?.totalWithdrawn ?? 0;
-    const displayCurrency = amounts?.currency || 'NGN';
+    const displayCurrency = amounts?.currency || selectedCurrency || 'NGN';
     const currencySymbol = displayCurrency === 'NGN' ? '₦' : 
                           displayCurrency === 'USD' ? '$' :
                           displayCurrency === 'GBP' ? '£' :
