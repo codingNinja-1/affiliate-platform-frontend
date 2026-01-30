@@ -27,6 +27,9 @@ Route::prefix('auth')->group(function () {
 Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index']);
 Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show']);
 
+// Image serving (public - no auth required)
+Route::get('/image', [\App\Http\Controllers\ImageController::class, 'serve']);
+
 // Affiliate tracking (public - no auth required)
 Route::get('/track/{referralCode}/{productId}', [\App\Http\Controllers\TrackingController::class, 'trackClick']);
 
@@ -86,8 +89,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/affiliates', [\App\Http\Controllers\Admin\AffiliateController::class, 'index']);
         Route::post('/affiliates/{id}/approve', [\App\Http\Controllers\Admin\AffiliateController::class, 'approve']);
         Route::post('/affiliates/{id}/reject', [\App\Http\Controllers\Admin\AffiliateController::class, 'reject']);
-            // Currency rates settings
-            Route::get('/settings/currencies', [\App\Http\Controllers\Admin\CurrencyController::class, 'index']);
+        
+        // Currency rates CRUD endpoints
+        Route::get('/currency-rates', [\App\Http\Controllers\Admin\CurrencyRateController::class, 'index']);
+        Route::post('/currency-rates', [\App\Http\Controllers\Admin\CurrencyRateController::class, 'store']);
+        Route::put('/currency-rates/{id}', [\App\Http\Controllers\Admin\CurrencyRateController::class, 'update']);
+        Route::delete('/currency-rates/{id}', [\App\Http\Controllers\Admin\CurrencyRateController::class, 'destroy']);
+        
+        // Currency settings (legacy)
+        Route::get('/settings/currencies', [\App\Http\Controllers\Admin\CurrencyController::class, 'index']);
         Route::apiResource('users', \App\Http\Controllers\Admin\UserController::class)->only(['index', 'show', 'update']);
         Route::apiResource('products', \App\Http\Controllers\Admin\ProductController::class)->only(['index', 'show']);
         Route::apiResource('transactions', \App\Http\Controllers\Admin\TransactionController::class)->only(['index', 'show']);

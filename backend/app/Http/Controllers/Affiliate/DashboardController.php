@@ -42,6 +42,7 @@ class DashboardController extends Controller
                 'total_withdrawn' => (float) $affiliate->total_withdrawn,
                 'pending_balance' => $pendingBalance,
                 'conversion_rate' => 1.0,
+                'original_currency' => $baseCurrency,
             ];
             \Log::info('Returning NGN data', $data);
             return response()->json([
@@ -61,6 +62,7 @@ class DashboardController extends Controller
                 'total_withdrawn' => (float) $affiliate->total_withdrawn,
                 'pending_balance' => $pendingBalance,
                 'conversion_rate' => 1.0,
+                'original_currency' => $baseCurrency,
             ];
             \Log::warning('Conversion rate not found', ['requestedCurrency' => $requestedCurrency, 'affiliate_id' => $affiliate->id]);
             return response()->json([
