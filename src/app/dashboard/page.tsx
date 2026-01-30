@@ -203,7 +203,10 @@ function RoleSections({
 
   const handleCurrencyChange = (currency: string) => {
     setSelectedCurrency(currency);
-    setRefreshTrigger(prev => prev + 1);
+    // Trigger a refetch with a small delay to ensure selectedCurrency state is updated
+    setTimeout(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 100);
   };
 
   const { amounts, loading: conversionLoading, formatAmount } = useCurrencyConversion(refreshTrigger, selectedCurrency);
