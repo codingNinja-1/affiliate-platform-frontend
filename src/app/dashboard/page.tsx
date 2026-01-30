@@ -207,7 +207,7 @@ function RoleSections({
   };
 
   const { amounts, loading: conversionLoading, formatAmount } = useCurrencyConversion(refreshTrigger, selectedCurrency);
-  const { amounts: vendorAmounts, loading: vendorConversionLoading, formatAmount: vendorFormatAmount } = useVendorCurrencyConversion(refreshTrigger, selectedCurrency, selectedCurrency);
+  const { amounts: vendorAmounts, loading: vendorConversionLoading, formatAmount: vendorFormatAmount } = useVendorCurrencyConversion(refreshTrigger, selectedCurrency);
 
   if (type === 'vendor') {
     const displayBalance = vendorAmounts?.balance ?? summary?.balance ?? 0;
