@@ -656,10 +656,16 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
             // Handle both single image string and images array
             let productImage = product.image || (product.images && product.images.length > 0 ? product.images[0] : null);
             
-            // Use backend image endpoint
+            // Use storage symlink URL - construct direct path from storage/products/{filename}
             if (productImage) {
-              const encodedPath = encodeURIComponent(productImage);
-              productImage = `https://snow-mantis-616662.hostingersite.com/api/image?path=${encodedPath}`;
+              // If it's already a full URL, use as-is
+              if (productImage.startsWith('http')) {
+                // Already a full URL
+              } else {
+                // Extract just the filename from any path
+                const filename = productImage.split('/').pop();
+                productImage = `https://snow-mantis-616662.hostingersite.com/storage/products/${filename}`;
+              }
             }
             
             return (
