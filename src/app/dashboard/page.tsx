@@ -588,6 +588,7 @@ function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount
 function HotProducts({ currency, formatAmount }: { currency?: string, formatAmount?: (amount: number, currency?: string) => string } = {}) {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { amounts } = useCurrencyConversion(0, currency);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -619,6 +620,14 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
                         currency === 'EUR' ? '€' :
                         currency + ' ';
 
+  // Convert product commission from NGN to target currency
+  const convertProductAmount = (amount: number) => {
+    if (!currency || currency === 'NGN' || !amounts?.conversion_rate) {
+      return amount;
+    }
+    return amount * amounts.conversion_rate;
+  };
+
   return (
     <section className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm mb-6">
       <div className="flex items-center justify-between mb-6">
@@ -641,30 +650,34 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
         <p className="text-center text-sm text-gray-500 py-12">No products available yet</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              href={`/products/${product.slug}`}
-              className="group rounded-lg border border-gray-200 overflow-hidden hover:border-blue-300 hover:shadow-md transition-all"
-            >
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 h-32 flex items-center justify-center">
-                {product.image ? (
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-12 h-12 bg-blue-200 rounded-lg" />
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="font-medium text-gray-900 text-sm group-hover:text-blue-600 transition line-clamp-2">
-                  {product.name}
-                </h3>
-                <p className="text-xs text-gray-500 mt-2">Commission</p>
-                <p className="text-lg font-semibold text-green-600 mt-1">
-                  {formatAmount ? formatAmount(product.commission_amount || product.commission || 0, currency) : (currencySymbol + (product.commission_amount || product.commission || 0).toLocaleString())}
-                </p>
-              </div>
-            </Link>
-          ))}
+          {products.map((product) => {
+            const commissionAmount = product.commission_amount || product.commission || 0;
+            const convertedAmount = convertProductAmount(commissionAmount);
+            return (
+              <Link
+                key={product.id}
+                href={`/products/${product.slug}`}
+                className="group rounded-lg border border-gray-200 overflow-hidden hover:border-blue-300 hover:shadow-md transition-all"
+              >
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 h-32 flex items-center justify-center">
+                  {product.image ? (
+                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-12 h-12 bg-blue-200 rounded-lg" />
+                  )}
+                </div>
+                <div className="p-4">
+                  <h3 className="font-medium text-gray-900 text-sm group-hover:text-blue-600 transition line-clamp-2">
+                    {product.name}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-2">Commission</p>
+                  <p className="text-lg font-semibold text-green-600 mt-1">
+                    {formatAmount ? formatAmount(convertedAmount, currency) : (currencySymbol + convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </section>
