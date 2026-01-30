@@ -654,7 +654,16 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
             const commissionAmount = product.commission_amount || product.commission || 0;
             const convertedAmount = convertProductAmount(commissionAmount);
             // Handle both single image string and images array
-            const productImage = product.image || (product.images && product.images.length > 0 ? product.images[0] : null);
+            let productImage = product.image || (product.images && product.images.length > 0 ? product.images[0] : null);
+            
+            // If image is a relative URL, construct full URL from backend
+            if (productImage && !productImage.startsWith('http')) {
+              const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://snow-mantis-616662.hostingersite.com';
+              productImage = `${backendUrl}${productImage.startsWith('/') ? '' : '/'}${productImage}`;
+            }
+            
+            console.log('Product image:', { name: product.name, image: productImage, raw: product.image, images: product.images });
+            
             return (
               <Link
                 key={product.id}
@@ -663,7 +672,15 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
               >
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 h-32 flex items-center justify-center">
                   {productImage ? (
-                    <img src={productImage} alt={product.name} className="w-full h-full object-cover" onError={(e) => e.currentTarget.style.display = 'none'} />
+                    <img 
+                      src={productImage} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        console.error('Image load error:', productImage);
+                        e.currentTarget.style.display = 'none';
+                      }} 
+                    />
                   ) : (
                     <div className="w-12 h-12 bg-blue-200 rounded-lg" />
                   )}
