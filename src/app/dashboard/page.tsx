@@ -688,6 +688,7 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+  const { amounts } = useCurrencyConversion(0, currency);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -723,6 +724,14 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
     fetchData();
   }, []);
 
+  // Convert amounts from NGN to target currency
+  const convertAmount = (amount: number) => {
+    if (!currency || currency === 'NGN' || !amounts?.conversion_rate) {
+      return amount;
+    }
+    return amount * amounts.conversion_rate;
+  };
+
   return (
     <section className="grid gap-4 lg:grid-cols-3">
       {/* Recent Commissions */}
@@ -744,7 +753,9 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
           <p className="text-center text-sm text-gray-500 py-8">No commissions yet</p>
         ) : (
           <div className="space-y-3">
-            {commissions.map((commission) => (
+            {commissions.map((commission) => {
+              const convertedAmount = convertAmount(commission.amount);
+              return (
               <div
                 key={commission.id}
                 className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0"
@@ -756,7 +767,7 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">{formatAmount ? formatAmount(commission.amount, currency) : commission.amount.toLocaleString()}</p>
+                  <p className="font-semibold text-gray-900">{formatAmount ? formatAmount(convertedAmount, currency) : convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                       commission.status === 'pending'
@@ -770,7 +781,8 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
                   </span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -802,13 +814,15 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
           </div>
         ) : (
           <div className="space-y-2">
-            {withdrawals.map((withdrawal) => (
+            {withdrawals.map((withdrawal) => {
+              const convertedAmount = convertAmount(withdrawal.amount);
+              return (
               <div
                 key={withdrawal.id}
                 className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0"
               >
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{formatAmount ? formatAmount(withdrawal.amount, currency) : withdrawal.amount.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-900">{formatAmount ? formatAmount(convertedAmount, currency) : convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   <p className="text-xs text-gray-500">{withdrawal.withdrawal_ref}</p>
                 </div>
                 <span
@@ -823,7 +837,8 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
                   {withdrawal.status}
                 </span>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
