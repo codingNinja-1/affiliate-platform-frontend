@@ -105,8 +105,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Vendor dashboard converted endpoint
     Route::get('/vendor/dashboard/converted', [\App\Http\Controllers\Vendor\DashboardController::class, 'converted']);
-    // Vendor settings endpoint
+    // Vendor settings endpoints
     Route::get('/vendor/settings', [\App\Http\Controllers\Vendor\SettingsController::class, 'index']);
+    Route::post('/vendor/settings/currency', [\App\Http\Controllers\Vendor\SettingsController::class, 'updateCurrency']);
 
     // Vendor routes
     Route::prefix('vendor')->middleware('role:vendor')->group(function () {
@@ -118,6 +119,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Affiliate dashboard converted endpoint
     Route::get('/affiliate/dashboard/converted', [\App\Http\Controllers\Affiliate\DashboardController::class, 'converted']);
+
+    // Affiliate settings endpoints
+    Route::get('/affiliate/settings', [\App\Http\Controllers\Affiliate\SettingsController::class, 'index']);
+    Route::post('/affiliate/settings/currency', [\App\Http\Controllers\Affiliate\SettingsController::class, 'updateCurrency']);
 
     // Affiliate routes
     Route::prefix('affiliate')->middleware('role:affiliate')->group(function () {
