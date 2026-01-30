@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useWithdrawals, useCreateWithdrawal, type Withdrawal } from '@/hooks/useWithdrawals';
-import { useCurrencyConversion, useVendorCurrencyConversion } from '@/hooks/useCurrencyConversion';
-import { CurrencySelector } from '@/components/CurrencySelector';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { useVendorCurrencyConversion } from '@/hooks/useVendorCurrencyConversion';
 
 const API_BASE = '/api'; // Always use relative path for client-side requests
 
@@ -174,12 +174,18 @@ export default function WithdrawalsPage() {
           <h1 className="mt-2 text-3xl font-semibold text-gray-900">Withdrawals</h1>
           <p className="text-sm text-gray-600">Request and track your withdrawals</p>
         </div>
-        <div className="flex gap-3">
-          <CurrencySelector 
-            onCurrencyChange={handleCurrencyChange}
-            isVendor={userType === 'vendor'}
-            showLabel={false}
-          />
+        <div className="flex gap-3 items-center">
+          <select 
+            value={selectedCurrency}
+            onChange={(e) => handleCurrencyChange(e.target.value)}
+            aria-label="Select currency"
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="NGN">₦ NGN</option>
+            <option value="USD">$ USD</option>
+            <option value="GBP">£ GBP</option>
+            <option value="EUR">€ EUR</option>
+          </select>
           <button
             onClick={() => setShowForm(!showForm)}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
