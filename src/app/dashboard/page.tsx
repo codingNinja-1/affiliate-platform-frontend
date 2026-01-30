@@ -656,10 +656,10 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
             // Handle both single image string and images array
             let productImage = product.image || (product.images && product.images.length > 0 ? product.images[0] : null);
             
-            // Use proxy endpoint to serve images
+            // Use backend image endpoint
             if (productImage) {
               const encodedPath = encodeURIComponent(productImage);
-              productImage = `/api/image-proxy?path=${encodedPath}`;
+              productImage = `https://snow-mantis-616662.hostingersite.com/api/image?path=${encodedPath}`;
             }
             
             return (
