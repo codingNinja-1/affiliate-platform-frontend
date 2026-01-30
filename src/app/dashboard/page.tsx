@@ -201,8 +201,18 @@ function RoleSections({
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedCurrency, setSelectedCurrency] = useState<string>('NGN');
 
+  // Load saved currency preference from localStorage on mount
+  useEffect(() => {
+    const savedCurrency = localStorage.getItem('selected_currency');
+    if (savedCurrency) {
+      setSelectedCurrency(savedCurrency);
+    }
+  }, []);
+
   const handleCurrencyChange = (currency: string) => {
     setSelectedCurrency(currency);
+    // Save to localStorage for persistence across page reloads
+    localStorage.setItem('selected_currency', currency);
     // Trigger a refetch with a small delay to ensure selectedCurrency state is updated
     setTimeout(() => {
       setRefreshTrigger(prev => prev + 1);
