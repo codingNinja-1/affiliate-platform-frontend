@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useWithdrawals, useCreateWithdrawal, type Withdrawal } from '@/hooks/useWithdrawals';
+import { useCurrencyConversion, useVendorCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import { CurrencySelector } from '@/components/CurrencySelector';
 
 const API_BASE = '/api'; // Always use relative path for client-side requests
 
@@ -20,6 +22,57 @@ export default function WithdrawalsPage() {
   
   const { data: withdrawals = [], isLoading, refetch } = useWithdrawals(userType);
   const createWithdrawal = useCreateWithdrawal(userType);
+  
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('NGN');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  const { amounts, formatAmount } = useCurrencyConversion(refreshTrigger, selectedCurrency);
+  const { amounts: vendorAmounts, formatAmount: vendorFormatAmount } = useVendorCurrencyConversion(refreshTrigger, selectedCurrency);
+  
+  // Load saved currency preference on mount
+  useEffect(() => {
+    const loadUserCurrencyPreference = async () => {
+      if (!token) return;
+      try {
+        const endpoint = userType === 'vendor' ? '/api/vendor/settings' : '/api/affiliate/settings';
+        const res = await fetch(endpoint, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const preferredCurrency = data.data?.preferred_currency;
+          if (preferredCurrency) {
+            setSelectedCurrency(preferredCurrency);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load currency preference:', error);
+      }
+    };
+    loadUserCurrencyPreference();
+  }, [token, userType]);
+  
+  const handleCurrencyChange = (currency: string) => {
+    setSelectedCurrency(currency);
+    setTimeout(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 100);
+  };
+  
+  const displayCurrency = userType === 'vendor' ? (vendorAmounts?.currency || selectedCurrency || 'NGN') : (amounts?.currency || selectedCurrency || 'NGN');
+  const conversionRate = userType === 'vendor' ? vendorAmounts?.conversion_rate : amounts?.conversion_rate;
+  const currencySymbol = displayCurrency === 'NGN' ? '₦' : 
+                        displayCurrency === 'USD' ? '$' :
+                        displayCurrency === 'GBP' ? '£' :
+                        displayCurrency === 'EUR' ? '€' :
+                        displayCurrency + ' ';
+  
+  const convertAmount = (amount: number) => {
+    if (!displayCurrency || displayCurrency === 'NGN' || !conversionRate) {
+      return amount;
+    }
+    return amount * conversionRate;
+  };
   
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState('');
@@ -121,12 +174,19 @@ export default function WithdrawalsPage() {
           <h1 className="mt-2 text-3xl font-semibold text-gray-900">Withdrawals</h1>
           <p className="text-sm text-gray-600">Request and track your withdrawals</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
-        >
-          {showForm ? 'Cancel' : 'New withdrawal'}
-        </button>
+        <div className="flex gap-3">
+          <CurrencySelector 
+            onCurrencyChange={handleCurrencyChange}
+            isVendor={userType === 'vendor'}
+            showLabel={false}
+          />
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
+          >
+            {showForm ? 'Cancel' : 'New withdrawal'}
+          </button>
+        </div>
       </header>
 
       {(error || bankError) && (
@@ -151,7 +211,7 @@ export default function WithdrawalsPage() {
           ) : null}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm text-gray-700 font-medium">Amount (₦)</label>
+              <label className="mb-2 block text-sm text-gray-700 font-medium">Amount ({displayCurrency})</label>
               <input
                 type="number"
                 value={amount}
@@ -163,7 +223,7 @@ export default function WithdrawalsPage() {
                 className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 disabled:opacity-50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="Enter amount"
               />
-              <p className="mt-1 text-xs text-gray-500">Minimum withdrawal: ₦1,000</p>
+              <p className="mt-1 text-xs text-gray-500">Minimum withdrawal: 1000 {displayCurrency}</p>
             </div>
 
             {bankDetails && (
@@ -215,9 +275,11 @@ export default function WithdrawalsPage() {
                 </tr>
               </thead>
               <tbody>
-                {withdrawals.map((withdrawal: Withdrawal) => (
+                {withdrawals.map((withdrawal: Withdrawal) => {
+                  const convertedAmount = convertAmount(withdrawal.amount);
+                  return (
                   <tr key={withdrawal.id} className="border-b border-gray-100">
-                    <td className="py-4 font-medium text-gray-900">₦{withdrawal.amount.toLocaleString()}</td>
+                    <td className="py-4 font-medium text-gray-900">{userType === 'vendor' ? (vendorFormatAmount ? vendorFormatAmount(convertedAmount, displayCurrency) : (currencySymbol + convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }))) : (formatAmount ? formatAmount(convertedAmount, displayCurrency) : (currencySymbol + convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })))}</td>
                     <td className="py-4 text-gray-700">{withdrawal.payment_method}</td>
                     <td className="py-4">
                       <span
@@ -241,7 +303,8 @@ export default function WithdrawalsPage() {
                         : '-'}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
