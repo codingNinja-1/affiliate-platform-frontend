@@ -656,13 +656,11 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
             // Handle both single image string and images array
             let productImage = product.image || (product.images && product.images.length > 0 ? product.images[0] : null);
             
-            // If image is a relative URL, construct full URL from backend
-            if (productImage && !productImage.startsWith('http')) {
-              const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://snow-mantis-616662.hostingersite.com';
-              productImage = `${backendUrl}${productImage.startsWith('/') ? '' : '/'}${productImage}`;
+            // Use proxy endpoint to serve images
+            if (productImage) {
+              const encodedPath = encodeURIComponent(productImage);
+              productImage = `/api/image-proxy?path=${encodedPath}`;
             }
-            
-            console.log('Product image:', { name: product.name, image: productImage, raw: product.image, images: product.images });
             
             return (
               <Link
@@ -677,7 +675,6 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
                       alt={product.name} 
                       className="w-full h-full object-cover" 
                       onError={(e) => {
-                        console.error('Image load error:', productImage);
                         e.currentTarget.style.display = 'none';
                       }} 
                     />
