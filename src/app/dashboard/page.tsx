@@ -201,18 +201,35 @@ function RoleSections({
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedCurrency, setSelectedCurrency] = useState<string>('NGN');
 
-  // Load saved currency preference from localStorage on mount
+  // Load saved currency preference from backend on mount
   useEffect(() => {
-    const savedCurrency = localStorage.getItem('selected_currency');
-    if (savedCurrency) {
-      setSelectedCurrency(savedCurrency);
-    }
-  }, []);
+    const loadUserCurrencyPreference = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      try {
+        const endpoint = type === 'vendor' ? '/api/vendor/settings' : '/api/affiliate/settings';
+        const res = await fetch(endpoint, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const preferredCurrency = data.data?.preferred_currency;
+          if (preferredCurrency) {
+            setSelectedCurrency(preferredCurrency);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load currency preference:', error);
+      }
+    };
+
+    loadUserCurrencyPreference();
+  }, [type]);
 
   const handleCurrencyChange = (currency: string) => {
     setSelectedCurrency(currency);
-    // Save to localStorage for persistence across page reloads
-    localStorage.setItem('selected_currency', currency);
     // Trigger a refetch with a small delay to ensure selectedCurrency state is updated
     setTimeout(() => {
       setRefreshTrigger(prev => prev + 1);
