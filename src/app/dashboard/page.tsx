@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { Wallet } from 'lucide-react';
 import CurrencySelector from '../components/CurrencySelector';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { useVendorCurrencyConversion } from '@/hooks/useVendorCurrencyConversion';
@@ -206,7 +207,7 @@ function RoleSections({
   };
 
   const { amounts, loading: conversionLoading, formatAmount } = useCurrencyConversion(refreshTrigger, selectedCurrency);
-  const { amounts: vendorAmounts, loading: vendorConversionLoading, formatAmount: vendorFormatAmount } = useVendorCurrencyConversion(refreshTrigger);
+  const { amounts: vendorAmounts, loading: vendorConversionLoading, formatAmount: vendorFormatAmount } = useVendorCurrencyConversion(refreshTrigger, selectedCurrency, selectedCurrency);
 
   if (type === 'vendor') {
     const displayBalance = vendorAmounts?.balance ?? summary?.balance ?? 0;
@@ -227,6 +228,10 @@ function RoleSections({
             isVendor={true}
             showLabel={false}
           />
+          <Link href="/withdrawals" className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
+            <Wallet size={18} />
+            Withdraw
+          </Link>
           {vendorAmounts?.original_currency && vendorAmounts.original_currency !== displayCurrency && (
             <p className="text-xs text-gray-500">
               Conversion rate: 1 {vendorAmounts.original_currency} = {vendorAmounts.conversion_rate?.toFixed(6)} {displayCurrency}
@@ -271,6 +276,10 @@ function RoleSections({
             onCurrencyChange={handleCurrencyChange}
             showLabel={false}
           />
+          <Link href="/withdrawals" className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
+            <Wallet size={18} />
+            Withdraw
+          </Link>
           {amounts?.original_currency && amounts.original_currency !== displayCurrency && (
             <p className="text-xs text-gray-500">
               Conversion rate: 1 {amounts.original_currency} = {amounts.conversion_rate?.toFixed(6)} {displayCurrency}
@@ -289,6 +298,8 @@ function RoleSections({
           ]}
           loading={loading || conversionLoading}
         />
+
+        <HotProducts currency={displayCurrency} formatAmount={formatAmount} />
 
         <AffiliatePerformance formatAmount={formatAmount} currency={displayCurrency} />
       </>
@@ -540,6 +551,92 @@ function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+function HotProducts({ currency, formatAmount }: { currency?: string, formatAmount?: (amount: number, currency?: string) => string } = {}) {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    const fetchHotProducts = async () => {
+      try {
+        const res = await fetch('/api/affiliate/products?limit=6&sort=commission_desc', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setProducts((data.data || []).slice(0, 6));
+        }
+      } catch (error) {
+        console.error('Failed to load hot products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHotProducts();
+  }, []);
+
+  const currencySymbol = currency === 'NGN' ? '₦' : 
+                        currency === 'USD' ? '$' :
+                        currency === 'GBP' ? '£' :
+                        currency === 'EUR' ? '€' :
+                        currency + ' ';
+
+  return (
+    <section className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">🔥 Hot Products</h2>
+          <p className="text-xs text-gray-500 mt-1">Products with highest commissions</p>
+        </div>
+        <Link href="/products" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+          Browse all →
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-40 animate-pulse rounded-lg bg-gray-100" />
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <p className="text-center text-sm text-gray-500 py-12">No products available yet</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {products.map((product) => (
+            <Link
+              key={product.id}
+              href={`/products/${product.slug}`}
+              className="group rounded-lg border border-gray-200 overflow-hidden hover:border-blue-300 hover:shadow-md transition-all"
+            >
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 h-32 flex items-center justify-center">
+                {product.image ? (
+                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-12 h-12 bg-blue-200 rounded-lg" />
+                )}
+              </div>
+              <div className="p-4">
+                <h3 className="font-medium text-gray-900 text-sm group-hover:text-blue-600 transition line-clamp-2">
+                  {product.name}
+                </h3>
+                <p className="text-xs text-gray-500 mt-2">Commission</p>
+                <p className="text-lg font-semibold text-green-600 mt-1">
+                  {formatAmount ? formatAmount(product.commission_amount || product.commission || 0, currency) : (currencySymbol + (product.commission_amount || product.commission || 0).toLocaleString())}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
