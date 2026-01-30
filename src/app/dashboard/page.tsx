@@ -653,6 +653,8 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
           {products.map((product) => {
             const commissionAmount = product.commission_amount || product.commission || 0;
             const convertedAmount = convertProductAmount(commissionAmount);
+            // Handle both single image string and images array
+            const productImage = product.image || (product.images && product.images.length > 0 ? product.images[0] : null);
             return (
               <Link
                 key={product.id}
@@ -660,8 +662,8 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
                 className="group rounded-lg border border-gray-200 overflow-hidden hover:border-blue-300 hover:shadow-md transition-all"
               >
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 h-32 flex items-center justify-center">
-                  {product.image ? (
-                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                  {productImage ? (
+                    <img src={productImage} alt={product.name} className="w-full h-full object-cover" onError={(e) => e.currentTarget.style.display = 'none'} />
                   ) : (
                     <div className="w-12 h-12 bg-blue-200 rounded-lg" />
                   )}
