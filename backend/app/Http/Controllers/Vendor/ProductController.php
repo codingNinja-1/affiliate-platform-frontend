@@ -161,6 +161,12 @@ class ProductController extends Controller
             'buy_now_config.open_in_new_tab' => 'nullable|boolean',
         ]);
 
+        // Map status field to is_active
+        if (isset($validated['status'])) {
+            $validated['is_active'] = $validated['status'] === 'active';
+            unset($validated['status']);
+        }
+
         // Handle image upload and replace old one
         if ($request->hasFile('image')) {
             // Delete old image if exists
@@ -173,7 +179,11 @@ class ProductController extends Controller
             $validated['images'] = [$imagePath];
         }
 
+        // Update the product
         $product->update($validated);
+
+        // Refresh to ensure we return the latest data
+        $product->refresh();
 
         return response()->json([
             'success' => true,
