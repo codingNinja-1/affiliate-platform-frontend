@@ -87,6 +87,7 @@ export default function VendorEditProductPage() {
     setSaving(true);
     try {
       const formData = new FormData();
+      formData.append('_method', 'PUT');
       formData.append('name', form.name);
       formData.append('description', form.description);
       formData.append('price', form.price);
@@ -100,7 +101,7 @@ export default function VendorEditProductPage() {
       }
 
       const res = await fetch(`/api/vendor/products/${id}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
         },
