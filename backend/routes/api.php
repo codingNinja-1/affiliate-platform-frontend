@@ -27,9 +27,6 @@ Route::prefix('auth')->group(function () {
 Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index']);
 Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show']);
 
-// Image serving (public - no auth required)
-Route::get('/image', [\App\Http\Controllers\ImageController::class, 'serve']);
-
 // Affiliate tracking (public - no auth required)
 Route::get('/track/{referralCode}/{productId}', [\App\Http\Controllers\TrackingController::class, 'trackClick']);
 
