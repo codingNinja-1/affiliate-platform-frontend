@@ -7,6 +7,7 @@ use App\Models\Withdrawal;
 use App\Models\Vendor;
 use App\Models\CurrencyRate;
 use App\Services\CurrencyConversionService;
+use App\Services\AutomaticWithdrawalService;
 use App\Models\EmailLog;
 use App\Notifications\WithdrawalProcessingNotification;
 use Illuminate\Http\Request;
@@ -35,9 +36,9 @@ class WithdrawalController extends Controller
     }
 
     /**
-     * Store a newly created withdrawal request.
+     * Store a newly created withdrawal request with instant payout.
      */
-    public function store(Request $request)
+    public function store(Request $request, AutomaticWithdrawalService $withdrawalService)
     {
         $validated = $request->validate([
             'amount' => 'required|numeric|min:1000',
@@ -109,6 +110,16 @@ class WithdrawalController extends Controller
 
             DB::commit();
 
+            // Immediately process automatic withdrawal
+            $result = $withdrawalService->processWithdrawal($withdrawal, $user);
+            
+            if (!$result['success']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'],
+                ], 400);
+            }
+
             $notification = new WithdrawalProcessingNotification([
                 'name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? $user->email),
                 'amount' => number_format((float) $withdrawal->amount, 2),
@@ -145,8 +156,8 @@ class WithdrawalController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Withdrawal request submitted successfully.',
-                'data' => $withdrawal,
+                'message' => 'Withdrawal processed successfully! Funds will arrive within minutes.',
+                'data' => $withdrawal->fresh(),
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
