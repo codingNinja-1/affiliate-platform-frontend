@@ -52,6 +52,11 @@ Route::get('/transactions/{reference}', [\App\Http\Controllers\CheckoutControlle
 Route::middleware('auth:sanctum')->group(function () {
         // Vendor currency update endpoint (must be authenticated)
         Route::post('/vendor/settings/currency', [\App\Http\Controllers\Vendor\SettingsController::class, 'updateCurrency']);
+    
+    // Bank endpoints for withdrawal processing
+    Route::get('/banks', [\App\Http\Controllers\BankController::class, 'index']);
+    Route::post('/banks/verify-account', [\App\Http\Controllers\BankController::class, 'verifyAccount']);
+    
     // Dashboard
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
 
