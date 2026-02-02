@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useAdminWithdrawals, type AdminWithdrawal } from '@/hooks/useAdmin';
+import { useAdminWithdrawals, usePaymentSettings, type AdminWithdrawal } from '@/hooks/useAdmin';
 import { Home, Users, Package, CreditCard, DollarSign, Building2, TrendingUp, Settings, Mail, Plug, ChevronLeft, Menu, X } from 'lucide-react';
 
 const API_BASE = '/api';
@@ -102,9 +102,12 @@ export default function AdminWithdrawalsPage() {
   const router = useRouter();
   const { user, hydrated } = useAuth();
   const { data: withdrawals, isLoading, error, refetch } = useAdminWithdrawals();
+  const { settings, isLoading: settingsLoading, isSaving, saveSettings } = usePaymentSettings();
   const [approving, setApproving] = useState<number | null>(null);
   const [denying, setDenying] = useState<number | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+  const [toggleSuccess, setToggleSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -224,6 +227,22 @@ export default function AdminWithdrawalsPage() {
     }
   };
 
+  const toggleAutomaticWithdrawals = async () => {
+    try {
+      setToggleError(null);
+      setToggleSuccess(null);
+      
+      const newValue = !settings?.enable_automatic_withdrawals;
+      await saveSettings({ enable_automatic_withdrawals: newValue });
+      setToggleSuccess(`Automatic withdrawals ${newValue ? 'enabled' : 'disabled'} successfully`);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setToggleSuccess(null), 3000);
+    } catch (err) {
+      setToggleError(err instanceof Error ? err.message : 'Failed to update setting');
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
@@ -240,6 +259,47 @@ export default function AdminWithdrawalsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Withdrawals Management</h1>
           <p className="text-gray-600 mt-1">Approve and manage withdrawal requests</p>
         </div>
+
+        {/* Automatic Withdrawals Toggle */}
+        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Automatic Withdrawals</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {settingsLoading 
+                  ? 'Loading settings...' 
+                  : settings?.enable_automatic_withdrawals 
+                    ? 'Withdrawals are processed instantly' 
+                    : 'Withdrawals require manual admin approval'}
+              </p>
+            </div>
+            <button
+              onClick={toggleAutomaticWithdrawals}
+              disabled={isSaving || settingsLoading}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                settings?.enable_automatic_withdrawals ? 'bg-blue-600' : 'bg-gray-300'
+              } ${isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
+            >
+              <span
+                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                  settings?.enable_automatic_withdrawals ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {toggleSuccess && (
+          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
+            {toggleSuccess}
+          </div>
+        )}
+
+        {toggleError && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+            {toggleError}
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">

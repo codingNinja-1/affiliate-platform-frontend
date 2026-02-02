@@ -51,7 +51,8 @@ class SettingsController extends Controller
             'paystack_test_secret_key' => 'nullable|string|max:255',
             'paystack_live_public_key' => 'nullable|string|max:255',
             'paystack_live_secret_key' => 'nullable|string|max:255',
-            'paystack_mode' => 'required|in:test,live',
+            'paystack_mode' => 'nullable|in:test,live',
+            'enable_automatic_withdrawals' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
