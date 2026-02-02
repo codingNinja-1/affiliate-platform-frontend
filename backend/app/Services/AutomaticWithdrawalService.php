@@ -24,7 +24,7 @@ class AutomaticWithdrawalService
         try {
             // Step 1: Get bank code from bank name
             $bankCode = $this->getBankCode($withdrawal->bank_name);
-            
+
             if (!$bankCode) {
                 throw new \Exception('Bank not found or not supported');
             }
@@ -34,7 +34,7 @@ class AutomaticWithdrawalService
 
             // Step 2: Create or get transfer recipient
             $recipientCode = $this->getOrCreateRecipient($withdrawal);
-            
+
             // Step 3: Initiate transfer
             $transferResponse = $this->paystack->initiateTransfer([
                 'amount' => $withdrawal->amount,
@@ -64,18 +64,28 @@ class AutomaticWithdrawalService
             ];
 
         } catch (\Exception $e) {
+            $errorMessage = $e->getMessage();
             Log::error('Automatic withdrawal failed', [
                 'withdrawal_id' => $withdrawal->id,
-                'error' => $e->getMessage(),
+                'error' => $errorMessage,
                 'trace' => $e->getTraceAsString(),
             ]);
 
             // Rollback the withdrawal and refund balance
-            $this->rollbackWithdrawal($withdrawal, $user, $e->getMessage());
+            $this->rollbackWithdrawal($withdrawal, $user, $errorMessage);
+
+            // Check if this is a Paystack account restriction error
+            if ($this->isPaystackTransferRestriction($errorMessage)) {
+                return [
+                    'success' => false,
+                    'message' => 'Payouts are temporarily unavailable. Please contact support.',
+                    'data' => null,
+                ];
+            }
 
             return [
                 'success' => false,
-                'message' => 'Withdrawal failed: ' . $e->getMessage(),
+                'message' => 'Withdrawal failed: ' . $errorMessage,
                 'data' => null,
             ];
         }
@@ -99,7 +109,7 @@ class AutomaticWithdrawalService
         ]);
 
         $recipientCode = $recipientResponse['data']['recipient_code'];
-        
+
         // Save recipient code for future use
         $withdrawal->update(['recipient_code' => $recipientCode]);
 
@@ -112,15 +122,39 @@ class AutomaticWithdrawalService
     private function getBankCode(string $bankName): ?string
     {
         $banks = $this->paystack->getBanks();
-        
+
         foreach ($banks as $bank) {
-            if (stripos($bank['name'], $bankName) !== false || 
+            if (stripos($bank['name'], $bankName) !== false ||
                 stripos($bankName, $bank['name']) !== false) {
                 return $bank['code'];
             }
         }
 
         return null;
+    }
+
+    /**
+     * Check if error is a Paystack account transfer restriction
+     */
+    private function isPaystackTransferRestriction(string $error): bool
+    {
+        $restrictionKeywords = [
+            'third party payouts',
+            'starter',
+            'transfer not enabled',
+            'payouts not enabled',
+            '405',
+            'restricted',
+        ];
+
+        $lowerError = strtolower($error);
+        foreach ($restrictionKeywords as $keyword) {
+            if (stripos($lowerError, $keyword) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

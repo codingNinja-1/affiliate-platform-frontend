@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
+use App\Models\Setting;
 use App\Models\Vendor;
 use App\Models\CurrencyRate;
 use App\Services\CurrencyConversionService;
@@ -110,14 +111,24 @@ class WithdrawalController extends Controller
 
             DB::commit();
 
-            // Immediately process automatic withdrawal
-            $result = $withdrawalService->processWithdrawal($withdrawal, $user);
-            
-            if (!$result['success']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $result['message'],
-                ], 400);
+            // Check if automatic withdrawals are enabled
+            $enableAutomatic = Setting::getValue('enable_automatic_withdrawals', true);
+
+            if ($enableAutomatic) {
+                // Process automatic withdrawal immediately
+                $result = $withdrawalService->processWithdrawal($withdrawal, $user);
+
+                if (!$result['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $result['message'],
+                    ], 400);
+                }
+
+                $responseMessage = 'Withdrawal processed successfully! Funds will arrive within minutes.';
+            } else {
+                // Keep as pending for manual admin review
+                $responseMessage = 'Withdrawal request submitted. It will be reviewed by the admin shortly.';
             }
 
             $notification = new WithdrawalProcessingNotification([
@@ -156,7 +167,7 @@ class WithdrawalController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Withdrawal processed successfully! Funds will arrive within minutes.',
+                'message' => $responseMessage,
                 'data' => $withdrawal->fresh(),
             ], 201);
         } catch (\Exception $e) {
