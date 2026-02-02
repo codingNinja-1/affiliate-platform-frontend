@@ -15,14 +15,14 @@ class BankController extends Controller
     {
         try {
             $banks = $withdrawalService->getSupportedBanks();
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $banks,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to fetch banks', ['error' => $e->getMessage()]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch banks',
@@ -45,22 +45,48 @@ class BankController extends Controller
                 $validated['account_number'],
                 $validated['bank_code']
             );
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $accountDetails,
             ]);
         } catch (\Exception $e) {
+            $errorMessage = $e->getMessage();
             Log::error('Account verification failed', [
                 'account_number' => $validated['account_number'],
                 'bank_code' => $validated['bank_code'],
-                'error' => $e->getMessage(),
+                'error' => $errorMessage,
             ]);
-            
+
+            // Check if this is a Paystack API error
+            if ($this->isPaystackError($errorMessage)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Account verification temporarily unavailable. Please try again later.',
+                ], 400);
+            }
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Account verification failed.',
             ], 400);
         }
+    }
+
+    /**
+     * Check if error is from Paystack API
+     */
+    private function isPaystackError(string $error): bool
+    {
+        $apiKeywords = ['paystack', 'api', '1045', 'account', 'resolved', 'resolve'];
+        $lowerError = strtolower($error);
+
+        foreach ($apiKeywords as $keyword) {
+            if (stripos($lowerError, $keyword) !== false) {
+                return true;
+            }
+        }
+
+        return false
     }
 }
