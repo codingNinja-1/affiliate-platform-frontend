@@ -293,13 +293,16 @@ export function usePaymentSettings() {
       setError(null);
 
       try {
+        // Merge with existing settings to ensure all required fields are present
+        const payload = { ...settings, ...newSettings };
+        
         const res = await fetch(`${API_BASE}/admin/settings/payment`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(newSettings),
+          body: JSON.stringify(payload),
         });
 
         if (!res.ok) {
@@ -318,7 +321,7 @@ export function usePaymentSettings() {
         setIsSaving(false);
       }
     },
-    [token]
+    [token, settings]
   );
 
   useEffect(() => {
