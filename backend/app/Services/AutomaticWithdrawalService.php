@@ -5,8 +5,11 @@ namespace App\Services;
 use App\Models\Withdrawal;
 use App\Models\User;
 use App\Models\Setting;
+use App\Models\EmailLog;
+use App\Mail\WithdrawalApprovedMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class AutomaticWithdrawalService
 {
@@ -66,6 +69,39 @@ class AutomaticWithdrawalService
                 'transfer_code' => $withdrawal->transfer_code,
                 'user_id' => $user->id,
             ]);
+
+            // Send approval email notification
+            try {
+                if ($user && $user->email) {
+                    $mail = new WithdrawalApprovedMail($withdrawal);
+                    Mail::to($user->email)->send($mail);
+
+                    EmailLog::log(
+                        $user->email,
+                        $mail->subject ?? null,
+                        'withdrawal_approved',
+                        'sent',
+                        [
+                            'withdrawal_id' => $withdrawal->id,
+                            'user_type' => $withdrawal->user_type,
+                            'automatic' => true,
+                        ]
+                    );
+                }
+            } catch (\Exception $e) {
+                EmailLog::log(
+                    $user->email ?? 'unknown',
+                    null,
+                    'withdrawal_approved',
+                    'failed',
+                    [
+                        'withdrawal_id' => $withdrawal->id,
+                        'user_type' => $withdrawal->user_type,
+                        'automatic' => true,
+                    ],
+                    $e->getMessage()
+                );
+            }
 
             return [
                 'success' => true,
