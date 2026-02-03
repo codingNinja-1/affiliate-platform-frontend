@@ -37,20 +37,22 @@ class EmailTemplateController extends Controller
 </body></html>'
         ],
         'withdrawal_approved' => [
-            'subject' => 'Your Withdrawal Request Has Been Approved',
+            'subject' => 'Withdrawal Approved - Funds On The Way',
             'body' => '<html><body style="font-family: Arial, sans-serif; padding: 20px;">
-<h2>Hello {name},</h2>
-<p>Good news! Your withdrawal request has been approved and is being processed.</p>
-<p><strong>Withdrawal Details:</strong></p>
+<h2>Excellent News, {name}!</h2>
+<p>Your withdrawal request has been successfully approved and processed.</p>
+<p><strong>Transaction Details:</strong></p>
 <ul>
-<li>Amount: {amount}</li>
-<li>Reference: {withdrawal_ref}</li>
-<li>Bank: {bank_name}</li>
-<li>Account: {account_number}</li>
+<li><strong>Amount:</strong> {amount}</li>
+<li><strong>Reference:</strong> {withdrawal_ref}</li>
+<li><strong>Bank:</strong> {bank_name}</li>
+<li><strong>Account:</strong> {account_number}</li>
 </ul>
-<p>The funds will be transferred to your account within 1-3 business days.</p>
-<p>Thank you for being part of AffiliateHub!</p>
-<p>Best regards,<br>The AffiliateHub Team</p>
+<p>Your funds are now on the way and should reflect in your account shortly. Depending on your bank\'s processing time, this may take a few minutes to 24 hours.</p>
+<p>You can track this transaction using the reference number above.</p>
+<p>Thank you for your continued partnership with AffiliateHub. We appreciate your trust in us!</p>
+<p>Best regards,<br><strong>The AffiliateHub Team</strong></p>
+<p style="font-size: 12px; color: #666; margin-top: 20px;">If you have any questions or concerns about this transaction, please don\'t hesitate to contact our support team.</p>
 </body></html>'
         ],
         'withdrawal_rejected' => [
@@ -70,18 +72,17 @@ class EmailTemplateController extends Controller
 </body></html>'
         ],
     'withdrawal_processing' => [
-        'subject' => 'Your withdrawal request is being processed',
+        'subject' => 'Withdrawal Request Received',
         'body' => '<html><body style="font-family: Arial, sans-serif; padding: 20px;">
-<h2>Hello {name},</h2>
-<p>We received your withdrawal request and it is now being processed.</p>
+<h2>Good news, {name}!</h2>
+<p>Your withdrawal request has been received and is being processed.</p>
 <p><strong>Withdrawal Details:</strong></p>
 <ul>
 <li>Amount: {amount}</li>
 <li>Reference: {withdrawal_ref}</li>
-<li>Bank: {bank_name}</li>
-<li>Account: {account_number}</li>
 </ul>
-<p>We will notify you once it is approved and sent. If any issues arise, we will reach out.</p>
+<p>The funds will be transferred to your account within 1-3 business days.</p>
+<p>Thank you for being part of AffiliateHub!</p>
 <p>Best regards,<br>The AffiliateHub Team</p>
 </body></html>'
     ],
