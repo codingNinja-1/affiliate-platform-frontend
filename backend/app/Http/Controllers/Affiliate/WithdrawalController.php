@@ -135,10 +135,10 @@ class WithdrawalController extends Controller
                     ], 400);
                 }
 
-                $responseMessage = 'Withdrawal processed successfully! Funds will arrive within minutes.';
+                $responseMessage = 'Withdrawal processed successfully! Funds will arrive in your account within minutes.';
             } else {
                 // Keep as pending for manual admin review
-                $responseMessage = 'Withdrawal request submitted. It will be reviewed by the admin shortly.';
+                $responseMessage = 'Withdrawal request submitted successfully! Our team will review and process it shortly. You will receive an email notification once completed.';
             }
 
             $notification = new WithdrawalProcessingNotification([
