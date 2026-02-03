@@ -26,7 +26,7 @@ class AutomaticWithdrawalService
         if (!$enableAutomatic) {
             return [
                 'success' => false,
-                'message' => 'Automatic withdrawals are disabled. Withdrawal pending admin review.',
+                'message' => 'Your withdrawal request has been received and is being reviewed by our team. You will be notified once it is processed.',
                 'data' => $withdrawal,
             ];
         }
