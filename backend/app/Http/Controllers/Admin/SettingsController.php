@@ -66,7 +66,12 @@ class SettingsController extends Controller
         $data = $validator->validated();
 
         foreach ($data as $key => $value) {
-            Setting::setValue($key, $value, 'string', 'payment');
+            // Determine the correct type for each setting
+            $type = match($key) {
+                'enable_automatic_withdrawals' => 'boolean',
+                default => 'string',
+            };
+            Setting::setValue($key, $value, $type, 'payment');
         }
 
         return response()->json([
