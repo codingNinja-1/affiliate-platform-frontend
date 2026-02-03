@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Withdrawal;
 use App\Models\User;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,15 @@ class AutomaticWithdrawalService
      */
     public function processWithdrawal(Withdrawal $withdrawal, User $user): array
     {
+        $enableAutomatic = Setting::getValue('enable_automatic_withdrawals', true);
+        if (!$enableAutomatic) {
+            return [
+                'success' => false,
+                'message' => 'Automatic withdrawals are disabled. Withdrawal pending admin review.',
+                'data' => $withdrawal,
+            ];
+        }
+
         try {
             // Step 1: Get bank code from bank name
             $bankCode = $this->getBankCode($withdrawal->bank_name);
