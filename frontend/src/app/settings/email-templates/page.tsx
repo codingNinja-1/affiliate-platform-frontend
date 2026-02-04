@@ -25,6 +25,12 @@ const TEMPLATE_TYPES = [
     variables: ['{name}', '{email}', '{reason}'],
   },
   {
+    key: 'withdrawal_processing',
+    name: 'Withdrawal Processing',
+    description: 'Sent immediately when withdrawal is requested',
+    variables: ['{name}', '{amount}', '{withdrawal_ref}'],
+  },
+  {
     key: 'withdrawal_approved',
     name: 'Withdrawal Approved',
     description: 'Sent when withdrawal is approved',
