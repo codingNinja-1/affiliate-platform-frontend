@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Schedule balance updates every hour
 Schedule::command('balances:update')->hourly();
+
+// Schedule subscription charges daily
+Schedule::command('subscriptions:charge')->daily();

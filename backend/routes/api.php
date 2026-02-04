@@ -4,7 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\VapidKeyController;
+use App\Http\Controllers\PushSubscriptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +19,7 @@ use App\Http\Controllers\DashboardController;
 Route::prefix('auth')->group(function () {
     Route::post('/register', [RegisterController::class, 'register']);
     Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/google', [GoogleLoginController::class, 'login']);
     Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword']);
     Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
     Route::post('/verify-email', [RegisterController::class, 'verifyEmail']);
@@ -84,6 +88,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/email-templates/{templateKey}', [\App\Http\Controllers\EmailTemplateController::class, 'update']);
     });
 
+    // In-app notifications
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index']);
+    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markRead']);
+
+    // Web push notifications
+    Route::prefix('push')->group(function () {
+        Route::get('/vapid-key', [VapidKeyController::class, 'get']);
+        Route::post('/subscribe', [PushSubscriptionController::class, 'subscribe']);
+        Route::delete('/subscribe', [PushSubscriptionController::class, 'unsubscribe']);
+        Route::get('/subscribe', [PushSubscriptionController::class, 'status']);
+    });
+
+    // Subscription status for vendors/affiliates
+    Route::get('/subscriptions', [\App\Http\Controllers\SubscriptionController::class, 'show']);
+    Route::post('/subscriptions/pay', [\App\Http\Controllers\SubscriptionController::class, 'pay']);
+
     // Admin routes
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index']);
@@ -113,6 +133,19 @@ Route::middleware('auth:sanctum')->group(function () {
         // Settings
         Route::get('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'getPaymentSettings']);
         Route::post('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePaymentSettings']);
+        Route::get('/settings/subscriptions', [\App\Http\Controllers\Admin\SettingsController::class, 'getSubscriptionSettings']);
+        Route::post('/settings/subscriptions', [\App\Http\Controllers\Admin\SettingsController::class, 'updateSubscriptionSettings']);
+
+        // In-app notifications
+        Route::get('/notifications', [\App\Http\Controllers\Admin\InAppNotificationController::class, 'index']);
+        Route::post('/notifications', [\App\Http\Controllers\Admin\InAppNotificationController::class, 'store']);
+
+        // Web push notifications
+        Route::prefix('push')->group(function () {
+            Route::post('/send', [\App\Http\Controllers\Admin\PushNotificationController::class, 'send']);
+            Route::get('/subscriptions', [PushSubscriptionController::class, 'allSubscriptions']);
+            Route::delete('/subscriptions/{id}', [PushSubscriptionController::class, 'deleteSubscription']);
+        });
 
         // Email logs
         Route::get('/email/logs', [\App\Http\Controllers\Admin\EmailLogController::class, 'index']);
