@@ -85,8 +85,8 @@ export function usePushNotifications() {
         },
         body: JSON.stringify({
           endpoint: subscription.endpoint,
-          p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
-          auth: arrayBufferToBase64(subscription.getKey('auth')),
+          p256dh: arrayBufferToBase64(subscription.getKey('p256dh')!),
+          auth: arrayBufferToBase64(subscription.getKey('auth')!),
           user_agent: navigator.userAgent,
         }),
       });
