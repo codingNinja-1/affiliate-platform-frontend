@@ -23,7 +23,7 @@ class WithdrawalApprovedMail extends Mailable
         $bodySetting = Setting::where('key', 'email_template.withdrawal_approved.body')->first();
 
         $this->subject = $subjectSetting?->value ?? 'Your Withdrawal Request Has Been Approved';
-        
+
         $this->body = $bodySetting?->value ?? '<html><body style="font-family: Arial, sans-serif; padding: 20px;">
 <h2>Hello {name},</h2>
 <p>Good news! Your withdrawal request has been approved and is being processed.</p>
