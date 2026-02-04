@@ -2,15 +2,12 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\Setting;
 
-class AffiliateSaleNotification extends Notification implements ShouldQueue
+class AffiliateSaleNotification extends Notification
 {
-    use Queueable;
 
     public function __construct(private array $data)
     {
