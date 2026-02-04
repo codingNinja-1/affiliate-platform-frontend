@@ -80,4 +80,67 @@ class SettingsController extends Controller
             'data' => Setting::getByGroup('payment'),
         ]);
     }
+
+    /**
+     * Get subscription settings
+     */
+    public function getSubscriptionSettings()
+    {
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->user_type, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
+
+        $settings = Setting::getByGroup('subscription');
+
+        return response()->json([
+            'success' => true,
+            'data' => $settings,
+        ]);
+    }
+
+    /**
+     * Update subscription settings
+     */
+    public function updateSubscriptionSettings(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->user_type, ['admin', 'superadmin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'vendor_monthly' => 'nullable|numeric|min:0',
+            'affiliate_monthly' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|max:10',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $data = $validator->validated();
+
+        foreach ($data as $key => $value) {
+            Setting::setValue($key, $value, 'string', 'subscription');
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subscription settings updated successfully.',
+            'data' => Setting::getByGroup('subscription'),
+        ]);
+    }
 }

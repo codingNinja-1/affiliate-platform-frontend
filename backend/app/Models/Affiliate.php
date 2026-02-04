@@ -27,6 +27,10 @@ class Affiliate extends Model
         'country_id',
         'settings',
         'preferred_currency',
+        'subscription_status',
+        'subscription_expires_at',
+        'subscription_last_charged_at',
+        'subscription_failed_at',
     ];
 
     protected $casts = [
@@ -35,6 +39,9 @@ class Affiliate extends Model
         'total_withdrawn' => 'decimal:2',
         'conversion_rate' => 'decimal:2',
         'settings' => 'array',
+        'subscription_expires_at' => 'datetime',
+        'subscription_last_charged_at' => 'datetime',
+        'subscription_failed_at' => 'datetime',
     ];
 
     protected $appends = ['pending_balance', 'referral_link'];

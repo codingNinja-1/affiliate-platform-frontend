@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, Users, ShoppingBag, Mail, FileText, ChevronDown } from 'lucide-react';
+import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, Users, ShoppingBag, Mail, FileText, ChevronDown, Bell, CreditCard } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
@@ -47,11 +47,13 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
       icon: SettingsIcon,
       submenu: [
         { href: '/admin/settings/payment', label: 'Payment Settings' },
+        { href: '/admin/settings/subscriptions', label: 'Subscription Settings' },
         { href: '/admin/currency-rates', label: 'Currency Rates' },
       ],
     },
     { href: '/admin/email', label: 'Email Settings', icon: Mail },
     { href: '/admin/email/logs', label: 'Email Logs', icon: FileText },
+    { href: '/admin/notifications', label: 'Notifications', icon: Bell },
   ];
 
   const vendorNav: NavItem[] = [
@@ -59,6 +61,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
     { href: '/products', label: 'My Products', icon: Package },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/withdrawals', label: 'Withdrawals', icon: DollarSign },
+    { href: '/subscriptions', label: 'Subscription', icon: CreditCard },
   ];
 
   const affiliateNav: NavItem[] = [
@@ -67,6 +70,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
     { href: '/links', label: 'Affiliate Links', icon: Link2 },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/withdrawals', label: 'Withdrawals', icon: DollarSign },
+    { href: '/subscriptions', label: 'Subscription', icon: CreditCard },
   ];
 
   const customerNav: NavItem[] = [
