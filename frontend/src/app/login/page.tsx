@@ -126,7 +126,7 @@ export default function LoginPage() {
                 <path d="M13 3L4 14H12L11 21L20 10H12L13 3Z" fill="white" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="text-white text-base sm:text-xl font-semibold">Trakr</span>
+            <span className="text-white text-base sm:text-xl font-semibold">AffiliateHub</span>
           </div>
           <Link href="/" className="hidden sm:flex items-center gap-2 text-gray-400 hover:text-white transition text-sm">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -141,7 +141,7 @@ export default function LoginPage() {
           <div className="w-full max-w-md">
             <div className="bg-[#12131f] border border-[#1e2035] rounded-2xl p-6 sm:p-8 shadow-2xl">
               <h1 className="text-xl sm:text-2xl font-semibold text-white text-center mb-2">
-                Sign In to Your Trakr Account
+                Sign In to Your AffiliateHub Account
               </h1>
               
               {error && (
@@ -274,7 +274,7 @@ export default function LoginPage() {
         
         <div className="relative z-10 max-w-lg">
           <h2 className="text-4xl font-bold text-white mb-4 text-center">
-            Get better with Trakr
+            Get better with AffiliateHub
           </h2>
           <p className="text-gray-400 text-center mb-10">
             Take your affiliate marketing to the next level with AffiliateHub—optimize tracking, boost efficiency, and maximize your earnings effortlessly.
