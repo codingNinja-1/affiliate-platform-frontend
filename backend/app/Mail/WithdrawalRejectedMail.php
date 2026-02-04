@@ -4,16 +4,12 @@ namespace App\Mail;
 
 use App\Models\Withdrawal;
 use App\Models\Setting;
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
 
 class WithdrawalRejectedMail extends Mailable
 {
-    use Queueable, SerializesModels;
-
     public $subject;
     public $body;
 

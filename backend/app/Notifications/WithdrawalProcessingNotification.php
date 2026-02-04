@@ -4,15 +4,11 @@ namespace App\Notifications;
 
 use App\Models\EmailLog;
 use App\Models\Setting;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class WithdrawalProcessingNotification extends Notification implements ShouldQueue
+class WithdrawalProcessingNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(private array $data)
     {
     }
