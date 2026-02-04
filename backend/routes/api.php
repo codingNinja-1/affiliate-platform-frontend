@@ -120,10 +120,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Currency settings (legacy)
         Route::get('/settings/currencies', [\App\Http\Controllers\Admin\CurrencyController::class, 'index']);
-        Route::apiResource('users', \App\Http\Controllers\Admin\UserController::class)->only(['index', 'show', 'update']);
-        Route::apiResource('products', \App\Http\Controllers\Admin\ProductController::class)->only(['index', 'show']);
-        Route::apiResource('transactions', \App\Http\Controllers\Admin\TransactionController::class)->only(['index', 'show']);
-        Route::apiResource('withdrawals', \App\Http\Controllers\Admin\WithdrawalController::class)->only(['index']);
+        Route::apiResource('users', \App\Http\Controllers\Admin\UserController::class)->only(['index', 'show', 'update'])->names('admin.users');
+        Route::apiResource('products', \App\Http\Controllers\Admin\ProductController::class)->only(['index', 'show'])->names('admin.products');
+        Route::apiResource('transactions', \App\Http\Controllers\Admin\TransactionController::class)->only(['index', 'show'])->names('admin.transactions');
+        Route::apiResource('withdrawals', \App\Http\Controllers\Admin\WithdrawalController::class)->only(['index'])->names('admin.withdrawals');
         Route::post('/products/{product}/approve', [\App\Http\Controllers\Admin\ProductController::class, 'approve'])->name('admin.products.approve');
         Route::post('/products/{product}/reject', [\App\Http\Controllers\Admin\ProductController::class, 'reject'])->name('admin.products.reject');
         Route::post('/products/{product}/activate', [\App\Http\Controllers\Admin\ProductController::class, 'setActive'])->name('admin.products.activate');
@@ -159,8 +159,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Vendor routes
     Route::prefix('vendor')->middleware('role:vendor')->group(function () {
-        Route::apiResource('products', \App\Http\Controllers\Vendor\ProductController::class);
-        Route::apiResource('withdrawals', \App\Http\Controllers\Vendor\WithdrawalController::class);
+        Route::apiResource('products', \App\Http\Controllers\Vendor\ProductController::class)->names('vendor.products');
+        Route::apiResource('withdrawals', \App\Http\Controllers\Vendor\WithdrawalController::class)->names('vendor.withdrawals');
         Route::get('/transactions', [\App\Http\Controllers\Vendor\TransactionController::class, 'index']);
         Route::get('/reports', \App\Http\Controllers\Vendor\ReportController::class . '@index');
     });
@@ -174,11 +174,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Affiliate routes
     Route::prefix('affiliate')->middleware('role:affiliate')->group(function () {
-        Route::get('/products', \App\Http\Controllers\Affiliate\ProductController::class . '@index');
-        Route::get('/products/{product}', \App\Http\Controllers\Affiliate\ProductController::class . '@show');
-        Route::apiResource('withdrawals', \App\Http\Controllers\Affiliate\WithdrawalController::class);
+        Route::get('/products', [\App\Http\Controllers\Affiliate\ProductController::class, 'index'])->name('affiliate.products.index');
+        Route::get('/products/{product}', [\App\Http\Controllers\Affiliate\ProductController::class, 'show'])->name('affiliate.products.show');
+        Route::apiResource('withdrawals', \App\Http\Controllers\Affiliate\WithdrawalController::class)->names('affiliate.withdrawals');
         Route::get('/commissions', [\App\Http\Controllers\Affiliate\CommissionController::class, 'index']);
-        Route::get('/reports', \App\Http\Controllers\Affiliate\ReportController::class . '@index');
+        Route::get('/reports', [\App\Http\Controllers\Affiliate\ReportController::class, 'index']);
     });
 
     // Customer routes
