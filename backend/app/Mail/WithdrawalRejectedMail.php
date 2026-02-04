@@ -26,7 +26,7 @@ class WithdrawalRejectedMail extends Mailable
         $bodySetting = Setting::where('key', 'email_template.withdrawal_rejected.body')->first();
 
         $this->subject = $subjectSetting?->value ?? 'Withdrawal Request - Action Required';
-        
+
         $this->body = $bodySetting?->value ?? '<html><body style="font-family: Arial, sans-serif; padding: 20px;">
 <h2>Hello {name},</h2>
 <p>We regret to inform you that your withdrawal request could not be processed.</p>
