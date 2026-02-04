@@ -113,6 +113,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Settings
         Route::get('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'getPaymentSettings']);
         Route::post('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePaymentSettings']);
+
+        // Email logs
+        Route::get('/email/logs', [\App\Http\Controllers\Admin\EmailLogController::class, 'index']);
     });
 
     // Vendor dashboard converted endpoint
