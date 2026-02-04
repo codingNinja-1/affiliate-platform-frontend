@@ -56,7 +56,7 @@ class VapidKeyService
         // Extract base64 content from PEM
         $lines = explode("\n", $pem);
         $base64 = '';
-        
+
         foreach ($lines as $line) {
             if (strpos($line, '-----') !== 0) {
                 $base64 .= $line;
@@ -85,7 +85,7 @@ class VapidKeyService
         // PKCS#8 structure: look for the 32-byte private key
         // For P-256, the private key is 32 bytes
         $length = strlen($der);
-        
+
         // Scan for the OCTET STRING containing the private key (tag 04)
         for ($i = 0; $i < $length - 32; $i++) {
             if (ord($der[$i]) === 0x04 && ord($der[$i + 1]) === 0x20) {
@@ -105,7 +105,7 @@ class VapidKeyService
         // The public key point for P-256 is 65 bytes (0x04 || X || Y)
         // Look for 0x04 followed by 64 bytes
         $length = strlen($der);
-        
+
         for ($i = 0; $i < $length - 65; $i++) {
             if (ord($der[$i]) === 0x04 && strlen(substr($der, $i, 65)) === 65) {
                 return substr($der, $i, 65);
@@ -122,7 +122,7 @@ class VapidKeyService
     public static function getKeys(): array
     {
         $model = app('App\Models\Setting');
-        
+
         return [
             'public' => $model::firstWhere(['key' => 'vapid_public_key', 'group' => 'push'])?->value,
             'private' => $model::firstWhere(['key' => 'vapid_private_key', 'group' => 'push'])?->value,

@@ -75,7 +75,7 @@ class WebPushService
 
     /**
      * Send a push notification to a single subscription
-     * 
+     *
      * NOTE: For production use, install: composer require web-push-libs/web-push
      */
     private static function sendToSubscription(NotificationSubscription $subscription, array $payload): bool

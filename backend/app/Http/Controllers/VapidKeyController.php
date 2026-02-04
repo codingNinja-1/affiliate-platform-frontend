@@ -15,7 +15,7 @@ class VapidKeyController extends Controller
     {
         try {
             $keys = VapidKeyService::getKeys();
-            
+
             if (!$keys['public']) {
                 return response()->json([
                     'error' => 'VAPID keys not configured',
