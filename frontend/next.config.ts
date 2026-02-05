@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 // Use static production URL for rewrites - don't rely on env vars at config time
-const backendURL = "https://snow-mantis-616662.hostingersite.com/backend";
+const backendURL = "https://snow-mantis-616662.hostingersite.com/backend/public";
 
 const nextConfig: NextConfig = {
   reactCompiler: false,
