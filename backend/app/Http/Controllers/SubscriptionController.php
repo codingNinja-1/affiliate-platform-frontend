@@ -31,7 +31,7 @@ class SubscriptionController extends Controller
 
         $monthlyAmount = $this->getMonthlyAmount($user->user_type);
         $annualAmount = round($monthlyAmount * 12, 2);
-        
+
         // Check if payment is allowed (1 week before expiration or expired)
         $canPayNow = $this->canPaySubscription($record);
 
@@ -87,7 +87,7 @@ class SubscriptionController extends Controller
         $monthlyAmount = $this->getMonthlyAmount($user->user_type);
         $period = $request->input('period');
         $paymentMethod = $request->input('payment_method');
-        
+
         $amount = $period === 'monthly' ? $monthlyAmount : round($monthlyAmount * 12, 2);
 
         if ($amount <= 0) {
@@ -122,6 +122,22 @@ class SubscriptionController extends Controller
                 if ($user->status === 'inactive') {
                     $user->update(['status' => 'active']);
                 }
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Subscription paid successfully from balance.',
+                'data' => [
+                    'status' => $record->subscription_status,
+                    'expires_at' => $record->subscription_expires_at,
+                    'balance' => $record->balance,
+                ],
+            ]);
+        } else {
+            // Paystack payment - initialize transaction
+            return $this->initializePaystackPayment($user, $record, $amount, $period);
+        }
+    }
 
     private function canPaySubscription($record): bool
     {
@@ -138,7 +154,7 @@ class SubscriptionController extends Controller
     private function initializePaystackPayment($user, $record, $amount, $period)
     {
         $paystackSecretKey = config('services.paystack.secret_key');
-        
+
         if (!$paystackSecretKey) {
             return response()->json([
                 'success' => false,
@@ -190,27 +206,11 @@ class SubscriptionController extends Controller
             ], 500);
         }
     }
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Subscription paid successfully from balance.',
-                'data' => [
-                    'status' => $record->subscription_status,
-                    'expires_at' => $record->subscription_expires_at,
-                    'balance' => $record->balance,
-                ],
-            ]);
-        } else {
-            // Paystack payment - initialize transaction
-            return $this->initializePaystackPayment($user, $record, $amount, $period);
-        }
-    }
 
     public function verifyPayment(Request $request, $reference)
     {
         $paystackSecretKey = config('services.paystack.secret_key');
-        
+
         if (!$paystackSecretKey) {
             return response()->json([
                 'success' => false,
@@ -266,7 +266,7 @@ class SubscriptionController extends Controller
             // Update subscription
             DB::transaction(function () use ($record, $user, $period) {
                 $expiresAt = $period === 'monthly' ? now()->addMonth() : now()->addYear();
-                
+
                 $record->update([
                     'subscription_status' => 'active',
                     'subscription_last_charged_at' => now(),
