@@ -5,6 +5,7 @@ const BACKEND_BASE = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
 export async function POST(req: NextRequest) {
   try {
     const auth = req.headers.get('authorization') || '';
+    const body = await req.json();
 
     const res = await fetch(`${BACKEND_BASE}/api/subscriptions/pay`, {
       method: 'POST',
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
         ...(auth ? { Authorization: auth } : {}),
       },
+      body: JSON.stringify(body),
     });
 
     const data = await res.json().catch(async () => {
