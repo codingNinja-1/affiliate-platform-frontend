@@ -25,8 +25,6 @@ Route::post('/google', [GoogleLoginController::class, 'login']);
     Route::post('/verify-email', [RegisterController::class, 'verifyEmail']);
 });
 
-// ...existing code...
-
 // Public product routes (no auth required)
 Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show'])->name('products.show');

@@ -1,4 +1,14 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /backend/
+
+    # Prevent rewriting if already rewritten to public/
+    RewriteCond %{REQUEST_URI} !^/backend/public/
+
+    # Do not rewrite existing files or directories
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Send everything else to the public/ front controller
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
