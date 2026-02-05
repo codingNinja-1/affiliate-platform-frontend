@@ -101,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Subscription status for vendors/affiliates
     Route::get('/subscriptions', [\App\Http\Controllers\SubscriptionController::class, 'show']);
     Route::post('/subscriptions/pay', [\App\Http\Controllers\SubscriptionController::class, 'pay']);
+    Route::get('/subscriptions/verify/{reference}', [\App\Http\Controllers\SubscriptionController::class, 'verifyPayment']);
 
     // Admin routes
     Route::prefix('admin')->middleware('role:admin')->group(function () {
