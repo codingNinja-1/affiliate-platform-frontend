@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   reactCompiler: false,
   async rewrites() {
     return [
-      { source: "/api/:path*", destination: `${backendURL}/api/:path*` },
+      { source: "/api/:path*", destination: `${backendURL}/backend/api/:path*` },
     ];
   },
   images: {
