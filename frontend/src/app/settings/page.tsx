@@ -186,6 +186,12 @@ export default function SettingsPage() {
         }),
       });
 
+      // Check if response is actually JSON
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server error: Unable to verify account. Please try again later.');
+      }
+
       const data = await res.json();
 
       if (!res.ok || !data.success) {
@@ -294,21 +300,6 @@ export default function SettingsPage() {
             {bankDetails.bank_code && (
               <p className="mt-1 text-xs text-gray-500">Bank code: {bankDetails.bank_code}</p>
             )}
-          </div>
-
-          <div>
-            <label htmlFor="bank_name" className="block text-sm font-medium text-gray-700">
-              Bank Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="bank_name"
-              value={bankDetails.bank_name}
-              onChange={(e) => handleChange('bank_name', e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="e.g., Access Bank, GTBank, First Bank"
-              required
-            />
           </div>
 
           <div>

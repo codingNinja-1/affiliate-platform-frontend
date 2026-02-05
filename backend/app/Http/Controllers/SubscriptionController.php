@@ -77,7 +77,7 @@ class SubscriptionController extends Controller
         }
 
         // CRITICAL: Prevent duplicate payments - check if there was a recent payment (within last 5 minutes)
-        if ($record->subscription_last_charged_at && 
+        if ($record->subscription_last_charged_at &&
             now()->diffInMinutes($record->subscription_last_charged_at) < 5) {
             return response()->json([
                 'success' => false,
@@ -86,10 +86,10 @@ class SubscriptionController extends Controller
         }
 
         // Check if subscription is active and not near expiration
-        if ($record->subscription_status === 'active' && 
-            $record->subscription_expires_at && 
+        if ($record->subscription_status === 'active' &&
+            $record->subscription_expires_at &&
             now()->lessThan($record->subscription_expires_at)) {
-            
+
             // Only allow payment if within 7 days of expiration
             $daysUntilExpiry = now()->diffInDays($record->subscription_expires_at, false);
             if ($daysUntilExpiry > 7) {
@@ -180,7 +180,7 @@ class SubscriptionController extends Controller
     {
         // Get Paystack mode from settings (test or live)
         $mode = Setting::getValue('paystack_mode', 'test');
-        
+
         // Read correct Paystack keys based on mode
         if ($mode === 'live') {
             $paystackSecretKey = Setting::getValue('paystack_live_secret_key');
@@ -246,7 +246,7 @@ class SubscriptionController extends Controller
     {
         // Get Paystack mode from settings (test or live)
         $mode = Setting::getValue('paystack_mode', 'test');
-        
+
         // Read correct Paystack keys based on mode
         if ($mode === 'live') {
             $paystackSecretKey = Setting::getValue('paystack_live_secret_key');
@@ -307,7 +307,7 @@ class SubscriptionController extends Controller
             }
 
             // CRITICAL: Prevent duplicate verification - check if subscription was already updated with this payment
-            if ($record->subscription_last_charged_at && 
+            if ($record->subscription_last_charged_at &&
                 now()->diffInMinutes($record->subscription_last_charged_at) < 5) {
                 return response()->json([
                     'success' => true,
