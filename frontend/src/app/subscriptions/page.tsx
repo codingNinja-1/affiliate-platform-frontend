@@ -40,7 +40,14 @@ export default function SubscriptionPage() {
 
         const payload = await res.json();
         if (payload.success) {
-          setData(payload.data);
+          // Ensure numeric values are parsed as numbers
+          const rawData = payload.data;
+          setData({
+            ...rawData,
+            balance: parseFloat(rawData.balance) || 0,
+            annual_amount: parseFloat(rawData.annual_amount) || 0,
+            monthly_amount: parseFloat(rawData.monthly_amount) || 0,
+          });
         } else {
           setError(payload.message || 'Failed to load subscription');
         }
