@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 type SubscriptionData = {
@@ -15,7 +15,7 @@ type SubscriptionData = {
   can_pay_with_balance_yearly: boolean;
 };
 
-export default function SubscriptionPage() {
+function SubscriptionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -74,7 +74,40 @@ export default function SubscriptionPage() {
   }, [router, searchParams]);
 
   const verifyPaystackPayment = async (reference: string, token: string) => {
-    setShowPaymentModal(true); const token = localStorage.getItem('auth_token');
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/subscriptions/verify/${reference}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = await res.json();
+      if (payload.success) {
+        setMessage('Payment verified and subscription activated successfully!');
+        // Reload subscription data
+        window.location.href = '/subscriptions';
+      } else {
+        setError(payload.message || 'Payment verification failed');
+      }
+    } catch (err) {
+      console.error('Payment verification error:', err);
+      setError('Failed to verify payment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const payWithBalance = async () => {
+    if (!data?.can_pay) return;
+
+    setPaying(true);
+    setError('');
+    setMessage('');
+    setShowPaymentModal(false);
+
+    try {
+      const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/subscriptions/pay', {
         method: 'POST',
         headers: {
@@ -100,7 +133,7 @@ export default function SubscriptionPage() {
         can_pay: false,
         balance: parseFloat(payload.data?.balance) || prev.balance,
       } : prev);
-    } catch (err: unknown) {
+    } catch (err) {
       const msg = err instanceof Error ? err.message : 'Payment failed';
       setError(msg);
     } finally {
@@ -139,48 +172,15 @@ export default function SubscriptionPage() {
       if (payload.data?.authorization_url) {
         window.location.href = payload.data.authorization_url;
       }
-    } catch (err: unknown) {
+    } catch (err) {
       const msg = err instanceof Error ? err.message : 'Payment initialization failed';
       setError(msg);
       setPaying(false);
     }
   };
 
-  const paySubscription = async () => {
-    if (!data?.can_pay) return;
-
-    setPaying(true);
-    setError('');
-    setMessage('');
-
-    try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/subscriptions/pay', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const payload = await res.json();
-      if (!res.ok) {
-        throw new Error(payload.message || 'Payment failed');
-      }
-
-      setMessage('Subscription paid successfully.');
-      setData((prev) => prev ? {
-        ...prev,
-        status: payload.data?.status || prev.status,
-        expires_at: payload.data?.expires_at || prev.expires_at,
-        can_pay: false,
-        balance: prev.balance - prev.annual_amount,
-      } : prev);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Payment failed';
-      setError(msg);
-    } finally {
-      setPaying(false);
-    }
+  const paySubscription = () => {
+    setShowPaymentModal(true);
   };
 
   if (loading) {
@@ -338,5 +338,13 @@ export default function SubscriptionPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SubscriptionPage() {
+  return (
+    <Suspense fallback={<div className="p-8"><p className="text-gray-500">Loading...</p></div>}>
+      <SubscriptionContent />
+    </Suspense>
   );
 }
