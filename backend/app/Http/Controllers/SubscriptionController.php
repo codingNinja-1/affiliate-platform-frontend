@@ -16,7 +16,7 @@ class SubscriptionController extends Controller
         if (!$user || !in_array($user->user_type, ['vendor', 'affiliate'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized.',
+                'message' => 'You need to be logged in to manage your subscription.',
             ], 403);
         }
 
@@ -25,7 +25,7 @@ class SubscriptionController extends Controller
         if (!$record) {
             return response()->json([
                 'success' => false,
-                'message' => 'Subscription record not found.',
+                'message' => 'Your account profile was not found. Please contact support.',
             ], 404);
         }
 
@@ -63,7 +63,7 @@ class SubscriptionController extends Controller
         if (!$user || !in_array($user->user_type, ['vendor', 'affiliate'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized.',
+                'message' => 'You need to be logged in to manage your subscription.',
             ], 403);
         }
 
@@ -72,7 +72,7 @@ class SubscriptionController extends Controller
         if (!$record) {
             return response()->json([
                 'success' => false,
-                'message' => 'Subscription record not found.',
+                'message' => 'Your account profile was not found. Please contact support.',
             ], 404);
         }
 
@@ -80,7 +80,7 @@ class SubscriptionController extends Controller
         if (!$this->canPaySubscription($record)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Subscription payment not allowed at this time. You can only pay within 1 week before expiration or after expiration.',
+                'message' => 'You can renew your subscription 1 week before it expires or after it expires.',
             ], 422);
         }
 
@@ -93,7 +93,7 @@ class SubscriptionController extends Controller
         if ($amount <= 0) {
             return response()->json([
                 'success' => true,
-                'message' => 'Subscription is free.',
+                'message' => 'Your subscription is free. No payment required.',
                 'data' => [
                     'status' => $record->subscription_status,
                 ],
@@ -102,16 +102,17 @@ class SubscriptionController extends Controller
 
         if ($paymentMethod === 'balance') {
             if ($record->balance < $amount) {
+                $shortfall = $amount - $record->balance;
                 return response()->json([
                     'success' => false,
-                    'message' => 'Insufficient balance for subscription payment.',
+                    'message' => "Your balance is insufficient. You need " . number_format($shortfall, 2) . " more to complete this payment.",
                 ], 422);
             }
 
             DB::transaction(function () use ($record, $amount, $user, $period) {
                 $record->updateBalance($amount, 'subtract');
                 $expiresAt = $period === 'monthly' ? now()->addMonth() : now()->addYear();
-                
+
                 $record->update([
                     'subscription_status' => 'active',
                     'subscription_last_charged_at' => now(),
@@ -126,7 +127,7 @@ class SubscriptionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Subscription paid successfully from balance.',
+                'message' => 'Payment successful! Your subscription is now active.',
                 'data' => [
                     'status' => $record->subscription_status,
                     'expires_at' => $record->subscription_expires_at,
@@ -153,13 +154,15 @@ class SubscriptionController extends Controller
 
     private function initializePaystackPayment($user, $record, $amount, $period)
     {
-        $paystackSecretKey = config('services.paystack.secret_key');
+        // Read Paystack keys from Settings database
+        $paystackSecretKey = Setting::getValue('paystack_secret_key');
+        $paystackPublicKey = Setting::getValue('paystack_public_key');
 
-        if (!$paystackSecretKey) {
+        if (!$paystackSecretKey || !$paystackPublicKey) {
             return response()->json([
                 'success' => false,
-                'message' => 'Paystack is not configured.',
-            ], 500);
+                'message' => 'Card payment is temporarily unavailable. Please try using your account balance instead.',
+            ], 503);
         }
 
         $reference = 'SUB_' . time() . '_' . $user->id;
@@ -187,7 +190,7 @@ class SubscriptionController extends Controller
             if ($response->successful() && $data['status']) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Payment initialized.',
+                    'message' => 'Redirecting to payment...',
                     'data' => [
                         'authorization_url' => $data['data']['authorization_url'],
                         'reference' => $reference,
@@ -197,25 +200,26 @@ class SubscriptionController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => $data['message'] ?? 'Failed to initialize payment.',
+                'message' => $data['message'] ?? 'We couldn\'t process your payment request. Please try again.',
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Payment initialization failed: ' . $e->getMessage(),
-            ], 500);
+                'message' => 'Payment service is temporarily unavailable. Please try again later.',
+            ], 503);
         }
     }
 
     public function verifyPayment(Request $request, $reference)
     {
-        $paystackSecretKey = config('services.paystack.secret_key');
+        // Read Paystack keys from Settings database
+        $paystackSecretKey = Setting::getValue('paystack_secret_key');
 
         if (!$paystackSecretKey) {
             return response()->json([
                 'success' => false,
-                'message' => 'Paystack is not configured.',
-            ], 500);
+                'message' => 'Payment verification is temporarily unavailable. Please contact support.',
+            ], 503);
         }
 
         try {
@@ -228,7 +232,7 @@ class SubscriptionController extends Controller
             if (!$response->successful() || !$data['status']) {
                 return response()->json([
                     'success' => false,
-                    'message' => $data['message'] ?? 'Payment verification failed.',
+                    'message' => 'We couldn\'t verify your payment. Please try again or contact support.',
                 ], 422);
             }
 
@@ -237,7 +241,7 @@ class SubscriptionController extends Controller
             if ($transactionData['status'] !== 'success') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Payment was not successful.',
+                    'message' => 'Your payment was not completed. Please try again.',
                 ], 422);
             }
 
@@ -251,7 +255,7 @@ class SubscriptionController extends Controller
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'User not found.',
+                    'message' => 'Your account was not found. Please contact support.',
                 ], 404);
             }
 
@@ -259,7 +263,7 @@ class SubscriptionController extends Controller
             if (!$record) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Record not found.',
+                    'message' => 'Your account profile was not found. Please contact support.',
                 ], 404);
             }
 
@@ -281,7 +285,7 @@ class SubscriptionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Payment verified and subscription activated.',
+                'message' => 'Payment confirmed! Your subscription is now active.',
                 'data' => [
                     'status' => $record->subscription_status,
                     'expires_at' => $record->subscription_expires_at,
@@ -290,8 +294,8 @@ class SubscriptionController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Payment verification failed: ' . $e->getMessage(),
-            ], 500);
+                'message' => 'Payment verification failed. Please try again or contact support.',
+            ], 503);
         }
     }
 
