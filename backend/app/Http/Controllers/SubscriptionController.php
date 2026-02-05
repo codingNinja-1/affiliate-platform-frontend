@@ -76,11 +76,35 @@ class SubscriptionController extends Controller
             ], 404);
         }
 
-        // Check if payment is allowed
+        // CRITICAL: Prevent duplicate payments - check if there was a recent payment (within last 5 minutes)
+        if ($record->subscription_last_charged_at && 
+            now()->diffInMinutes($record->subscription_last_charged_at) < 5) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A payment was recently processed. Please refresh the page to see your current subscription status.',
+            ], 422);
+        }
+
+        // Check if subscription is active and not near expiration
+        if ($record->subscription_status === 'active' && 
+            $record->subscription_expires_at && 
+            now()->lessThan($record->subscription_expires_at)) {
+            
+            // Only allow payment if within 7 days of expiration
+            $daysUntilExpiry = now()->diffInDays($record->subscription_expires_at, false);
+            if ($daysUntilExpiry > 7) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Your subscription is active until " . $record->subscription_expires_at->format('M d, Y') . ". You can renew it starting " . now()->addDays((int)$daysUntilExpiry - 7)->format('M d, Y') . ".",
+                ], 422);
+            }
+        }
+
+        // Double-check with canPaySubscription method
         if (!$this->canPaySubscription($record)) {
             return response()->json([
                 'success' => false,
-                'message' => 'You can renew your subscription 1 week before it expires or after it expires.',
+                'message' => 'Your subscription is currently active. You can renew it 1 week before it expires.',
             ], 422);
         }
 
@@ -280,6 +304,19 @@ class SubscriptionController extends Controller
                     'success' => false,
                     'message' => 'Your account profile was not found. Please contact support.',
                 ], 404);
+            }
+
+            // CRITICAL: Prevent duplicate verification - check if subscription was already updated with this payment
+            if ($record->subscription_last_charged_at && 
+                now()->diffInMinutes($record->subscription_last_charged_at) < 5) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Your subscription is already active!',
+                    'data' => [
+                        'status' => $record->subscription_status,
+                        'expires_at' => $record->subscription_expires_at,
+                    ],
+                ]);
             }
 
             // Update subscription
