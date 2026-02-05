@@ -74,6 +74,14 @@ class WithdrawalController extends Controller
             ], 404);
         }
 
+        // Check if subscription is active
+        if ($vendor->subscription_expires_at && now()->greaterThan($vendor->subscription_expires_at)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your subscription has expired. Please renew your subscription to make withdrawals.',
+            ], 403);
+        }
+
         $balance = $vendor->balance ?? 0;
 
         // Check for pending withdrawals to calculate available balance

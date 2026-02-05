@@ -75,6 +75,14 @@ class WithdrawalController extends Controller
             ], 404);
         }
 
+        // Check if subscription is active
+        if ($affiliate->subscription_expires_at && now()->greaterThan($affiliate->subscription_expires_at)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your subscription has expired. Please renew your subscription to make withdrawals.',
+            ], 403);
+        }
+
         // Recompute available balance from commissions minus withdrawals to stay in sync with dashboard
         $totalEarnings = (float) Commission::where('user_id', $user->id)
             ->where('user_type', 'affiliate')
