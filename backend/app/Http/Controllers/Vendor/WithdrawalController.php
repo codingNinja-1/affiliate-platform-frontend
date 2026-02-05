@@ -75,7 +75,14 @@ class WithdrawalController extends Controller
         }
 
         // Check if subscription is active
-        if ($vendor->subscription_expires_at && now()->greaterThan($vendor->subscription_expires_at)) {
+        if (!$vendor->subscription_expires_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You need an active subscription to make withdrawals. Please subscribe first.',
+            ], 403);
+        }
+
+        if (now()->greaterThan($vendor->subscription_expires_at)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Your subscription has expired. Please renew your subscription to make withdrawals.',
