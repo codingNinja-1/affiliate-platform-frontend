@@ -87,6 +87,6 @@ class BankController extends Controller
             }
         }
 
-        return false
+        return false;
     }
 }

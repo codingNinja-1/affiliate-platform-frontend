@@ -19,7 +19,7 @@ use App\Http\Controllers\PushSubscriptionController;
 Route::prefix('auth')->group(function () {
     Route::post('/register', [RegisterController::class, 'register']);
     Route::post('/login', [LoginController::class, 'login']);
-    Route::post('/google', [GoogleLoginController::class, 'login']);
+Route::post('/google', [GoogleLoginController::class, 'login']);
     Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword']);
     Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
     Route::post('/verify-email', [RegisterController::class, 'verifyEmail']);
@@ -28,8 +28,8 @@ Route::prefix('auth')->group(function () {
 // ...existing code...
 
 // Public product routes (no auth required)
-Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index']);
-Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show']);
+Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
 
 // Affiliate tracking (public - no auth required)
 Route::get('/track/{referralCode}/{productId}', [\App\Http\Controllers\TrackingController::class, 'trackClick']);
@@ -133,7 +133,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Settings
         Route::get('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'getPaymentSettings']);
         Route::post('/settings/payment', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePaymentSettings']);
-        Route::get('/settings/subscriptions', [\App\Http\Controllers\Admin\SettingsController::class, 'getSubscriptionSettings']);
+Route::get('/settings/subscriptions', [\App\Http\Controllers\Admin\SettingsController::class, 'getSubscriptionSettings']);
         Route::post('/settings/subscriptions', [\App\Http\Controllers\Admin\SettingsController::class, 'updateSubscriptionSettings']);
 
         // In-app notifications
@@ -182,23 +182,25 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Customer routes
-    if (class_exists('App\\Http\\Controllers\\Customer\\OrderController')) {
-        Route::prefix('customer')->middleware('role:customer')->group(function () {
-            Route::get('/orders', 'Customer\OrderController@index');
-            Route::get('/orders/{transaction}', 'Customer\OrderController@show');
-        });
-    }
+    // Commented out if customer controller doesn't exist
+    // if (class_exists('App\\Http\\Controllers\\Customer\\OrderController')) {
+    //     Route::prefix('customer')->middleware('role:customer')->group(function () {
+    //         Route::get('/orders', [\App\Http\Controllers\Customer\OrderController::class, 'index']);
+    //         Route::get('/orders/{transaction}', [\App\Http\Controllers\Customer\OrderController::class, 'show']);
+    //     });
+    // }
 
     // Customer/Authenticated user product routes
-    Route::get('/products-auth', [\App\Http\Controllers\ProductController::class, 'index']);
-    Route::get('/products-auth/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show']);
+    Route::get('/products-auth', [\App\Http\Controllers\ProductController::class, 'index'])->name('products-auth.index');
+    Route::get('/products-auth/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show'])->name('products-auth.show');
 
     // Shared routes
-    if (class_exists('App\\Http\\Controllers\\ProfileController')) {
-        Route::get('/profile', 'ProfileController@show');
-        Route::put('/profile', 'ProfileController@update');
-        Route::post('/profile/avatar', 'ProfileController@updateAvatar');
-    }
+    // ProfileController not implemented yet - routes commented out
+    // if (class_exists('App\\Http\\Controllers\\ProfileController')) {
+    //     Route::get('/profile', 'ProfileController@show');
+    //     Route::put('/profile', 'ProfileController@update');
+    //     Route::post('/profile/avatar', 'ProfileController@updateAvatar');
+    // }
 
     // Settings routes
     Route::prefix('settings')->group(function () {
