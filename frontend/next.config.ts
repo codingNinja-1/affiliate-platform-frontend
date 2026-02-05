@@ -1,12 +1,13 @@
 import type { NextConfig } from "next";
 
-const backendURL = process.env.BACKEND_URL ?? "http://127.0.0.1:8000";
+// Use static production URL for rewrites - don't rely on env vars at config time
+const backendURL = "https://snow-mantis-616662.hostingersite.com/backend";
 
 const nextConfig: NextConfig = {
   reactCompiler: false,
   async rewrites() {
     return [
-      { source: "/api/:path*", destination: `${backendURL}/backend/api/:path*` },
+      { source: "/api/:path*", destination: `${backendURL}/api/:path*` },
     ];
   },
   images: {
