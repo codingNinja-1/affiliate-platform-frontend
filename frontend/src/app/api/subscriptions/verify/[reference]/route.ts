@@ -4,11 +4,11 @@ const BACKEND_BASE = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { reference: string } }
+  { params }: { params: Promise<{ reference: string }> }
 ) {
   try {
     const auth = req.headers.get('authorization') || '';
-    const { reference } = params;
+    const { reference } = await params;
 
     const res = await fetch(`${BACKEND_BASE}/api/subscriptions/verify/${reference}`, {
       headers: {
