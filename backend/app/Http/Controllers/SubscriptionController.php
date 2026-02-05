@@ -154,9 +154,17 @@ class SubscriptionController extends Controller
 
     private function initializePaystackPayment($user, $record, $amount, $period)
     {
-        // Read Paystack keys from Settings database
-        $paystackSecretKey = Setting::getValue('paystack_secret_key');
-        $paystackPublicKey = Setting::getValue('paystack_public_key');
+        // Get Paystack mode from settings (test or live)
+        $mode = Setting::getValue('paystack_mode', 'test');
+        
+        // Read correct Paystack keys based on mode
+        if ($mode === 'live') {
+            $paystackSecretKey = Setting::getValue('paystack_live_secret_key');
+            $paystackPublicKey = Setting::getValue('paystack_live_public_key');
+        } else {
+            $paystackSecretKey = Setting::getValue('paystack_test_secret_key');
+            $paystackPublicKey = Setting::getValue('paystack_test_public_key');
+        }
 
         if (!$paystackSecretKey || !$paystackPublicKey) {
             return response()->json([
@@ -212,8 +220,15 @@ class SubscriptionController extends Controller
 
     public function verifyPayment(Request $request, $reference)
     {
-        // Read Paystack keys from Settings database
-        $paystackSecretKey = Setting::getValue('paystack_secret_key');
+        // Get Paystack mode from settings (test or live)
+        $mode = Setting::getValue('paystack_mode', 'test');
+        
+        // Read correct Paystack keys based on mode
+        if ($mode === 'live') {
+            $paystackSecretKey = Setting::getValue('paystack_live_secret_key');
+        } else {
+            $paystackSecretKey = Setting::getValue('paystack_test_secret_key');
+        }
 
         if (!$paystackSecretKey) {
             return response()->json([
