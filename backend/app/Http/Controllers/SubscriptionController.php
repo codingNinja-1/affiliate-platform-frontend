@@ -174,7 +174,7 @@ class SubscriptionController extends Controller
         }
 
         $reference = 'SUB_' . time() . '_' . $user->id;
-        $callbackUrl = config('app.frontend_url') . '/subscriptions/verify';
+        $callbackUrl = config('app.frontend_url') . '/subscriptions';
 
         try {
             $response = \Illuminate\Support\Facades\Http::withHeaders([
