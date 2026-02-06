@@ -141,7 +141,7 @@ export default function LinksPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 bg-white px-6 py-10 text-slate-900">
+    <main className="flex min-h-screen w-full flex-col gap-6 bg-white px-6 py-10 text-slate-900">
       <header>
         <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-500">
           ← Back to dashboard
