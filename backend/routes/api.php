@@ -205,6 +205,7 @@ Route::get('/settings/subscriptions', [\App\Http\Controllers\Admin\SettingsContr
     Route::prefix('settings')->group(function () {
         Route::get('/', [\App\Http\Controllers\SettingsController::class, 'index']);
         Route::post('/bank-details', [\App\Http\Controllers\SettingsController::class, 'updateBankDetails']);
+        Route::post('/resolve-account', [\App\Http\Controllers\SettingsController::class, 'resolveAccount']);
         Route::get('/check-bank-details', [\App\Http\Controllers\SettingsController::class, 'checkBankDetails']);
     });
 });
