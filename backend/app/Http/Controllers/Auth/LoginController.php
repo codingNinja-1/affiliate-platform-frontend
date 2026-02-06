@@ -66,12 +66,15 @@ class LoginController extends Controller
             'id' => $user->id,
             'user_id' => $user->user_id,
             'user_type' => $user->user_type,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
             'full_name' => $user->full_name,
             'email' => $user->email,
             'phone' => $user->phone,
             'avatar' => $user->avatar,
             'status' => $user->status,
             'two_factor_enabled' => $user->two_factor_enabled,
+            'created_at' => $user->created_at,
         ];
 
         if ($user->user_type === 'vendor') {
@@ -121,6 +124,8 @@ class LoginController extends Controller
             'id' => $user->id,
             'user_id' => $user->user_id,
             'user_type' => $user->user_type,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
             'full_name' => $user->full_name,
             'email' => $user->email,
             'phone' => $user->phone,
@@ -129,6 +134,7 @@ class LoginController extends Controller
             'two_factor_enabled' => $user->two_factor_enabled,
             'email_verified_at' => $user->email_verified_at,
             'last_login_at' => $user->last_login_at,
+            'created_at' => $user->created_at,
         ];
 
         if ($user->user_type === 'vendor') {
