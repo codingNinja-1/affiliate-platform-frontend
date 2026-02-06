@@ -91,7 +91,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 bg-gray-50 px-6 py-10">
+      <main className="flex min-h-screen w-full flex-col gap-6 bg-gray-50 px-6 py-10">
         <div className="h-8 w-32 animate-pulse rounded bg-gray-200" />
         <div className="h-64 animate-pulse rounded-xl bg-gray-200" />
       </main>
@@ -99,7 +99,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 bg-gray-50 px-6 py-10">
+    <main className="flex min-h-screen w-full flex-col gap-6 bg-gray-50 px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
