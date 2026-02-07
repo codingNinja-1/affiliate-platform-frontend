@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 import { Wallet } from 'lucide-react';
 import CurrencySelector from '../components/CurrencySelector';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
@@ -105,6 +105,29 @@ export default function DashboardPage() {
       console.error('Failed to parse stored user', err);
     }
 
+    const loadProfileForGreeting = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data?.data) {
+          setUser(data.data);
+          localStorage.setItem('user', JSON.stringify(data.data));
+        }
+      } catch (err) {
+        console.warn('Failed to refresh user profile for greeting', err);
+      }
+    };
+
+    if (!user?.first_name && !user?.last_name) {
+      loadProfileForGreeting();
+    }
+
     const loadSummary = async () => {
       try {
         const res = await fetch('/api/dashboard/summary', {
@@ -153,9 +176,7 @@ export default function DashboardPage() {
     window.location.href = '/login';
   };
 
-  const greetingName = user?.first_name || user?.last_name
-    ? (user?.first_name || user?.last_name || '').trim()
-    : 'there';
+  const greetingName = (user?.first_name || user?.last_name || '').trim() || 'there';
 
   return (
     <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
@@ -878,3 +899,4 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
     </section>
   );
 }
+

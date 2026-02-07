@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Users, ShoppingBag, Mail, FileText, ChevronDown, Bell, CreditCard } from 'lucide-react';
@@ -226,3 +226,4 @@ export default function Sidebar({
     </>
   );
 }
+

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 import OtpModal from '@/app/components/OtpModal';
 
 type User = {
@@ -291,3 +291,4 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

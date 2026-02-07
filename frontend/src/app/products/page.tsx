@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProducts, type Product } from '@/hooks/useProducts';

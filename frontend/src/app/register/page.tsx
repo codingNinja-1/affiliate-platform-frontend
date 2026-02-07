@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -254,3 +254,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+

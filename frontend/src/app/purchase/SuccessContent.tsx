@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 
 export default function SuccessContent() {
   const searchParams = useSearchParams();
@@ -159,3 +159,4 @@ export default function SuccessContent() {
     </div>
   );
 }
+

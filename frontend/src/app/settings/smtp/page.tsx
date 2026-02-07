@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 
 type SmtpSettings = {
   mail_mailer?: string;
@@ -341,3 +341,4 @@ export default function SmtpSettingsPage() {
     </main>
   );
 }
+
