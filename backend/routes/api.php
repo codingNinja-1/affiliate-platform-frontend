@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VapidKeyController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -194,12 +195,8 @@ Route::get('/settings/subscriptions', [\App\Http\Controllers\Admin\SettingsContr
     Route::get('/products-auth/{product:slug}', [\App\Http\Controllers\ProductController::class, 'show'])->name('products-auth.show');
 
     // Shared routes
-    // ProfileController not implemented yet - routes commented out
-    // if (class_exists('App\\Http\\Controllers\\ProfileController')) {
-    //     Route::get('/profile', 'ProfileController@show');
-    //     Route::put('/profile', 'ProfileController@update');
-    //     Route::post('/profile/avatar', 'ProfileController@updateAvatar');
-    // }
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
 
     // Settings routes
     Route::prefix('settings')->group(function () {

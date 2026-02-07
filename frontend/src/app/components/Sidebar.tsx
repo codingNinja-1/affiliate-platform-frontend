@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, Users, ShoppingBag, Mail, FileText, ChevronDown, Bell, CreditCard } from 'lucide-react';
+import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Users, ShoppingBag, Mail, FileText, ChevronDown, Bell, CreditCard } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
@@ -24,10 +24,15 @@ type NavItemWithSubmenu = NavItem & {
 
 interface SidebarProps {
   userType?: string | null;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function Sidebar({ userType = 'customer' }: SidebarProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function Sidebar({
+  userType = 'customer',
+  isOpen = false,
+  onClose,
+}: SidebarProps) {
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const pathname = usePathname();
 
@@ -97,25 +102,9 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile toggle button - positioned inline on mobile, hidden on desktop */}
-      <div className="fixed left-0 top-0 right-0 h-14 bg-white border-b border-gray-200 md:hidden z-50 flex items-center px-4">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700 shadow-sm"
-        >
-          <Menu size={20} />
-        </button>
-        <div className="ml-3 flex items-center gap-2">
-          <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xs">A</span>
-          </div>
-          <h1 className="text-base font-bold text-gray-900">AffiliateHub</h1>
-        </div>
-      </div>
-
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-60 bg-white shadow-sm transition-transform duration-300 md:translate-x-0 flex flex-col border-r border-gray-200 z-40 ${
+        className={`fixed left-0 top-14 md:top-0 h-[calc(100vh-3.5rem)] md:h-screen w-60 bg-white shadow-sm transition-transform duration-300 md:translate-x-0 flex flex-col border-r border-gray-200 z-40 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -166,7 +155,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
                           href={subitem.href}
                           onClick={() => {
                             if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                              setIsOpen(false);
+                              onClose?.();
                             }
                           }}
                           className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
@@ -186,7 +175,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
                   href={item.href}
                   onClick={() => {
                     if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                      setIsOpen(false);
+                      onClose?.();
                     }
                   }}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
@@ -207,9 +196,9 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
         <div className="border-t border-gray-100 p-4 space-y-2">
           <Link
             href={isAdmin ? '#' : '/settings'}
-            onClick={(e) => {
-              if (isAdmin) {
-                e.preventDefault();
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                onClose?.();
               }
             }}
             className={isAdmin ? 'opacity-0 pointer-events-none' : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors'}
@@ -230,8 +219,8 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
-          onClick={() => setIsOpen(false)}
+          className="fixed inset-x-0 bottom-0 top-14 z-30 bg-black/50 md:hidden"
+          onClick={() => onClose?.()}
         />
       )}
     </>
