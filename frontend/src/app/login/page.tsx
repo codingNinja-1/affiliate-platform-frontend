@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 import { Eye, EyeOff } from 'lucide-react';
 
 declare global {
@@ -471,3 +471,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

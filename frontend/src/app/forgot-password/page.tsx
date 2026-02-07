@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -185,3 +185,4 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+

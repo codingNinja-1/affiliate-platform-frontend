@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 import { Save } from 'lucide-react';
 import Sidebar from '@/app/components/Sidebar';
 
@@ -222,3 +222,4 @@ export default function SubscriptionSettingsPage() {
     </div>
   );
 }
+

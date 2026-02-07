@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import NotificationBar from './NotificationBar';
@@ -120,11 +120,59 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
     window.location.href = '/login';
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!state.isAuthenticated) return;
+
+    const inactivityLimitMs = 5 * 60 * 1000;
+    const activityKey = 'last_activity_at';
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+
+    const markActivity = () => {
+      localStorage.setItem(activityKey, String(Date.now()));
+    };
+
+    const checkInactivity = () => {
+      const lastActivity = Number(localStorage.getItem(activityKey)) || Date.now();
+      if (Date.now() - lastActivity >= inactivityLimitMs) {
+        handleLogout();
+      }
+    };
+
+    const events: Array<keyof WindowEventMap> = [
+      'mousemove',
+      'mousedown',
+      'keydown',
+      'scroll',
+      'touchstart',
+    ];
+
+    events.forEach((eventName) => {
+      window.addEventListener(eventName, markActivity, { passive: true });
+    });
+
+    window.addEventListener('focus', checkInactivity);
+    document.addEventListener('visibilitychange', checkInactivity);
+
+    markActivity();
+    intervalId = setInterval(checkInactivity, 30 * 1000);
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      events.forEach((eventName) => {
+        window.removeEventListener(eventName, markActivity);
+      });
+      window.removeEventListener('focus', checkInactivity);
+      document.removeEventListener('visibilitychange', checkInactivity);
+    };
+  }, [handleLogout, state.isAuthenticated]);
 
   const renderTopBar = () => (
     <div className="md:sticky md:top-0 z-50 w-full border-b border-gray-200 bg-white">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/app/components/NoPrefetchLink';
 
 type EmailTemplate = {
   key: string;
@@ -258,3 +258,4 @@ export default function EmailTemplatesPage() {
     </main>
   );
 }
+
