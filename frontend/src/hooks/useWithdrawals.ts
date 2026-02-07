@@ -19,6 +19,7 @@ export type CreateWithdrawalPayload = {
   bank_name: string;
   account_name: string;
   account_number: string;
+  otp_code?: string;
 };
 
 function normalizeWithdrawal(item: unknown): Withdrawal {

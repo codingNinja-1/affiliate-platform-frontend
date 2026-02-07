@@ -37,6 +37,8 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleEnabled, setGoogleEnabled] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -52,12 +54,21 @@ export default function LoginPage() {
     if (typeof window === 'undefined') return;
 
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) return;
+    if (!clientId) {
+      setGoogleEnabled(false);
+      setGoogleReady(false);
+      return;
+    }
+
+    setGoogleEnabled(true);
 
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
+    script.onerror = () => {
+      setGoogleReady(false);
+    };
     document.body.appendChild(script);
 
     script.onload = () => {
@@ -76,6 +87,7 @@ export default function LoginPage() {
           width: '240',
         }
       );
+      setGoogleReady(true);
     };
 
     return () => {
@@ -313,10 +325,23 @@ export default function LoginPage() {
 
               {/* Social Login Buttons */}
               <div className="flex gap-2 sm:gap-4 mt-4 sm:mt-6 flex-col sm:flex-row">
-                <div
-                  id="google-signin-button"
-                  className="flex-1 flex items-center justify-center min-h-[44px]"
-                />
+                {googleEnabled ? (
+                  <div className="relative flex-1 min-h-[44px]">
+                    {!googleReady && (
+                      <div className="absolute inset-0 rounded-lg border border-[#1e2035] bg-[#0a0b14] text-gray-500 text-xs sm:text-sm flex items-center justify-center">
+                        Loading Google sign-in...
+                      </div>
+                    )}
+                    <div
+                      id="google-signin-button"
+                      className="flex items-center justify-center min-h-[44px]"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-1 min-h-[44px] rounded-lg border border-[#1e2035] bg-[#0a0b14] text-gray-500 text-xs sm:text-sm flex items-center justify-center">
+                    Google sign-in not configured
+                  </div>
+                )}
               </div>
 
               <p className="text-gray-400 text-center mt-4 sm:mt-6 text-xs sm:text-sm">

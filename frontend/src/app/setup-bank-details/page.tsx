@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import OtpModal from '@/app/components/OtpModal';
 
 type BankDetails = {
   bank_name: string;
@@ -20,6 +21,11 @@ export default function BankDetailsSetupPage() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [pendingBankDetails, setPendingBankDetails] = useState<BankDetails | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -27,6 +33,38 @@ export default function BankDetailsSetupPage() {
       router.push('/login');
     }
   }, [router]);
+
+  const requestOtp = async () => {
+    setOtpError('');
+    setOtpLoading(true);
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/otp/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ purpose: 'bank_details_update' }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || 'Failed to send verification code');
+        return false;
+      }
+
+      setOtpOpen(true);
+      return true;
+    } catch (err) {
+      setError('Failed to send verification code');
+      console.error(err);
+      return false;
+    } finally {
+      setOtpLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,32 +80,45 @@ export default function BankDetailsSetupPage() {
       return;
     }
 
+    setPendingBankDetails({ ...bankDetails });
+    const sent = await requestOtp();
+    if (!sent) {
+      setPendingBankDetails(null);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!pendingBankDetails) return;
+
+    setOtpError('');
     setSaving(true);
+    setOtpLoading(true);
 
     try {
       const token = localStorage.getItem('auth_token');
-      const apiUrl = '/api'; // Always use relative path for client-side requests
+      const apiUrl = '/api';
       const res = await fetch(`${apiUrl}/settings/bank-details`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(bankDetails),
+        body: JSON.stringify({ ...pendingBankDetails, otp_code: otpCode }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to save bank details');
+        throw new Error(data.message || 'Verification failed');
       }
 
-      // Mark as completed and redirect to dashboard
       router.push('/dashboard');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to save bank details';
-      setError(message);
+      const message = err instanceof Error ? err.message : 'Verification failed';
+      setOtpError(message);
+    } finally {
       setSaving(false);
+      setOtpLoading(false);
     }
   };
 
@@ -182,6 +233,22 @@ export default function BankDetailsSetupPage() {
           </form>
         </div>
       </div>
+
+      <OtpModal
+        open={otpOpen}
+        title="Verify bank details"
+        description="Enter the 6-digit code sent to your email to save bank details."
+        code={otpCode}
+        onCodeChange={setOtpCode}
+        onVerify={handleVerifyOtp}
+        onResend={requestOtp}
+        onClose={() => {
+          setOtpOpen(false);
+          setOtpCode('');
+        }}
+        isLoading={otpLoading}
+        error={otpError}
+      />
     </main>
   );
 }
