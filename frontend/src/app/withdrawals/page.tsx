@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useWithdrawals, useCreateWithdrawal, type Withdrawal } from '@/hooks/useWithdrawals';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { useVendorCurrencyConversion } from '@/hooks/useVendorCurrencyConversion';
+import OtpModal from '@/app/components/OtpModal';
 
 const API_BASE = '/api'; // Always use relative path for client-side requests
 
@@ -83,6 +84,16 @@ export default function WithdrawalsPage() {
   const [bankLoading, setBankLoading] = useState(true);
   const [bankError, setBankError] = useState('');
   const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [pendingWithdrawal, setPendingWithdrawal] = useState<{
+    amount: number;
+    bank_name: string;
+    account_name: string;
+    account_number: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -136,6 +147,37 @@ export default function WithdrawalsPage() {
     fetchBankDetails();
   }, [token]);
 
+  const requestOtp = async () => {
+    setOtpError('');
+    setOtpLoading(true);
+
+    try {
+      const res = await fetch('/api/otp/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ purpose: 'withdrawal_request' }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || 'Failed to send verification code');
+        return false;
+      }
+
+      setOtpOpen(true);
+      return true;
+    } catch (err) {
+      setError('Failed to send verification code');
+      console.error(err);
+      return false;
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -145,12 +187,30 @@ export default function WithdrawalsPage() {
       return;
     }
 
+    const payload = {
+      amount: parseFloat(amount),
+      bank_name: bankName,
+      account_name: accountName,
+      account_number: accountNumber,
+    };
+
+    setPendingWithdrawal(payload);
+    const sent = await requestOtp();
+    if (!sent) {
+      setPendingWithdrawal(null);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!pendingWithdrawal) return;
+
+    setOtpError('');
+    setOtpLoading(true);
+
     try {
       await createWithdrawal.mutateAsync({
-        amount: parseFloat(amount),
-        bank_name: bankName,
-        account_name: accountName,
-        account_number: accountNumber,
+        ...pendingWithdrawal,
+        otp_code: otpCode,
       });
 
       setAmount('');
@@ -158,9 +218,14 @@ export default function WithdrawalsPage() {
       setAccountName('');
       setAccountNumber(accountNumber);
       setShowForm(false);
+      setOtpOpen(false);
+      setOtpCode('');
+      setPendingWithdrawal(null);
       refetch();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit withdrawal request');
+      setOtpError(err instanceof Error ? err.message : 'Verification failed');
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -316,6 +381,22 @@ export default function WithdrawalsPage() {
           </div>
         )}
       </section>
+
+      <OtpModal
+        open={otpOpen}
+        title="Verify withdrawal"
+        description="Enter the 6-digit code sent to your email to submit this withdrawal."
+        code={otpCode}
+        onCodeChange={setOtpCode}
+        onVerify={handleVerifyOtp}
+        onResend={requestOtp}
+        onClose={() => {
+          setOtpOpen(false);
+          setOtpCode('');
+        }}
+        isLoading={otpLoading}
+        error={otpError}
+      />
     </main>
   );
 }

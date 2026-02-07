@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import OtpModal from '@/app/components/OtpModal';
 
 type User = {
   id: number;
@@ -27,6 +28,11 @@ export default function ProfilePage() {
   });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [pendingData, setPendingData] = useState<typeof formData | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -61,10 +67,55 @@ export default function ProfilePage() {
     loadProfile();
   }, []);
 
+  const requestOtp = async () => {
+    setOtpError('');
+    setOtpLoading(true);
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/otp/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ purpose: 'profile_update' }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || 'Failed to send verification code');
+        return false;
+      }
+
+      setOtpOpen(true);
+      return true;
+    } catch (err) {
+      setError('Failed to send verification code');
+      console.error(err);
+      return false;
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
     setError('');
+    setPendingData({ ...formData });
+
+    const sent = await requestOtp();
+    if (!sent) {
+      setPendingData(null);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!pendingData) return;
+
+    setOtpError('');
+    setOtpLoading(true);
 
     const token = localStorage.getItem('auth_token');
     try {
@@ -74,19 +125,27 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...pendingData, otp_code: otpCode }),
       });
 
-      if (!res.ok) throw new Error('Update failed');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setOtpError(data.message || 'Verification failed');
+        return;
+      }
 
-      const data = await res.json();
       setUser(data.data);
       setEditing(false);
       setMessage('Profile updated successfully');
       localStorage.setItem('user', JSON.stringify(data.data));
+      setOtpOpen(false);
+      setOtpCode('');
+      setPendingData(null);
     } catch (err) {
-      setError('Failed to update profile');
+      setOtpError('Verification failed');
       console.error(err);
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -204,6 +263,22 @@ export default function ProfilePage() {
           </div>
         )}
       </section>
+
+      <OtpModal
+        open={otpOpen}
+        title="Verify profile update"
+        description="Enter the 6-digit code sent to your email to save changes."
+        code={otpCode}
+        onCodeChange={setOtpCode}
+        onVerify={handleVerifyOtp}
+        onResend={requestOtp}
+        onClose={() => {
+          setOtpOpen(false);
+          setOtpCode('');
+        }}
+        isLoading={otpLoading}
+        error={otpError}
+      />
     </main>
   );
 }
