@@ -153,26 +153,18 @@ export default function DashboardPage() {
     window.location.href = '/login';
   };
 
-  const fullName = user?.first_name || user?.last_name
-    ? `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim()
-    : user?.email;
+  const greetingName = user?.first_name || user?.last_name
+    ? (user?.first_name || user?.last_name || '').trim()
+    : 'there';
 
   return (
     <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
       <header className="mb-4 sm:mb-6">
         <div className="flex flex-col gap-3 sm:gap-4">
           <div>
-            <p className="text-xs sm:text-sm text-gray-600">{greeting}, {fullName ?? 'there'}</p>
+            <p className="text-xs sm:text-sm text-gray-600">{greeting}, {greetingName}</p>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-xs sm:text-sm text-gray-500">Account overview and quick actions</p>
-          </div>
-          <div className="flex flex-wrap gap-2 sm:gap-3">
-            <Link
-              href="/profile"
-              className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
-            >
-              Profile
-            </Link>
           </div>
         </div>
       </header>
@@ -283,6 +275,8 @@ function RoleSections({
         <VendorSalesPayouts 
           formatAmount={vendorFormatAmount}
           currency={displayCurrency}
+          conversionRate={vendorAmounts?.conversion_rate}
+          originalCurrency={vendorAmounts?.original_currency}
         />
       </>
     );
@@ -448,10 +442,27 @@ function StatCard({
   );
 }
 
-function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount: number, currency?: string) => string, currency?: string }) {
+function VendorSalesPayouts({
+  formatAmount,
+  currency,
+  conversionRate,
+  originalCurrency,
+}: {
+  formatAmount?: (amount: number, currency?: string) => string;
+  currency?: string;
+  conversionRate?: number;
+  originalCurrency?: string;
+}) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const convertAmount = (amount: number) => {
+    if (!currency || !originalCurrency || currency === originalCurrency || !conversionRate) {
+      return amount;
+    }
+    return amount * conversionRate;
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -520,8 +531,8 @@ function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">{formatAmount ? formatAmount(transaction.vendor_amount, currency) : transaction.vendor_amount.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500">from {formatAmount ? formatAmount(transaction.amount, currency) : transaction.amount.toLocaleString()}</p>
+                  <p className="font-semibold text-gray-900">{formatAmount ? formatAmount(convertAmount(transaction.vendor_amount), currency) : convertAmount(transaction.vendor_amount).toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">from {formatAmount ? formatAmount(convertAmount(transaction.amount), currency) : convertAmount(transaction.amount).toLocaleString()}</p>
                 </div>
               </div>
             ))}
@@ -562,7 +573,7 @@ function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount
                 className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0"
               >
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{formatAmount ? formatAmount(withdrawal.amount, currency) : withdrawal.amount.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-900">{formatAmount ? formatAmount(convertAmount(withdrawal.amount), currency) : convertAmount(withdrawal.amount).toLocaleString()}</p>
                   <p className="text-xs text-gray-500">{withdrawal.withdrawal_ref}</p>
                 </div>
                 <span

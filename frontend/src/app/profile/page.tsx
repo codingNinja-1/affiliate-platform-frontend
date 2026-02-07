@@ -7,6 +7,7 @@ type User = {
   id: number;
   first_name: string;
   last_name: string;
+  full_name?: string;
   email: string;
   phone?: string;
   user_type: string;
@@ -184,12 +185,22 @@ export default function ProfilePage() {
           </form>
         ) : (
           <div className="space-y-3 text-sm">
-            <InfoRow label="Name" value={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Not set'} />
+            <InfoRow
+              label="Name"
+              value={
+                `${user?.first_name || ''} ${user?.last_name || ''}`.trim() ||
+                user?.full_name ||
+                'Not set'
+              }
+            />
             <InfoRow label="Email" value={user?.email || ''} />
             <InfoRow label="Phone" value={user?.phone || 'Not set'} />
             <InfoRow label="User type" value={user?.user_type || ''} />
             <InfoRow label="Status" value={user?.status || ''} />
-            <InfoRow label="Member since" value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : ''} />
+            <InfoRow
+              label="Member since"
+              value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'Not set'}
+            />
           </div>
         )}
       </section>
