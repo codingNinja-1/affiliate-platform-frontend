@@ -7,6 +7,8 @@ import { useWithdrawals, useCreateWithdrawal, type Withdrawal } from '@/hooks/us
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { useVendorCurrencyConversion } from '@/hooks/useVendorCurrencyConversion';
 import OtpModal from '@/app/components/OtpModal';
+import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
+import SubscriptionRequiredModal from '@/app/components/SubscriptionRequiredModal';
 
 const API_BASE = '/api'; // Always use relative path for client-side requests
 
@@ -20,8 +22,16 @@ type BankDetails = {
 export default function WithdrawalsPage() {
   const { user, token } = useAuth();
   const userType = user?.user_type || 'customer';
-  
-  const { data: withdrawals = [], isLoading, refetch } = useWithdrawals(userType);
+
+  const isRestrictedUser = userType === 'vendor' || userType === 'affiliate';
+  const { isActive: isSubscribed, loading: subscriptionLoading, error: subscriptionError } = useSubscriptionStatus({
+    enabled: isRestrictedUser,
+  });
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
+  const { data: withdrawals = [], isLoading, refetch } = useWithdrawals(userType, {
+    enabled: !isRestrictedUser || isSubscribed,
+  });
   const createWithdrawal = useCreateWithdrawal(userType);
   
   const [selectedCurrency, setSelectedCurrency] = useState<string>('NGN');
@@ -94,6 +104,12 @@ export default function WithdrawalsPage() {
     account_name: string;
     account_number: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (isRestrictedUser && !subscriptionLoading && !isSubscribed) {
+      setShowSubscriptionModal(true);
+    }
+  }, [isRestrictedUser, subscriptionLoading, isSubscribed]);
 
   useEffect(() => {
     if (!token) {
@@ -253,7 +269,8 @@ export default function WithdrawalsPage() {
           </select>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
+            disabled={isRestrictedUser && !isSubscribed}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {showForm ? 'Cancel' : 'New withdrawal'}
           </button>
@@ -266,7 +283,19 @@ export default function WithdrawalsPage() {
         </div>
       )}
 
-      {showForm && (
+      {subscriptionError && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {subscriptionError}
+        </div>
+      )}
+
+      {!isRestrictedUser || isSubscribed ? null : (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Your subscription is inactive. Subscribe to request withdrawals.
+        </div>
+      )}
+
+      {showForm && (!isRestrictedUser || isSubscribed) && (
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-xl font-semibold text-gray-900">Request withdrawal</h2>
           {bankLoading ? (
@@ -322,7 +351,18 @@ export default function WithdrawalsPage() {
 
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold text-gray-900">Withdrawal history</h2>
-        {isLoading ? (
+        {subscriptionLoading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-16 animate-pulse rounded-lg bg-gray-100" />
+            ))}
+          </div>
+        ) : isRestrictedUser && !isSubscribed ? (
+          <div className="py-12 text-center text-gray-500">
+            <p>Subscribe to access withdrawals.</p>
+            <p className="mt-2 text-sm">Manage your plan in the subscription page.</p>
+          </div>
+        ) : isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-16 animate-pulse rounded-lg bg-gray-100" />
@@ -396,6 +436,14 @@ export default function WithdrawalsPage() {
         }}
         isLoading={otpLoading}
         error={otpError}
+      />
+      <SubscriptionRequiredModal
+        open={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        title="Subscribe to access withdrawals"
+        description="Your subscription is inactive. Please subscribe to request withdrawals."
+        actionHref="/subscriptions"
+        actionLabel="View subscription"
       />
     </main>
   );
