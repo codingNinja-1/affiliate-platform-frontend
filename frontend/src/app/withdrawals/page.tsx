@@ -21,7 +21,7 @@ type BankDetails = {
 
 export default function WithdrawalsPage() {
   const { user, token } = useAuth();
-  const userType = user?.user_type || 'customer';
+  const userType = user?.user_type?.toLowerCase() || 'customer';
 
   const isRestrictedUser = userType === 'vendor' || userType === 'affiliate';
   const { isActive: isSubscribed, loading: subscriptionLoading, error: subscriptionError } = useSubscriptionStatus({

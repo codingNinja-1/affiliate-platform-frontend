@@ -144,6 +144,17 @@ class EmailTemplateController extends Controller
 <p>Best regards,<br>The AffiliateHub Team</p>
 </body></html>'
         ],
+        'otp_verification' => [
+            'subject' => 'Your AffiliateHub verification code',
+            'body' => '<html><body style="font-family: Arial, sans-serif; padding: 20px;">
+<h2>Hello {name},</h2>
+<p>Use the verification code below to complete your action: <strong>{purpose}</strong>.</p>
+<p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">{code}</p>
+<p>This code expires in {expiry_time}.</p>
+<p>If you did not request this, please ignore this email or contact support.</p>
+<p>Best regards,<br>The AffiliateHub Team</p>
+</body></html>'
+        ],
     ];
 
     public function show(Request $request, $templateKey)

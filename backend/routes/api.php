@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VapidKeyController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\OtpController;
 
 /*
 |--------------------------------------------------------------------------
@@ -71,6 +72,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/refresh', [LoginController::class, 'refreshToken']);
         Route::post('/change-password', [PasswordResetController::class, 'changePassword']);
     });
+
+    // OTP
+    Route::post('/otp/request', [OtpController::class, 'requestOtp']);
 
     // Settings routes
     Route::prefix('settings')->group(function () {

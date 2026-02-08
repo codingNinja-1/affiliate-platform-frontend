@@ -108,6 +108,7 @@ export default function AdminWithdrawalsPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [toggleError, setToggleError] = useState<string | null>(null);
   const [toggleSuccess, setToggleSuccess] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
 
   useEffect(() => {
     setIsMounted(true);
@@ -135,6 +136,24 @@ export default function AdminWithdrawalsPage() {
   if (!user || (user.user_type?.toLowerCase() !== 'admin' && user.user_type?.toLowerCase() !== 'superadmin')) {
     return null;
   }
+
+  const counts = withdrawals.reduce(
+    (acc, w) => {
+      if (w.status === 'pending') acc.pending += 1;
+      else if (w.status === 'approved' || w.status === 'paid') acc.approved += 1;
+      else if (w.status === 'rejected') acc.rejected += 1;
+      acc.all += 1;
+      return acc;
+    },
+    { pending: 0, approved: 0, rejected: 0, all: 0 }
+  );
+
+  const filteredWithdrawals = withdrawals.filter((w) => {
+    if (statusFilter === 'pending') return w.status === 'pending';
+    if (statusFilter === 'approved') return w.status === 'approved' || w.status === 'paid';
+    if (statusFilter === 'rejected') return w.status === 'rejected';
+    return true;
+  });
 
   const approveWithdrawal = async (withdrawalId: number) => {
     setApproving(withdrawalId);
@@ -308,17 +327,59 @@ export default function AdminWithdrawalsPage() {
         )}
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="flex flex-wrap gap-2 border-b border-gray-200 px-4 py-3">
+            <button
+              onClick={() => setStatusFilter('pending')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                statusFilter === 'pending'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Pending ({counts.pending})
+            </button>
+            <button
+              onClick={() => setStatusFilter('approved')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                statusFilter === 'approved'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Approved ({counts.approved})
+            </button>
+            <button
+              onClick={() => setStatusFilter('rejected')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                statusFilter === 'rejected'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Rejected ({counts.rejected})
+            </button>
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                statusFilter === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              All ({counts.all})
+            </button>
+          </div>
           {isLoading ? (
             <div className="p-6 space-y-3">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />
               ))}
             </div>
-          ) : withdrawals.length === 0 ? (
+          ) : filteredWithdrawals.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
               <DollarSign size={48} className="mx-auto mb-4 text-gray-300" />
               <p className="text-lg font-medium">No withdrawals found</p>
-              <p className="text-sm text-gray-400 mt-1">Withdrawal requests will appear here</p>
+              <p className="text-sm text-gray-400 mt-1">No {statusFilter} withdrawals to show</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -335,7 +396,7 @@ export default function AdminWithdrawalsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {withdrawals.map((w: AdminWithdrawal) => {
+                  {filteredWithdrawals.map((w: AdminWithdrawal) => {
                     const displayName = (w.user?.first_name || w.user?.last_name)
                       ? `${w.user?.first_name ?? ''} ${w.user?.last_name ?? ''}`.trim()
                       : (w.user?.email ?? `#${w.user_id}`);
@@ -365,7 +426,7 @@ export default function AdminWithdrawalsPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600">
-                        {new Date(w.created_at).toLocaleDateString()}
+                        {new Date(w.created_at).toLocaleString()}
                       </td>
                       <td className="py-3 px-4">
                         {w.status === 'pending' ? (

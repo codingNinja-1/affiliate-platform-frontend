@@ -11,6 +11,7 @@ use App\Models\Affiliate;
 use App\Models\CurrencyRate;
 use App\Services\CurrencyConversionService;
 use App\Services\AutomaticWithdrawalService;
+use App\Services\OtpService;
 use App\Notifications\WithdrawalProcessingNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +41,7 @@ class WithdrawalController extends Controller
     /**
      * Store a newly created withdrawal request with instant payout.
      */
-    public function store(Request $request, AutomaticWithdrawalService $withdrawalService)
+    public function store(Request $request, AutomaticWithdrawalService $withdrawalService, OtpService $otpService)
     {
         $validated = $request->validate([
             'amount' => 'required|numeric|min:1000',
@@ -48,10 +49,19 @@ class WithdrawalController extends Controller
             'account_name' => 'required|string|max:100',
             'account_number' => 'required|string|min:10|max:20',
             'payment_method' => 'nullable|string|in:bank_transfer,paypal,stripe',
+            'otp_code' => 'required|string',
         ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
+
+        $otpCheck = $otpService->verifyForUser($user, 'withdrawal_request', $validated['otp_code']);
+        if (!$otpCheck['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $otpCheck['message'],
+            ], 403);
+        }
 
         // Check if there's already a pending withdrawal
         $hasPending = Withdrawal::where('user_id', $user->id)

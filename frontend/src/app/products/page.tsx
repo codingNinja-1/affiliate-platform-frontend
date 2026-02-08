@@ -11,7 +11,8 @@ import SubscriptionRequiredModal from '@/app/components/SubscriptionRequiredModa
 
 export default function ProductsPage() {
   const { user } = useAuth();
-  const isRestrictedUser = user?.user_type === 'vendor' || user?.user_type === 'affiliate';
+  const userType = user?.user_type?.toLowerCase();
+  const isRestrictedUser = userType === 'vendor' || userType === 'affiliate';
   const { isActive: isSubscribed, loading: subscriptionLoading, error: subscriptionError } = useSubscriptionStatus({
     enabled: isRestrictedUser,
   });
@@ -22,9 +23,9 @@ export default function ProductsPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { amounts, formatAmount } = useCurrencyConversion(refreshTrigger);
 
-  const isAffiliate = user?.user_type === 'affiliate';
-  const isCustomer = user?.user_type === 'customer';
-  const isVendor = user?.user_type === 'vendor';
+  const isAffiliate = userType === 'affiliate';
+  const isCustomer = userType === 'customer';
+  const isVendor = userType === 'vendor';
 
   useEffect(() => {
     if (isRestrictedUser && !subscriptionLoading && !isSubscribed) {
