@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Affiliate;
 use App\Models\Vendor;
 use App\Services\PaystackService;
+use App\Services\OtpService;
 
 class SettingsController extends Controller
 {
@@ -59,7 +60,7 @@ class SettingsController extends Controller
     /**
      * Update bank details
      */
-    public function updateBankDetails(Request $request)
+    public function updateBankDetails(Request $request, OtpService $otpService)
     {
         $user = Auth::user();
 
@@ -83,7 +84,16 @@ class SettingsController extends Controller
             'account_name' => 'required|string|max:100',
             'account_number' => 'required|string|min:10|max:20',
             'bank_code' => 'nullable|string|max:20',
+            'otp_code' => 'required|string',
         ]);
+
+        $otpCheck = $otpService->verifyForUser($user, 'bank_details_update', $validated['otp_code']);
+        if (!$otpCheck['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $otpCheck['message'],
+            ], 403);
+        }
 
         $profile = null;
 

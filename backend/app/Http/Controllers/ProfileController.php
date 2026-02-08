@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Services\OtpService;
 
 class ProfileController extends Controller
 {
@@ -28,7 +29,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function update(Request $request, OtpService $otpService)
     {
         $user = $request->user();
 
@@ -36,7 +37,16 @@ class ProfileController extends Controller
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:25',
+            'otp_code' => 'required|string',
         ]);
+
+        $otpCheck = $otpService->verifyForUser($user, 'profile_update', $validated['otp_code']);
+        if (!$otpCheck['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $otpCheck['message'],
+            ], 403);
+        }
 
         if (array_key_exists('first_name', $validated)) {
             $user->first_name = $validated['first_name'];
@@ -51,9 +61,6 @@ class ProfileController extends Controller
         }
 
         $fullName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
-        if ($fullName !== '') {
-            $user->name = $fullName;
-        }
 
         $user->save();
 
@@ -63,7 +70,7 @@ class ProfileController extends Controller
                 'id' => $user->id,
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
-                'full_name' => $fullName ?: $user->name,
+                'full_name' => $fullName ?: $user->email,
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'user_type' => $user->user_type,

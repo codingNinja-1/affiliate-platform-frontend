@@ -1,8 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Camera, ChevronLeft } from 'lucide-react';
+import Link from '@/app/components/NoPrefetchLink';
+import { useAuth } from '@/hooks/useAuth';
+import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
+import SubscriptionRequiredModal from '@/app/components/SubscriptionRequiredModal';
 
 const BUTTON_STYLES = [
   { id: 'yellow_large', label: 'Yellow Large', color: '#FFD700', text: 'BUY NOW' },
@@ -41,6 +45,13 @@ interface IntegrationData {
 
 export default function CreateProductPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const userType = user?.user_type?.toLowerCase();
+  const isRestrictedUser = userType === 'vendor' || userType === 'affiliate';
+  const { isActive: isSubscribed, loading: subscriptionLoading, error: subscriptionError } = useSubscriptionStatus({
+    enabled: isRestrictedUser,
+  });
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [step, setStep] = useState<'form' | 'integration'>('form');
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -61,6 +72,13 @@ export default function CreateProductPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [selectedButton, setSelectedButton] = useState<string | null>(null);
+  const isBlocked = isRestrictedUser && !subscriptionLoading && !isSubscribed;
+
+  useEffect(() => {
+    if (isRestrictedUser && !subscriptionLoading && !isSubscribed) {
+      setShowSubscriptionModal(true);
+    }
+  }, [isRestrictedUser, subscriptionLoading, isSubscribed]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -103,6 +121,11 @@ export default function CreateProductPage() {
 
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isRestrictedUser && (subscriptionLoading || !isSubscribed)) {
+      setErrors({ submit: 'Subscription required to create products.' });
+      return;
+    }
 
     if (!validateForm()) return;
 
@@ -220,32 +243,55 @@ export default function CreateProductPage() {
 
   if (step === 'form') {
     return (
-      <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
-        <div className="max-w-2xl mx-auto">
-          {/* Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 mb-6"
-          >
-            <ChevronLeft size={18} />
-            Back
-          </button>
+      <>
+        <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
+          <div className="max-w-2xl mx-auto">
+            {/* Back Button */}
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 mb-6"
+            >
+              <ChevronLeft size={18} />
+              Back
+            </button>
 
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Create New Product</h1>
-            <p className="text-gray-600 mt-2">Step 1: Product Setup</p>
-          </div>
-
-          {/* Error Alert */}
-          {errors.submit && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-              {errors.submit}
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900">Create New Product</h1>
+              <p className="text-gray-600 mt-2">Step 1: Product Setup</p>
             </div>
-          )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmitForm} className="space-y-8">
+            {subscriptionError && (
+              <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                {subscriptionError}
+              </div>
+            )}
+
+            {isBlocked && (
+              <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Your subscription is inactive. Please subscribe to create products.
+              </div>
+            )}
+
+            {/* Error Alert */}
+            {errors.submit && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+                {errors.submit}
+              </div>
+            )}
+
+            {isBlocked ? (
+              <div className="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
+                <p className="text-gray-700">Subscribe to unlock product creation.</p>
+                <Link
+                  href="/subscriptions"
+                  className="mt-4 inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  View subscription
+                </Link>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitForm} className="space-y-8">
             {/* Product Image */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-4">Product Image</label>
@@ -481,19 +527,29 @@ export default function CreateProductPage() {
               />
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? 'Creating...' : 'Next'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </main>
+              {/* Submit Button */}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={loading || (isRestrictedUser && (subscriptionLoading || !isSubscribed))}
+                  className="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Creating...' : 'Next'}
+                </button>
+              </div>
+            </form>
+            )}
+          </div>
+        </main>
+        <SubscriptionRequiredModal
+          open={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          title="Subscribe to create products"
+          description="Your subscription is inactive. Please subscribe to create products."
+          actionHref="/subscriptions"
+          actionLabel="View subscription"
+        />
+      </>
     );
   }
 
@@ -509,132 +565,162 @@ export default function CreateProductPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Back Button */}
-        <button
-          onClick={() => setStep('form')}
-          className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 mb-6"
-        >
-          <ChevronLeft size={18} />
-          Back to Product Setup
-        </button>
+    <>
+      <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Back Button */}
+          <button
+            onClick={() => setStep('form')}
+            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 mb-6"
+          >
+            <ChevronLeft size={18} />
+            Back to Product Setup
+          </button>
 
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Integration Setup</h1>
-          <p className="text-gray-600 mt-2">Step 2: Add tracking and payment buttons to your sales page</p>
-        </div>
-
-        {/* Tracking Pixel Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Copy & Paste Pixel Code on your Sales Page</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Kindly copy this pixel code below and insert it in your sales page header as a custom script. Statsecut
-            integration? <a href="#" className="text-blue-600 hover:text-blue-700">CLICK HERE TO SEE AN EXAMPLE</a>
-          </p>
-          <div className="relative bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <pre className="text-xs text-gray-700 overflow-x-auto">{integrationData.pixel_code}</pre>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(integrationData.pixel_code);
-              }}
-              className="absolute top-4 right-4 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700"
-            >
-              Copy
-            </button>
-          </div>
-        </div>
-
-        {/* Button Generator Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Generate your PAY BUTTON (CTA)</h2>
-          <p className="text-sm text-gray-600 mb-6">
-            Select from the button options below that best suits your Website/sales page and then copy the code generated
-            and insert in your website
-          </p>
-
-          {/* Button Type Selector */}
+          {/* Header */}
           <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-700 mb-3">Select Button Type</label>
-            <select
-              value={selectedButton || ''}
-              onChange={(e) => setSelectedButton(e.target.value || null)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select...</option>
-              {BUTTON_STYLES.map((btn) => (
-                <option key={btn.id} value={btn.id}>
-                  {btn.label}
-                </option>
-              ))}
-            </select>
+            <h1 className="text-3xl font-bold text-gray-900">Integration Setup</h1>
+            <p className="text-gray-600 mt-2">Step 2: Add tracking and payment buttons to your sales page</p>
           </div>
 
-          {/* Button Preview */}
-          <div className="mb-8 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-gray-200">
-            <p className="text-sm text-gray-600 mb-4 text-center">Button Preview</p>
-            {selectedButton ? (
-              <div className="flex justify-center">
-                {BUTTON_STYLES.find((b) => b.id === selectedButton) && (
-                  <button
-                    style={{
-                      backgroundColor: BUTTON_STYLES.find((b) => b.id === selectedButton)!.color,
-                      padding: '12px 24px',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                    }}
-                  >
-                    {BUTTON_STYLES.find((b) => b.id === selectedButton)!.text}
-                  </button>
-                )}
-              </div>
-            ) : (
-              <p className="text-center text-gray-500">No Button Selected, Please Select a button</p>
-            )}
-          </div>
+          {subscriptionError && (
+            <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {subscriptionError}
+            </div>
+          )}
 
-          {/* Code Output */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Your Button Code</label>
-            <div className="relative bg-gray-50 border border-gray-200 rounded-lg p-4 min-h-32">
-              {selectedButton ? (
-                <>
-                  <pre className="text-xs text-gray-700 overflow-x-auto whitespace-pre-wrap break-words">
-                    {generateButtonCode(selectedButton)}
-                  </pre>
+          {isBlocked ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
+              <p className="text-gray-700">Subscribe to access product integration tools.</p>
+              <Link
+                href="/subscriptions"
+                className="mt-4 inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                View subscription
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* Tracking Pixel Section */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Copy & Paste Pixel Code on your Sales Page</h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  Kindly copy this pixel code below and insert it in your sales page header as a custom script. Statsecut
+                  integration? <a href="#" className="text-blue-600 hover:text-blue-700">CLICK HERE TO SEE AN EXAMPLE</a>
+                </p>
+                <div className="relative bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <pre className="text-xs text-gray-700 overflow-x-auto">{integrationData.pixel_code}</pre>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(generateButtonCode(selectedButton));
+                      navigator.clipboard.writeText(integrationData.pixel_code);
                     }}
                     className="absolute top-4 right-4 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700"
                   >
                     Copy
                   </button>
-                </>
-              ) : (
-                <p className="text-gray-500 flex items-center justify-center h-full">
-                  No Button Selected, Please Select a button
-                </p>
-              )}
-            </div>
-          </div>
+                </div>
+              </div>
 
-          {/* Completion Actions */}
-          <div className="mt-8 flex gap-4 justify-end">
-            <button
-              onClick={() => router.push('/products')}
-              className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Done
-            </button>
-          </div>
+              {/* Button Generator Section */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Generate your PAY BUTTON (CTA)</h2>
+                <p className="text-sm text-gray-600 mb-6">
+                  Select from the button options below that best suits your Website/sales page and then copy the code generated
+                  and insert in your website
+                </p>
+
+                {/* Button Type Selector */}
+                <div className="mb-8">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Select Button Type</label>
+                  <select
+                    value={selectedButton || ''}
+                    onChange={(e) => setSelectedButton(e.target.value || null)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    {BUTTON_STYLES.map((btn) => (
+                      <option key={btn.id} value={btn.id}>
+                        {btn.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Button Preview */}
+                <div className="mb-8 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-4 text-center">Button Preview</p>
+                  {selectedButton ? (
+                    <div className="flex justify-center">
+                      {BUTTON_STYLES.find((b) => b.id === selectedButton) && (
+                        <button
+                          style={{
+                            backgroundColor: BUTTON_STYLES.find((b) => b.id === selectedButton)!.color,
+                            padding: '12px 24px',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            fontSize: '16px',
+                          }}
+                        >
+                          {BUTTON_STYLES.find((b) => b.id === selectedButton)!.text}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-center text-gray-500">No Button Selected, Please Select a button</p>
+                  )}
+                </div>
+
+                {/* Code Output */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Your Button Code</label>
+                  <div className="relative bg-gray-50 border border-gray-200 rounded-lg p-4 min-h-32">
+                    {selectedButton ? (
+                      <>
+                        <pre className="text-xs text-gray-700 overflow-x-auto whitespace-pre-wrap break-words">
+                          {generateButtonCode(selectedButton)}
+                        </pre>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(generateButtonCode(selectedButton));
+                          }}
+                          className="absolute top-4 right-4 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700"
+                        >
+                          Copy
+                        </button>
+                      </>
+                    ) : (
+                      <p className="text-gray-500 flex items-center justify-center h-full">
+                        No Button Selected, Please Select a button
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Completion Actions */}
+                <div className="mt-8 flex gap-4 justify-end">
+                  <button
+                    onClick={() => router.push('/products')}
+                    className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
-      </div>
-    </main>
+      </main>
+      <SubscriptionRequiredModal
+        open={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        title="Subscribe to create products"
+        description="Your subscription is inactive. Please subscribe to create products."
+        actionHref="/subscriptions"
+        actionLabel="View subscription"
+      />
+    </>
   );
 }

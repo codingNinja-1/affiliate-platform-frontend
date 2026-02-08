@@ -32,14 +32,23 @@ class SubscriptionController extends Controller
         $monthlyAmount = $this->getMonthlyAmount($user->user_type);
         $annualAmount = round($monthlyAmount * 12, 2);
 
+        $status = $record->subscription_status;
+        $expiresAt = $record->subscription_expires_at;
+
+        if ($status === 'active' && $monthlyAmount > 0) {
+            if (!$expiresAt || now()->greaterThan($expiresAt)) {
+                $status = 'past_due';
+            }
+        }
+
         // Check if payment is allowed (1 week before expiration or expired)
         $canPayNow = $this->canPaySubscription($record);
 
         return response()->json([
             'success' => true,
             'data' => [
-                'status' => $record->subscription_status,
-                'expires_at' => $record->subscription_expires_at,
+                'status' => $status,
+                'expires_at' => $expiresAt,
                 'last_charged_at' => $record->subscription_last_charged_at,
                 'annual_amount' => $annualAmount,
                 'monthly_amount' => $monthlyAmount,

@@ -25,7 +25,7 @@ class GoogleLoginController extends Controller
         }
 
         $credential = $request->input('credential');
-        $clientId = env('GOOGLE_CLIENT_ID');
+        $clientId = config('services.google.client_id');
 
         if (!$clientId) {
             return response()->json([
