@@ -54,11 +54,16 @@ export function normalizeProduct(item: unknown): Product {
   };
 }
 
-export function useProducts(userType?: string) {
+type UseProductsOptions = {
+  enabled?: boolean;
+};
+
+export function useProducts(userType?: string, options: UseProductsOptions = {}) {
   const { token } = useAuth();
   const [data, setData] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const enabled = options.enabled ?? true;
 
   const endpoint = useMemo(() => {
     const role = userType?.toLowerCase();
@@ -70,6 +75,13 @@ export function useProducts(userType?: string) {
   }, [userType]);
 
   const fetchProducts = useCallback(async () => {
+    if (!enabled) {
+      setIsLoading(false);
+      setError(null);
+      setData([]);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -102,7 +114,7 @@ export function useProducts(userType?: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [endpoint, token]);
+  }, [endpoint, token, enabled]);
 
   useEffect(() => {
     fetchProducts();
