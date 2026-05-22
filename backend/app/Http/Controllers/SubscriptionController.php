@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Models\SubscriptionPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -208,6 +209,22 @@ class SubscriptionController extends Controller
 
         $reference = 'SUB_' . time() . '_' . $user->id;
         $callbackUrl = config('app.frontend_url') . '/subscriptions';
+
+        // Create a server-side pending subscription payment record so webhook/reconciliation
+        // can update the subscription even if the user is logged out or loses session.
+        try {
+            SubscriptionPayment::create([
+                'reference' => $reference,
+                'user_id' => $user->id,
+                'user_type' => $user->user_type,
+                'amount' => $amount,
+                'period' => $period,
+                'status' => 'pending',
+            ]);
+        } catch (\Exception $e) {
+            // If DB fails, log but continue to avoid blocking user unnecessarily
+            \Log::error('Failed to create subscription payment record: ' . $e->getMessage());
+        }
 
         try {
             $response = \Illuminate\Support\Facades\Http::withHeaders([
