@@ -39,7 +39,12 @@ Route::post('/payment/initialize', [\App\Http\Controllers\PurchaseController::cl
 // Point callback to the new CheckoutController so transactions started via /checkout/initialize are completed
 Route::get('/payment/callback', [\App\Http\Controllers\CheckoutController::class, 'handleCallback']);
 Route::post('/payment/webhook', [\App\Http\Controllers\PurchaseController::class, 'handleWebhook']);
+// Paystack webhook for subscriptions (public endpoint)
+Route::post('/webhooks/paystack', [\App\Http\Controllers\Webhook\PaystackController::class, 'handle']);
 Route::get('/payment/public-key', [\App\Http\Controllers\PurchaseController::class, 'getPublicKey']);
+
+// Public subscription verification (used by frontend return page so users don't need to be logged in)
+Route::get('/subscriptions/public/verify/{reference}', [\App\Http\Controllers\SubscriptionController::class, 'verifyPayment']);
 
 // Centralized checkout (public - new Stakecut-style endpoint)
 Route::post('/checkout/initialize', [\App\Http\Controllers\CheckoutController::class, 'initialize']);

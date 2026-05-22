@@ -61,9 +61,11 @@ export default function Sidebar({
     { href: '/admin/notifications', label: 'Notifications', icon: Bell },
   ];
 
+
   const vendorNav: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/products', label: 'My Products', icon: Package },
+    { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/withdrawals', label: 'Withdrawals', icon: DollarSign },
     { href: '/subscriptions', label: 'Subscription', icon: CreditCard },
@@ -72,6 +74,7 @@ export default function Sidebar({
   const affiliateNav: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/products', label: 'Products', icon: ShoppingBag },
+    { href: '/marketplace', label: 'Marketplace', icon: Package },
     { href: '/links', label: 'Affiliate Links', icon: Link2 },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/withdrawals', label: 'Withdrawals', icon: DollarSign },
@@ -81,6 +84,7 @@ export default function Sidebar({
   const customerNav: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/products', label: 'Products', icon: ShoppingBag },
+    { href: '/marketplace', label: 'Marketplace', icon: Package },
   ];
 
   let navItems = customerNav;
