@@ -1,37 +1,21 @@
 'use client';
 
-import Link from '@/app/components/NoPrefetchLink';
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProducts, type Product } from '@/hooks/useProducts';
 import CurrencySelector from '../components/CurrencySelector';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
-import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
-import SubscriptionRequiredModal from '@/app/components/SubscriptionRequiredModal';
 
 export default function ProductsPage() {
   const { user } = useAuth();
-  const userType = user?.user_type?.toLowerCase();
-  const isRestrictedUser = userType === 'vendor' || userType === 'affiliate';
-  const { isActive: isSubscribed, loading: subscriptionLoading, error: subscriptionError } = useSubscriptionStatus({
-    enabled: isRestrictedUser,
-  });
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const { data: products = [], isLoading, error: queryError } = useProducts(user?.user_type, {
-    enabled: !isRestrictedUser || isSubscribed,
-  });
+  const { data: products = [], isLoading, error: queryError } = useProducts(user?.user_type);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { amounts, formatAmount } = useCurrencyConversion(refreshTrigger);
 
-  const isAffiliate = userType === 'affiliate';
-  const isCustomer = userType === 'customer';
-  const isVendor = userType === 'vendor';
-
-  useEffect(() => {
-    if (isRestrictedUser && !subscriptionLoading && !isSubscribed) {
-      setShowSubscriptionModal(true);
-    }
-  }, [isRestrictedUser, subscriptionLoading, isSubscribed]);
+  const isAffiliate = user?.user_type === 'affiliate';
+  const isCustomer = user?.user_type === 'customer';
+  const isVendor = user?.user_type === 'vendor';
 
   const handleCurrencyChange = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -46,8 +30,7 @@ export default function ProductsPage() {
   const conversionRate = amounts?.conversion_rate || 1;
 
   return (
-    <>
-      <main className="flex min-h-screen w-full flex-col gap-6 bg-gray-50 px-6 py-10">
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 bg-gray-50 px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
@@ -76,18 +59,6 @@ export default function ProductsPage() {
         </div>
       </header>
 
-      {subscriptionError && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {subscriptionError}
-        </div>
-      )}
-
-      {!isRestrictedUser || isSubscribed ? null : (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Your subscription is inactive. Please subscribe to access products.
-        </div>
-      )}
-
       {queryError && (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {queryError instanceof Error ? queryError.message : 'Failed to load products'}
@@ -95,18 +66,7 @@ export default function ProductsPage() {
       )}
 
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        {subscriptionLoading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 animate-pulse rounded-lg bg-gray-100" />
-            ))}
-          </div>
-        ) : isRestrictedUser && !isSubscribed ? (
-          <div className="py-12 text-center text-gray-500">
-            <p>Subscribe to access products.</p>
-            <p className="mt-2 text-sm">Manage your plan in the subscription page.</p>
-          </div>
-        ) : isLoading ? (
+        {isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-16 animate-pulse rounded-lg bg-gray-100" />
@@ -184,14 +144,5 @@ export default function ProductsPage() {
         )}
       </section>
     </main>
-      <SubscriptionRequiredModal
-        open={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-        title="Subscribe to access products"
-        description="Your subscription is inactive. Please subscribe to view and manage products."
-        actionHref="/subscriptions"
-        actionLabel="View subscription"
-      />
-    </>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 
 export default function AdminSidebar() {
   // Don't conditionally return null - let AppLayout handle the conditional rendering
@@ -60,4 +60,3 @@ export default function AdminSidebar() {
     </aside>
   );
 }
-

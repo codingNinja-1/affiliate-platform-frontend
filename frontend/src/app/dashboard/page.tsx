@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 import { Wallet } from 'lucide-react';
 import CurrencySelector from '../components/CurrencySelector';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
@@ -105,29 +105,6 @@ export default function DashboardPage() {
       console.error('Failed to parse stored user', err);
     }
 
-    const loadProfileForGreeting = async () => {
-      if (!token) return;
-      try {
-        const res = await fetch('/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) return;
-
-        const data = await res.json();
-        if (data?.data) {
-          setUser(data.data);
-          localStorage.setItem('user', JSON.stringify(data.data));
-        }
-      } catch (err) {
-        console.warn('Failed to refresh user profile for greeting', err);
-      }
-    };
-
-    if (!user?.first_name && !user?.last_name) {
-      loadProfileForGreeting();
-    }
-
     const loadSummary = async () => {
       try {
         const res = await fetch('/api/dashboard/summary', {
@@ -176,16 +153,26 @@ export default function DashboardPage() {
     window.location.href = '/login';
   };
 
-  const greetingName = (user?.first_name || user?.last_name || '').trim() || 'there';
+  const fullName = user?.first_name || user?.last_name
+    ? `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim()
+    : user?.email;
 
   return (
     <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
       <header className="mb-4 sm:mb-6">
         <div className="flex flex-col gap-3 sm:gap-4">
           <div>
-            <p className="text-xs sm:text-sm text-gray-600">{greeting}, {greetingName}</p>
+            <p className="text-xs sm:text-sm text-gray-600">{greeting}, {fullName ?? 'there'}</p>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-xs sm:text-sm text-gray-500">Account overview and quick actions</p>
+          </div>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            <Link
+              href="/profile"
+              className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
+            >
+              Profile
+            </Link>
           </div>
         </div>
       </header>
@@ -296,8 +283,6 @@ function RoleSections({
         <VendorSalesPayouts 
           formatAmount={vendorFormatAmount}
           currency={displayCurrency}
-          conversionRate={vendorAmounts?.conversion_rate}
-          originalCurrency={vendorAmounts?.original_currency}
         />
       </>
     );
@@ -335,7 +320,7 @@ function RoleSections({
         <StatsGrid
           items={[ 
             { title: 'Balance', value: displayBalance, prefix: currencySymbol },
-            { title: 'Pending Withdrawal', value: amounts?.pending_balance ?? 0, prefix: currencySymbol },
+            { title: 'Pending balance', value: amounts?.pending_balance ?? 0, prefix: currencySymbol },
             { title: 'Total earnings', value: displayEarnings, prefix: currencySymbol },
             { title: 'Total withdrawn', value: displayWithdrawn, prefix: currencySymbol },
             { title: 'Total sales', value: summary?.totalSales ?? 0 },
@@ -463,27 +448,10 @@ function StatCard({
   );
 }
 
-function VendorSalesPayouts({
-  formatAmount,
-  currency,
-  conversionRate,
-  originalCurrency,
-}: {
-  formatAmount?: (amount: number, currency?: string) => string;
-  currency?: string;
-  conversionRate?: number;
-  originalCurrency?: string;
-}) {
+function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount: number, currency?: string) => string, currency?: string }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const convertAmount = (amount: number) => {
-    if (!currency || !originalCurrency || currency === originalCurrency || !conversionRate) {
-      return amount;
-    }
-    return amount * conversionRate;
-  };
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -552,8 +520,8 @@ function VendorSalesPayouts({
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">{formatAmount ? formatAmount(convertAmount(transaction.vendor_amount), currency) : convertAmount(transaction.vendor_amount).toLocaleString()}</p>
-                  <p className="text-xs text-gray-500">from {formatAmount ? formatAmount(convertAmount(transaction.amount), currency) : convertAmount(transaction.amount).toLocaleString()}</p>
+                  <p className="font-semibold text-gray-900">{formatAmount ? formatAmount(transaction.vendor_amount, currency) : transaction.vendor_amount.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">from {formatAmount ? formatAmount(transaction.amount, currency) : transaction.amount.toLocaleString()}</p>
                 </div>
               </div>
             ))}
@@ -594,7 +562,7 @@ function VendorSalesPayouts({
                 className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0"
               >
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{formatAmount ? formatAmount(convertAmount(withdrawal.amount), currency) : convertAmount(withdrawal.amount).toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-900">{formatAmount ? formatAmount(withdrawal.amount, currency) : withdrawal.amount.toLocaleString()}</p>
                   <p className="text-xs text-gray-500">{withdrawal.withdrawal_ref}</p>
                 </div>
                 <span
@@ -620,7 +588,6 @@ function VendorSalesPayouts({
 function HotProducts({ currency, formatAmount }: { currency?: string, formatAmount?: (amount: number, currency?: string) => string } = {}) {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { amounts } = useCurrencyConversion(0, currency);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -652,14 +619,6 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
                         currency === 'EUR' ? '€' :
                         currency + ' ';
 
-  // Convert product commission from NGN to target currency
-  const convertProductAmount = (amount: number) => {
-    if (!currency || currency === 'NGN' || !amounts?.conversion_rate) {
-      return amount;
-    }
-    return amount * amounts.conversion_rate;
-  };
-
   return (
     <section className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm mb-6">
       <div className="flex items-center justify-between mb-6">
@@ -682,56 +641,30 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
         <p className="text-center text-sm text-gray-500 py-12">No products available yet</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product) => {
-            const commissionAmount = product.commission_amount || product.commission || 0;
-            const convertedAmount = convertProductAmount(commissionAmount);
-            // Handle both single image string and images array
-            let productImage = product.image || (product.images && product.images.length > 0 ? product.images[0] : null);
-            
-            // Use storage symlink URL - construct direct path from storage/products/{filename}
-            if (productImage) {
-              // If it's already a full URL, use as-is
-              if (productImage.startsWith('http')) {
-                // Already a full URL
-              } else {
-                // Extract just the filename from any path
-                const filename = productImage.split('/').pop();
-                productImage = `https://snow-mantis-616662.hostingersite.com/storage/products/${filename}`;
-              }
-            }
-            
-            return (
-              <Link
-                key={product.id}
-                href={`/products/${product.slug}`}
-                className="group rounded-lg border border-gray-200 overflow-hidden hover:border-blue-300 hover:shadow-md transition-all"
-              >
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 h-32 flex items-center justify-center">
-                  {productImage ? (
-                    <img 
-                      src={productImage} 
-                      alt={product.name} 
-                      className="w-full h-full object-cover" 
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }} 
-                    />
-                  ) : (
-                    <div className="w-12 h-12 bg-blue-200 rounded-lg" />
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-medium text-gray-900 text-sm group-hover:text-blue-600 transition line-clamp-2">
-                    {product.name}
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-2">Commission</p>
-                  <p className="text-lg font-semibold text-green-600 mt-1">
-                    {formatAmount ? formatAmount(convertedAmount, currency) : (currencySymbol + convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}
-                  </p>
-                </div>
-              </Link>
-            );
-          })}
+          {products.map((product) => (
+            <Link
+              key={product.id}
+              href={`/products/${product.slug}`}
+              className="group rounded-lg border border-gray-200 overflow-hidden hover:border-blue-300 hover:shadow-md transition-all"
+            >
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 h-32 flex items-center justify-center">
+                {product.image ? (
+                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-12 h-12 bg-blue-200 rounded-lg" />
+                )}
+              </div>
+              <div className="p-4">
+                <h3 className="font-medium text-gray-900 text-sm group-hover:text-blue-600 transition line-clamp-2">
+                  {product.name}
+                </h3>
+                <p className="text-xs text-gray-500 mt-2">Commission</p>
+                <p className="text-lg font-semibold text-green-600 mt-1">
+                  {formatAmount ? formatAmount(product.commission_amount || product.commission || 0, currency) : (currencySymbol + (product.commission_amount || product.commission || 0).toLocaleString())}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </section>
@@ -742,7 +675,6 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
-  const { amounts } = useCurrencyConversion(0, currency);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -778,14 +710,6 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
     fetchData();
   }, []);
 
-  // Convert amounts from NGN to target currency
-  const convertAmount = (amount: number) => {
-    if (!currency || currency === 'NGN' || !amounts?.conversion_rate) {
-      return amount;
-    }
-    return amount * amounts.conversion_rate;
-  };
-
   return (
     <section className="grid gap-4 lg:grid-cols-3">
       {/* Recent Commissions */}
@@ -807,9 +731,7 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
           <p className="text-center text-sm text-gray-500 py-8">No commissions yet</p>
         ) : (
           <div className="space-y-3">
-            {commissions.map((commission) => {
-              const convertedAmount = convertAmount(commission.amount);
-              return (
+            {commissions.map((commission) => (
               <div
                 key={commission.id}
                 className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0"
@@ -821,7 +743,7 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">{formatAmount ? formatAmount(convertedAmount, currency) : convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="font-semibold text-gray-900">{formatAmount ? formatAmount(commission.amount, currency) : commission.amount.toLocaleString()}</p>
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                       commission.status === 'pending'
@@ -835,8 +757,7 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
                   </span>
                 </div>
               </div>
-              );
-            })}
+            ))}
           </div>
         )}
       </div>
@@ -868,15 +789,13 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
           </div>
         ) : (
           <div className="space-y-2">
-            {withdrawals.map((withdrawal) => {
-              const convertedAmount = convertAmount(withdrawal.amount);
-              return (
+            {withdrawals.map((withdrawal) => (
               <div
                 key={withdrawal.id}
                 className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0"
               >
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{formatAmount ? formatAmount(convertedAmount, currency) : convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="text-sm font-medium text-gray-900">{formatAmount ? formatAmount(withdrawal.amount, currency) : withdrawal.amount.toLocaleString()}</p>
                   <p className="text-xs text-gray-500">{withdrawal.withdrawal_ref}</p>
                 </div>
                 <span
@@ -891,12 +810,10 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
                   {withdrawal.status}
                 </span>
               </div>
-              );
-            })}
+            ))}
           </div>
         )}
       </div>
     </section>
   );
 }
-

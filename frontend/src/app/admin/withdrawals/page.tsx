@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useAdminWithdrawals, usePaymentSettings, type AdminWithdrawal } from '@/hooks/useAdmin';
+import { useAdminWithdrawals, type AdminWithdrawal } from '@/hooks/useAdmin';
 import { Home, Users, Package, CreditCard, DollarSign, Building2, TrendingUp, Settings, Mail, Plug, ChevronLeft, Menu, X } from 'lucide-react';
 
 const API_BASE = '/api';
@@ -102,13 +102,9 @@ export default function AdminWithdrawalsPage() {
   const router = useRouter();
   const { user, hydrated } = useAuth();
   const { data: withdrawals, isLoading, error, refetch } = useAdminWithdrawals();
-  const { settings, isLoading: settingsLoading, isSaving, saveSettings } = usePaymentSettings();
   const [approving, setApproving] = useState<number | null>(null);
   const [denying, setDenying] = useState<number | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  const [toggleError, setToggleError] = useState<string | null>(null);
-  const [toggleSuccess, setToggleSuccess] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
 
   useEffect(() => {
     setIsMounted(true);
@@ -136,24 +132,6 @@ export default function AdminWithdrawalsPage() {
   if (!user || (user.user_type?.toLowerCase() !== 'admin' && user.user_type?.toLowerCase() !== 'superadmin')) {
     return null;
   }
-
-  const counts = withdrawals.reduce(
-    (acc, w) => {
-      if (w.status === 'pending') acc.pending += 1;
-      else if (w.status === 'approved' || w.status === 'paid') acc.approved += 1;
-      else if (w.status === 'rejected') acc.rejected += 1;
-      acc.all += 1;
-      return acc;
-    },
-    { pending: 0, approved: 0, rejected: 0, all: 0 }
-  );
-
-  const filteredWithdrawals = withdrawals.filter((w) => {
-    if (statusFilter === 'pending') return w.status === 'pending';
-    if (statusFilter === 'approved') return w.status === 'approved' || w.status === 'paid';
-    if (statusFilter === 'rejected') return w.status === 'rejected';
-    return true;
-  });
 
   const approveWithdrawal = async (withdrawalId: number) => {
     setApproving(withdrawalId);
@@ -246,22 +224,6 @@ export default function AdminWithdrawalsPage() {
     }
   };
 
-  const toggleAutomaticWithdrawals = async () => {
-    try {
-      setToggleError(null);
-      setToggleSuccess(null);
-      
-      const newValue = !settings?.enable_automatic_withdrawals;
-      await saveSettings({ enable_automatic_withdrawals: newValue });
-      setToggleSuccess(`Automatic withdrawals ${newValue ? 'enabled' : 'disabled'} successfully`);
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setToggleSuccess(null), 3000);
-    } catch (err) {
-      setToggleError(err instanceof Error ? err.message : 'Failed to update setting');
-    }
-  };
-
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
@@ -279,47 +241,6 @@ export default function AdminWithdrawalsPage() {
           <p className="text-gray-600 mt-1">Approve and manage withdrawal requests</p>
         </div>
 
-        {/* Automatic Withdrawals Toggle */}
-        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Automatic Withdrawals</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                {settingsLoading 
-                  ? 'Loading settings...' 
-                  : settings?.enable_automatic_withdrawals 
-                    ? 'Withdrawals are processed instantly' 
-                    : 'Withdrawals require manual admin approval'}
-              </p>
-            </div>
-            <button
-              onClick={toggleAutomaticWithdrawals}
-              disabled={isSaving || settingsLoading}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                settings?.enable_automatic_withdrawals ? 'bg-blue-600' : 'bg-gray-300'
-              } ${isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
-            >
-              <span
-                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                  settings?.enable_automatic_withdrawals ? 'translate-x-7' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {toggleSuccess && (
-          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
-            {toggleSuccess}
-          </div>
-        )}
-
-        {toggleError && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-            {toggleError}
-          </div>
-        )}
-
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
             {error.message}
@@ -327,59 +248,17 @@ export default function AdminWithdrawalsPage() {
         )}
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="flex flex-wrap gap-2 border-b border-gray-200 px-4 py-3">
-            <button
-              onClick={() => setStatusFilter('pending')}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                statusFilter === 'pending'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Pending ({counts.pending})
-            </button>
-            <button
-              onClick={() => setStatusFilter('approved')}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                statusFilter === 'approved'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Approved ({counts.approved})
-            </button>
-            <button
-              onClick={() => setStatusFilter('rejected')}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                statusFilter === 'rejected'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Rejected ({counts.rejected})
-            </button>
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                statusFilter === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              All ({counts.all})
-            </button>
-          </div>
           {isLoading ? (
             <div className="p-6 space-y-3">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />
               ))}
             </div>
-          ) : filteredWithdrawals.length === 0 ? (
+          ) : withdrawals.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
               <DollarSign size={48} className="mx-auto mb-4 text-gray-300" />
               <p className="text-lg font-medium">No withdrawals found</p>
-              <p className="text-sm text-gray-400 mt-1">No {statusFilter} withdrawals to show</p>
+              <p className="text-sm text-gray-400 mt-1">Withdrawal requests will appear here</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -396,7 +275,7 @@ export default function AdminWithdrawalsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredWithdrawals.map((w: AdminWithdrawal) => {
+                  {withdrawals.map((w: AdminWithdrawal) => {
                     const displayName = (w.user?.first_name || w.user?.last_name)
                       ? `${w.user?.first_name ?? ''} ${w.user?.last_name ?? ''}`.trim()
                       : (w.user?.email ?? `#${w.user_id}`);
@@ -426,7 +305,7 @@ export default function AdminWithdrawalsPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600">
-                        {new Date(w.created_at).toLocaleString()}
+                        {new Date(w.created_at).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4">
                         {w.status === 'pending' ? (

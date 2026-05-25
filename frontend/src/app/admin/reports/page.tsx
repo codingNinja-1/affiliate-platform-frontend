@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 
 type ReportSummary = {
   totalUsers: number;
@@ -62,7 +62,7 @@ export default function AdminReportsPage() {
   };
 
   return (
-    <main className="flex min-h-screen w-full flex-col gap-6 bg-gray-50 px-6 py-10">
+    <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 bg-gray-50 px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
@@ -177,4 +177,3 @@ function MetricCard({
     </div>
   );
 }
-

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Home, ShoppingBag, Users, CreditCard, TrendingUp, BarChart3, DollarSign, Settings, Mail, Link2, Plus, LogOut } from 'lucide-react';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const API_BASE = '/api';
@@ -365,4 +365,3 @@ export default function AdminApp() {
     </div>
   );
 }
-

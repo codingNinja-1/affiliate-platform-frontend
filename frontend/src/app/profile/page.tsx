@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from '@/app/components/NoPrefetchLink';
-import OtpModal from '@/app/components/OtpModal';
+import Link from 'next/link';
 
 type User = {
   id: number;
   first_name: string;
   last_name: string;
-  full_name?: string;
   email: string;
   phone?: string;
   user_type: string;
@@ -28,11 +26,6 @@ export default function ProfilePage() {
   });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [otpOpen, setOtpOpen] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [otpError, setOtpError] = useState('');
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [pendingData, setPendingData] = useState<typeof formData | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -67,55 +60,10 @@ export default function ProfilePage() {
     loadProfile();
   }, []);
 
-  const requestOtp = async () => {
-    setOtpError('');
-    setOtpLoading(true);
-
-    try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/otp/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ purpose: 'profile_update' }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.message || 'Failed to send verification code');
-        return false;
-      }
-
-      setOtpOpen(true);
-      return true;
-    } catch (err) {
-      setError('Failed to send verification code');
-      console.error(err);
-      return false;
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
     setError('');
-    setPendingData({ ...formData });
-
-    const sent = await requestOtp();
-    if (!sent) {
-      setPendingData(null);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!pendingData) return;
-
-    setOtpError('');
-    setOtpLoading(true);
 
     const token = localStorage.getItem('auth_token');
     try {
@@ -125,33 +73,25 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...pendingData, otp_code: otpCode }),
+        body: JSON.stringify(formData),
       });
 
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setOtpError(data.message || 'Verification failed');
-        return;
-      }
+      if (!res.ok) throw new Error('Update failed');
 
+      const data = await res.json();
       setUser(data.data);
       setEditing(false);
       setMessage('Profile updated successfully');
       localStorage.setItem('user', JSON.stringify(data.data));
-      setOtpOpen(false);
-      setOtpCode('');
-      setPendingData(null);
     } catch (err) {
-      setOtpError('Verification failed');
+      setError('Failed to update profile');
       console.error(err);
-    } finally {
-      setOtpLoading(false);
     }
   };
 
   if (loading) {
     return (
-      <main className="flex min-h-screen w-full flex-col gap-6 bg-gray-50 px-6 py-10">
+      <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 bg-gray-50 px-6 py-10">
         <div className="h-8 w-32 animate-pulse rounded bg-gray-200" />
         <div className="h-64 animate-pulse rounded-xl bg-gray-200" />
       </main>
@@ -159,7 +99,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="flex min-h-screen w-full flex-col gap-6 bg-gray-50 px-6 py-10">
+    <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 bg-gray-50 px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
@@ -244,41 +184,15 @@ export default function ProfilePage() {
           </form>
         ) : (
           <div className="space-y-3 text-sm">
-            <InfoRow
-              label="Name"
-              value={
-                `${user?.first_name || ''} ${user?.last_name || ''}`.trim() ||
-                user?.full_name ||
-                'Not set'
-              }
-            />
+            <InfoRow label="Name" value={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Not set'} />
             <InfoRow label="Email" value={user?.email || ''} />
             <InfoRow label="Phone" value={user?.phone || 'Not set'} />
             <InfoRow label="User type" value={user?.user_type || ''} />
             <InfoRow label="Status" value={user?.status || ''} />
-            <InfoRow
-              label="Member since"
-              value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'Not set'}
-            />
+            <InfoRow label="Member since" value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : ''} />
           </div>
         )}
       </section>
-
-      <OtpModal
-        open={otpOpen}
-        title="Verify profile update"
-        description="Enter the 6-digit code sent to your email to save changes."
-        code={otpCode}
-        onCodeChange={setOtpCode}
-        onVerify={handleVerifyOtp}
-        onResend={requestOtp}
-        onClose={() => {
-          setOtpOpen(false);
-          setOtpCode('');
-        }}
-        isLoading={otpLoading}
-        error={otpError}
-      />
     </main>
   );
 }
@@ -291,4 +205,3 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

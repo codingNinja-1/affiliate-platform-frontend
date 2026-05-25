@@ -321,7 +321,7 @@ export default function AdminProductsPage() {
         )}
 
         {/* Products Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="text-gray-500">Loading products...</div>
@@ -333,7 +333,7 @@ export default function AdminProductsPage() {
               <p className="text-sm text-gray-500 mt-1">Product submissions will appear here</p>
             </div>
           ) : (
-            <table className="w-full min-w-[900px]">
+            <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">

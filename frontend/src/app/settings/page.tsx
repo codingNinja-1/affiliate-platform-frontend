@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { africanBanks, countries, banksByCountry } from '@/data/africanBanks';
-import OtpModal from '@/app/components/OtpModal';
 
 type BankDetails = {
   bank_name: string;
@@ -28,11 +27,6 @@ export default function SettingsPage() {
   const [verifying, setVerifying] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
   const [verificationError, setVerificationError] = useState('');
-  const [otpOpen, setOtpOpen] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [otpError, setOtpError] = useState('');
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [pendingBankDetails, setPendingBankDetails] = useState<BankDetails | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -84,38 +78,6 @@ export default function SettingsPage() {
     }
   };
 
-  const requestOtp = async () => {
-    setOtpError('');
-    setOtpLoading(true);
-
-    try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/otp/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ purpose: 'bank_details_update' }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.message || 'Failed to send verification code');
-        return false;
-      }
-
-      setOtpOpen(true);
-      return true;
-    } catch (err) {
-      setError('Failed to send verification code');
-      console.error(err);
-      return false;
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -136,19 +98,7 @@ export default function SettingsPage() {
       return;
     }
 
-    setPendingBankDetails({ ...bankDetails });
-    const sent = await requestOtp();
-    if (!sent) {
-      setPendingBankDetails(null);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!pendingBankDetails) return;
-
-    setOtpError('');
     setSaving(true);
-    setOtpLoading(true);
 
     try {
       const token = localStorage.getItem('auth_token');
@@ -158,30 +108,26 @@ export default function SettingsPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...pendingBankDetails, otp_code: otpCode }),
+        body: JSON.stringify(bankDetails),
       });
 
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json();
 
       if (!res.ok) {
-        setOtpError(data.message || 'Verification failed');
-        return;
+        throw new Error(data.message || 'Failed to save bank details');
       }
 
       setMessage('Bank details saved successfully!');
-      setOtpOpen(false);
-      setOtpCode('');
-      setPendingBankDetails(null);
-
+      
+      // Redirect to dashboard after 1.5 seconds
       setTimeout(() => {
         router.push('/dashboard');
       }, 1500);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Verification failed';
-      setOtpError(msg);
+      const message = err instanceof Error ? err.message : 'Failed to save bank details';
+      setError(message);
     } finally {
       setSaving(false);
-      setOtpLoading(false);
     }
   };
 
@@ -240,12 +186,6 @@ export default function SettingsPage() {
         }),
       });
 
-      // Check if response is actually JSON
-      const contentType = res.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Server error: Unable to verify account. Please try again later.');
-      }
-
       const data = await res.json();
 
       if (!res.ok || !data.success) {
@@ -272,14 +212,14 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen w-full flex-col items-center justify-center bg-gray-50 px-6 py-10">
+      <main className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center bg-gray-50 px-6 py-10">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-screen w-full flex-col gap-6 bg-gray-50 px-6 py-10">
+    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 bg-gray-50 px-6 py-10">
       <header>
         <h1 className="text-3xl font-semibold text-gray-900">Settings</h1>
         <p className="mt-1 text-sm text-gray-600">Manage your account and bank details</p>
@@ -354,6 +294,21 @@ export default function SettingsPage() {
             {bankDetails.bank_code && (
               <p className="mt-1 text-xs text-gray-500">Bank code: {bankDetails.bank_code}</p>
             )}
+          </div>
+
+          <div>
+            <label htmlFor="bank_name" className="block text-sm font-medium text-gray-700">
+              Bank Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="bank_name"
+              value={bankDetails.bank_name}
+              onChange={(e) => handleChange('bank_name', e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="e.g., Access Bank, GTBank, First Bank"
+              required
+            />
           </div>
 
           <div>
@@ -440,22 +395,6 @@ export default function SettingsPage() {
           </div>
         </form>
       </section>
-
-      <OtpModal
-        open={otpOpen}
-        title="Verify bank details"
-        description="Enter the 6-digit code sent to your email to save bank details."
-        code={otpCode}
-        onCodeChange={setOtpCode}
-        onVerify={handleVerifyOtp}
-        onResend={requestOtp}
-        onClose={() => {
-          setOtpOpen(false);
-          setOtpCode('');
-        }}
-        isLoading={otpLoading}
-        error={otpError}
-      />
     </main>
   );
 }

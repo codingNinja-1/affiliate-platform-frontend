@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 
 interface Product {
   id: number;
@@ -384,4 +384,3 @@ export default function DemoPage() {
     </div>
   );
 }
-
