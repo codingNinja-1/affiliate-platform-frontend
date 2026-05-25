@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 
 export default function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -327,4 +327,3 @@ export default function ResetPasswordContent() {
     </div>
   );
 }
-

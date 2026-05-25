@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 import { Save, Eye, EyeOff } from 'lucide-react';
 import Sidebar from '@/app/components/Sidebar';
 
@@ -310,4 +310,3 @@ export default function PaymentSettingsPage() {
     </div>
   );
 }
-

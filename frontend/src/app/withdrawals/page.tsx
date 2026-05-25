@@ -1,14 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useWithdrawals, useCreateWithdrawal, type Withdrawal } from '@/hooks/useWithdrawals';
-import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
-import { useVendorCurrencyConversion } from '@/hooks/useVendorCurrencyConversion';
-import OtpModal from '@/app/components/OtpModal';
-import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
-import SubscriptionRequiredModal from '@/app/components/SubscriptionRequiredModal';
 
 const API_BASE = '/api'; // Always use relative path for client-side requests
 
@@ -21,69 +16,10 @@ type BankDetails = {
 
 export default function WithdrawalsPage() {
   const { user, token } = useAuth();
-  const userType = user?.user_type?.toLowerCase() || 'customer';
-
-  const isRestrictedUser = userType === 'vendor' || userType === 'affiliate';
-  const { isActive: isSubscribed, loading: subscriptionLoading, error: subscriptionError } = useSubscriptionStatus({
-    enabled: isRestrictedUser,
-  });
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-
-  const { data: withdrawals = [], isLoading, refetch } = useWithdrawals(userType, {
-    enabled: !isRestrictedUser || isSubscribed,
-  });
+  const userType = user?.user_type || 'customer';
+  
+  const { data: withdrawals = [], isLoading, refetch } = useWithdrawals(userType);
   const createWithdrawal = useCreateWithdrawal(userType);
-  
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('NGN');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
-  const { amounts, formatAmount } = useCurrencyConversion(refreshTrigger, selectedCurrency);
-  const { amounts: vendorAmounts, formatAmount: vendorFormatAmount } = useVendorCurrencyConversion(refreshTrigger, selectedCurrency);
-  
-  // Load saved currency preference on mount
-  useEffect(() => {
-    const loadUserCurrencyPreference = async () => {
-      if (!token) return;
-      try {
-        const endpoint = userType === 'vendor' ? '/api/vendor/settings' : '/api/affiliate/settings';
-        const res = await fetch(endpoint, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const preferredCurrency = data.data?.preferred_currency;
-          if (preferredCurrency) {
-            setSelectedCurrency(preferredCurrency);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load currency preference:', error);
-      }
-    };
-    loadUserCurrencyPreference();
-  }, [token, userType]);
-  
-  const handleCurrencyChange = (currency: string) => {
-    setSelectedCurrency(currency);
-    setTimeout(() => {
-      setRefreshTrigger(prev => prev + 1);
-    }, 100);
-  };
-  
-  const displayCurrency = userType === 'vendor' ? (vendorAmounts?.currency || selectedCurrency || 'NGN') : (amounts?.currency || selectedCurrency || 'NGN');
-  const conversionRate = userType === 'vendor' ? vendorAmounts?.conversion_rate : amounts?.conversion_rate;
-  const currencySymbol = displayCurrency === 'NGN' ? '₦' : 
-                        displayCurrency === 'USD' ? '$' :
-                        displayCurrency === 'GBP' ? '£' :
-                        displayCurrency === 'EUR' ? '€' :
-                        displayCurrency + ' ';
-  
-  const convertAmount = (amount: number) => {
-    if (!displayCurrency || displayCurrency === 'NGN' || !conversionRate) {
-      return amount;
-    }
-    return amount * conversionRate;
-  };
   
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState('');
@@ -94,22 +30,6 @@ export default function WithdrawalsPage() {
   const [bankLoading, setBankLoading] = useState(true);
   const [bankError, setBankError] = useState('');
   const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
-  const [otpOpen, setOtpOpen] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [otpError, setOtpError] = useState('');
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [pendingWithdrawal, setPendingWithdrawal] = useState<{
-    amount: number;
-    bank_name: string;
-    account_name: string;
-    account_number: string;
-  } | null>(null);
-
-  useEffect(() => {
-    if (isRestrictedUser && !subscriptionLoading && !isSubscribed) {
-      setShowSubscriptionModal(true);
-    }
-  }, [isRestrictedUser, subscriptionLoading, isSubscribed]);
 
   useEffect(() => {
     if (!token) {
@@ -163,37 +83,6 @@ export default function WithdrawalsPage() {
     fetchBankDetails();
   }, [token]);
 
-  const requestOtp = async () => {
-    setOtpError('');
-    setOtpLoading(true);
-
-    try {
-      const res = await fetch('/api/otp/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ purpose: 'withdrawal_request' }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.message || 'Failed to send verification code');
-        return false;
-      }
-
-      setOtpOpen(true);
-      return true;
-    } catch (err) {
-      setError('Failed to send verification code');
-      console.error(err);
-      return false;
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -203,30 +92,12 @@ export default function WithdrawalsPage() {
       return;
     }
 
-    const payload = {
-      amount: parseFloat(amount),
-      bank_name: bankName,
-      account_name: accountName,
-      account_number: accountNumber,
-    };
-
-    setPendingWithdrawal(payload);
-    const sent = await requestOtp();
-    if (!sent) {
-      setPendingWithdrawal(null);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!pendingWithdrawal) return;
-
-    setOtpError('');
-    setOtpLoading(true);
-
     try {
       await createWithdrawal.mutateAsync({
-        ...pendingWithdrawal,
-        otp_code: otpCode,
+        amount: parseFloat(amount),
+        bank_name: bankName,
+        account_name: accountName,
+        account_number: accountNumber,
       });
 
       setAmount('');
@@ -234,19 +105,14 @@ export default function WithdrawalsPage() {
       setAccountName('');
       setAccountNumber(accountNumber);
       setShowForm(false);
-      setOtpOpen(false);
-      setOtpCode('');
-      setPendingWithdrawal(null);
       refetch();
     } catch (err) {
-      setOtpError(err instanceof Error ? err.message : 'Verification failed');
-    } finally {
-      setOtpLoading(false);
+      setError(err instanceof Error ? err.message : 'Failed to submit withdrawal request');
     }
   };
 
   return (
-    <main className="flex min-h-screen w-full flex-col gap-6 bg-gray-50 px-6 py-10">
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 bg-gray-50 px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
@@ -255,26 +121,12 @@ export default function WithdrawalsPage() {
           <h1 className="mt-2 text-3xl font-semibold text-gray-900">Withdrawals</h1>
           <p className="text-sm text-gray-600">Request and track your withdrawals</p>
         </div>
-        <div className="flex gap-3 items-center">
-          <select 
-            value={selectedCurrency}
-            onChange={(e) => handleCurrencyChange(e.target.value)}
-            aria-label="Select currency"
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="NGN">₦ NGN</option>
-            <option value="USD">$ USD</option>
-            <option value="GBP">£ GBP</option>
-            <option value="EUR">€ EUR</option>
-          </select>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            disabled={isRestrictedUser && !isSubscribed}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {showForm ? 'Cancel' : 'New withdrawal'}
-          </button>
-        </div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
+        >
+          {showForm ? 'Cancel' : 'New withdrawal'}
+        </button>
       </header>
 
       {(error || bankError) && (
@@ -283,19 +135,7 @@ export default function WithdrawalsPage() {
         </div>
       )}
 
-      {subscriptionError && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {subscriptionError}
-        </div>
-      )}
-
-      {!isRestrictedUser || isSubscribed ? null : (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Your subscription is inactive. Subscribe to request withdrawals.
-        </div>
-      )}
-
-      {showForm && (!isRestrictedUser || isSubscribed) && (
+      {showForm && (
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-xl font-semibold text-gray-900">Request withdrawal</h2>
           {bankLoading ? (
@@ -311,7 +151,7 @@ export default function WithdrawalsPage() {
           ) : null}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm text-gray-700 font-medium">Amount ({displayCurrency})</label>
+              <label className="mb-2 block text-sm text-gray-700 font-medium">Amount (₦)</label>
               <input
                 type="number"
                 value={amount}
@@ -323,7 +163,7 @@ export default function WithdrawalsPage() {
                 className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 disabled:opacity-50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="Enter amount"
               />
-              <p className="mt-1 text-xs text-gray-500">Minimum withdrawal: 1000 {displayCurrency}</p>
+              <p className="mt-1 text-xs text-gray-500">Minimum withdrawal: ₦1,000</p>
             </div>
 
             {bankDetails && (
@@ -351,18 +191,7 @@ export default function WithdrawalsPage() {
 
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold text-gray-900">Withdrawal history</h2>
-        {subscriptionLoading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 animate-pulse rounded-lg bg-gray-100" />
-            ))}
-          </div>
-        ) : isRestrictedUser && !isSubscribed ? (
-          <div className="py-12 text-center text-gray-500">
-            <p>Subscribe to access withdrawals.</p>
-            <p className="mt-2 text-sm">Manage your plan in the subscription page.</p>
-          </div>
-        ) : isLoading ? (
+        {isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-16 animate-pulse rounded-lg bg-gray-100" />
@@ -386,11 +215,9 @@ export default function WithdrawalsPage() {
                 </tr>
               </thead>
               <tbody>
-                {withdrawals.map((withdrawal: Withdrawal) => {
-                  const convertedAmount = convertAmount(withdrawal.amount);
-                  return (
+                {withdrawals.map((withdrawal: Withdrawal) => (
                   <tr key={withdrawal.id} className="border-b border-gray-100">
-                    <td className="py-4 font-medium text-gray-900">{userType === 'vendor' ? (vendorFormatAmount ? vendorFormatAmount(convertedAmount, displayCurrency) : (currencySymbol + convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }))) : (formatAmount ? formatAmount(convertedAmount, displayCurrency) : (currencySymbol + convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })))}</td>
+                    <td className="py-4 font-medium text-gray-900">₦{withdrawal.amount.toLocaleString()}</td>
                     <td className="py-4 text-gray-700">{withdrawal.payment_method}</td>
                     <td className="py-4">
                       <span
@@ -414,37 +241,12 @@ export default function WithdrawalsPage() {
                         : '-'}
                     </td>
                   </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
           </div>
         )}
       </section>
-
-      <OtpModal
-        open={otpOpen}
-        title="Verify withdrawal"
-        description="Enter the 6-digit code sent to your email to submit this withdrawal."
-        code={otpCode}
-        onCodeChange={setOtpCode}
-        onVerify={handleVerifyOtp}
-        onResend={requestOtp}
-        onClose={() => {
-          setOtpOpen(false);
-          setOtpCode('');
-        }}
-        isLoading={otpLoading}
-        error={otpError}
-      />
-      <SubscriptionRequiredModal
-        open={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-        title="Subscribe to access withdrawals"
-        description="Your subscription is inactive. Please subscribe to request withdrawals."
-        actionHref="/subscriptions"
-        actionLabel="View subscription"
-      />
     </main>
   );
 }

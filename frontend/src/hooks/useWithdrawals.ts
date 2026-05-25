@@ -19,7 +19,6 @@ export type CreateWithdrawalPayload = {
   bank_name: string;
   account_name: string;
   account_number: string;
-  otp_code?: string;
 };
 
 function normalizeWithdrawal(item: unknown): Withdrawal {
@@ -34,16 +33,11 @@ function normalizeWithdrawal(item: unknown): Withdrawal {
   };
 }
 
-type UseWithdrawalsOptions = {
-  enabled?: boolean;
-};
-
-export function useWithdrawals(userType?: string, options: UseWithdrawalsOptions = {}) {
+export function useWithdrawals(userType?: string) {
   const { token } = useAuth();
   const [data, setData] = useState<Withdrawal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const enabled = options.enabled ?? true;
 
   const endpoint = useMemo(() => {
     const base = API_BASE;
@@ -56,13 +50,6 @@ export function useWithdrawals(userType?: string, options: UseWithdrawalsOptions
   }, [userType]);
 
   const fetchWithdrawals = useCallback(async () => {
-    if (!enabled) {
-      setIsLoading(false);
-      setError(null);
-      setData([]);
-      return;
-    }
-
     if (!token) {
       setIsLoading(false);
       return;
@@ -94,7 +81,7 @@ export function useWithdrawals(userType?: string, options: UseWithdrawalsOptions
     } finally {
       setIsLoading(false);
     }
-  }, [endpoint, token, enabled]);
+  }, [endpoint, token]);
 
   useEffect(() => {
     fetchWithdrawals();

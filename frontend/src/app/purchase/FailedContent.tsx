@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 
 export default function FailedContent() {
   const searchParams = useSearchParams();
@@ -93,4 +93,3 @@ export default function FailedContent() {
     </div>
   );
 }
-

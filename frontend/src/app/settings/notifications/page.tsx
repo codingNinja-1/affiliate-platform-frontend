@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 
 type NotificationSettings = {
   affiliate_approved?: boolean;
@@ -358,4 +358,3 @@ function NotificationToggle({
     </div>
   );
 }
-

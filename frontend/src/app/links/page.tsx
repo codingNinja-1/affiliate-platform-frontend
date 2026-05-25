@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 
 type Product = {
   id: number;
-  vendor_id?: number | null;
   name: string;
   slug: string;
   price: number;
@@ -14,12 +13,6 @@ type Product = {
   image?: string | null;
   clicks?: number;
   sales?: number;
-  vendor_name?: string | null;
-  vendor?: {
-    name?: string | null;
-    email?: string | null;
-    phone?: string | null;
-  };
 };
 
 type AffiliateLink = {
@@ -32,7 +25,6 @@ type AffiliateLink = {
 };
 
 export default function LinksPage() {
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const [products, setProducts] = useState<Product[]>([]);
   const [links, setLinks] = useState<AffiliateLink[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,8 +32,6 @@ export default function LinksPage() {
   const [copiedLink, setCopiedLink] = useState('');
   const [query, setQuery] = useState('');
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
-  const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
-  const [affiliateId, setAffiliateId] = useState<string>('');
 
   // Quick lookup for product details by id
   const productById = useMemo(() => {
@@ -91,8 +81,7 @@ export default function LinksPage() {
       // Get affiliate data to get referral code
       const userStr = localStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
-      const affiliateIdValue = user?.affiliate?.id ? String(user.affiliate.id) : '';
-      setAffiliateId(affiliateIdValue);
+      const affiliateId = user?.affiliate?.id;
 
       // Generate affiliate links using the affiliate ID
       const affiliateLinks = (productsData.data || []).map((product: Product) => {
@@ -100,8 +89,7 @@ export default function LinksPage() {
 
         // Build referral link: append ?pid=PRODUCT_ID&a=AFFILIATE_ID to sales page
         const separator = salesUrl.includes('?') ? '&' : '?';
-        const vendorId = product.vendor_id ?? '';
-        const referralLink = `${salesUrl}${separator}pid=${product.id}&a=${affiliateIdValue}&v=${vendorId}`;
+        const referralLink = `${salesUrl}${separator}pid=${product.id}&a=${affiliateId ?? ''}`;
 
         return {
           product_id: product.id,
@@ -153,7 +141,7 @@ export default function LinksPage() {
   };
 
   return (
-    <main className="flex min-h-screen w-full flex-col gap-6 bg-white px-6 py-10 text-slate-900">
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 bg-white px-6 py-10 text-slate-900">
       <header>
         <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-500">
           ← Back to dashboard
@@ -197,24 +185,24 @@ export default function LinksPage() {
             {links
               .filter((l) => !query || l.product_name.toLowerCase().includes(query.toLowerCase()))
               .map((link) => (
-              <article
+              <div
                 key={link.product_id}
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                  className="rounded-lg border border-slate-200 bg-white p-4"
               >
-                <header className="flex flex-wrap items-start justify-between gap-4">
+                <div className="mb-2 flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 overflow-hidden rounded-md bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
                       {productById[link.product_id]?.image && !imageErrors.has(link.product_id) ? (
                         <img
                           src={
-                            productById[link.product_id]?.image?.startsWith('http')
+                            productById[link.product_id]?.image?.startsWith('http') 
                               ? productById[link.product_id]?.image || ''
                               : `/api/storage/${productById[link.product_id]?.image}`
                           }
                           alt={link.product_name}
                           className="h-full w-full object-cover"
                           onError={() => {
-                            setImageErrors((prev) => new Set(prev).add(link.product_id));
+                            setImageErrors(prev => new Set(prev).add(link.product_id));
                           }}
                         />
                       ) : (
@@ -222,127 +210,39 @@ export default function LinksPage() {
                       )}
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-slate-900">{link.product_name}</h3>
+                      <h3 className="font-medium text-slate-900">{link.product_name}</h3>
                       <div className="mt-1 flex gap-4 text-sm text-slate-600">
                         <span>{link.clicks} clicks</span>
                         <span>{link.sales} sales</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <a
-                      href={`${origin}/checkout?p=${link.product_id}&a=${affiliateId}&v=${productById[link.product_id]?.vendor_id ?? ''}`}
-                      className="rounded-md border border-slate-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-50"
+                </div>
+                <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-center">
+                  <input
+                    type="text"
+                    value={link.referral_link}
+                    readOnly
+                    className="flex-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => copyToClipboard(link.referral_link)}
+                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
                     >
-                      Payment Page
-                    </a>
+                      {copiedLink === link.referral_link ? 'Copied!' : 'Copy'}
+                    </button>
                     <a
                       href={link.referral_link}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-md bg-slate-800 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:bg-slate-700"
+                      className="rounded-md bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200"
                     >
-                      Sales Page
+                      Open
                     </a>
                   </div>
-                </header>
-
-                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500">Vendor Name</p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {productById[link.product_id]?.vendor_name ||
-                          productById[link.product_id]?.vendor?.name ||
-                          'Vendor'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500">Sales Price</p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        ₦{productById[link.product_id]?.price?.toLocaleString() || '0'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500">Commission</p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {productById[link.product_id]?.commission_rate ?? 0}%
-                      </p>
-                    </div>
-                  </div>
                 </div>
-
-                <div className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-slate-900">Get your Affiliate Links</p>
-                    <button
-                      onClick={() =>
-                        setExpandedProductId((prev) => (prev === link.product_id ? null : link.product_id))
-                      }
-                      className="text-xs font-semibold text-slate-600 hover:text-slate-900"
-                    >
-                      {expandedProductId === link.product_id ? 'Hide' : 'More info'}
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-slate-600">Copy Affiliate Link below</p>
-                      <div className="mt-1 flex flex-col gap-2 md:flex-row md:items-center">
-                        <input
-                          type="text"
-                          value={link.referral_link}
-                          readOnly
-                          className="flex-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-                        />
-                        <button
-                          onClick={() => copyToClipboard(link.referral_link)}
-                          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
-                        >
-                          {copiedLink === link.referral_link ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-600">Copy Affiliate Link Payment Page below</p>
-                      <div className="mt-1 flex flex-col gap-2 md:flex-row md:items-center">
-                        <input
-                          type="text"
-                          value={`${origin}/checkout?p=${link.product_id}&a=${affiliateId}&v=${productById[link.product_id]?.vendor_id ?? ''}`}
-                          readOnly
-                          className="flex-1 rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600"
-                        />
-                        <button
-                          onClick={() =>
-                            copyToClipboard(`${origin}/checkout?p=${link.product_id}&a=${affiliateId}&v=${productById[link.product_id]?.vendor_id ?? ''}`)
-                          }
-                          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                          Copy
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {expandedProductId === link.product_id && (
-                  <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-semibold text-slate-900">Vendor Information</h4>
-                      <button
-                        onClick={() => setExpandedProductId(null)}
-                        className="text-xs font-semibold text-slate-500 hover:text-slate-700"
-                      >
-                        Close
-                      </button>
-                    </div>
-                    <div className="mt-3 grid gap-2 text-sm text-slate-600">
-                      <p><span className="font-semibold text-slate-800">Name:</span> {productById[link.product_id]?.vendor_name || productById[link.product_id]?.vendor?.name || 'Vendor'}</p>
-                      <p><span className="font-semibold text-slate-800">Email:</span> {productById[link.product_id]?.vendor?.email || 'Not available'}</p>
-                      <p><span className="font-semibold text-slate-800">Phone:</span> {productById[link.product_id]?.vendor?.phone || 'Not available'}</p>
-                    </div>
-                  </div>
-                )}
-              </article>
+              </div>
             ))}
           </div>
         )}
@@ -386,4 +286,3 @@ export default function LinksPage() {
     </main>
   );
 }
-

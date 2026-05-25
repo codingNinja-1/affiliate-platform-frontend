@@ -1,21 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
-
-declare global {
-  interface Window {
-    google?: {
-      accounts?: {
-        id?: {
-          initialize: (options: { client_id: string; callback: (response: { credential: string }) => void }) => void;
-          renderButton: (element: HTMLElement | null, options: { theme: string; size: string; width?: string }) => void;
-        };
-      };
-    };
-  }
-}
 
 const getApiBase = () => {
   if (process.env.NEXT_PUBLIC_API_URL) {
@@ -37,8 +24,6 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [googleEnabled, setGoogleEnabled] = useState(false);
-  const [googleReady, setGoogleReady] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -48,51 +33,6 @@ export default function LoginPage() {
         window.location.href = '/dashboard';
       }
     }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      setGoogleEnabled(false);
-      setGoogleReady(false);
-      return;
-    }
-
-    setGoogleEnabled(true);
-
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onerror = () => {
-      setGoogleReady(false);
-    };
-    document.body.appendChild(script);
-
-    script.onload = () => {
-      if (!window.google || !window.google.accounts?.id) return;
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: async (response: { credential: string }) => {
-          await handleGoogleLogin(response.credential);
-        },
-      });
-      window.google.accounts.id.renderButton(
-        document.getElementById('google-signin-button'),
-        {
-          theme: 'outline',
-          size: 'large',
-          width: '240',
-        }
-      );
-      setGoogleReady(true);
-    };
-
-    return () => {
-      document.body.removeChild(script);
-    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -141,7 +81,7 @@ export default function LoginPage() {
           if (checkRes.ok) {
             const checkData = await checkRes.json();
             if (checkData.success && checkData.data.requires_setup) {
-              window.location.href = '/settings';
+              window.location.href = '/setup-bank-details';
               return;
             }
           }
@@ -154,42 +94,6 @@ export default function LoginPage() {
       window.location.href = '/dashboard';
     } catch {
       setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async (credential: string) => {
-    setError('');
-    setLoading(true);
-
-    try {
-      const response = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ credential }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || 'Google sign-in failed');
-        return;
-      }
-
-      const userPayload = {
-        ...data.data.user,
-        referral_code: data.data.user?.affiliate?.referral_code || data.data.user?.referral_code,
-      };
-      localStorage.setItem('auth_token', data.data.access_token);
-      localStorage.setItem('user', JSON.stringify(userPayload));
-
-      window.location.href = '/dashboard';
-    } catch (err) {
-      console.error('Google sign-in failed', err);
-      setError('Google sign-in failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -222,7 +126,7 @@ export default function LoginPage() {
                 <path d="M13 3L4 14H12L11 21L20 10H12L13 3Z" fill="white" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="text-white text-base sm:text-xl font-semibold">AffiliateHub</span>
+            <span className="text-white text-base sm:text-xl font-semibold">Trakr</span>
           </div>
           <Link href="/" className="hidden sm:flex items-center gap-2 text-gray-400 hover:text-white transition text-sm">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -237,7 +141,7 @@ export default function LoginPage() {
           <div className="w-full max-w-md">
             <div className="bg-[#12131f] border border-[#1e2035] rounded-2xl p-6 sm:p-8 shadow-2xl">
               <h1 className="text-xl sm:text-2xl font-semibold text-white text-center mb-2">
-                Sign In to Your AffiliateHub Account
+                Sign In to Your Trakr Account
               </h1>
               
               {error && (
@@ -325,23 +229,24 @@ export default function LoginPage() {
 
               {/* Social Login Buttons */}
               <div className="flex gap-2 sm:gap-4 mt-4 sm:mt-6 flex-col sm:flex-row">
-                {googleEnabled ? (
-                  <div className="relative flex-1 min-h-[44px]">
-                    {!googleReady && (
-                      <div className="absolute inset-0 rounded-lg border border-[#1e2035] bg-[#0a0b14] text-gray-500 text-xs sm:text-sm flex items-center justify-center">
-                        Loading Google sign-in...
-                      </div>
-                    )}
-                    <div
-                      id="google-signin-button"
-                      className="flex items-center justify-center min-h-[44px]"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex-1 min-h-[44px] rounded-lg border border-[#1e2035] bg-[#0a0b14] text-gray-500 text-xs sm:text-sm flex items-center justify-center">
-                    Google sign-in not configured
-                  </div>
-                )}
+                <button className="flex-1 flex items-center justify-center gap-2 bg-[#0a0b14] border border-[#1e2035] text-gray-300 py-2 sm:py-3 rounded-lg hover:bg-[#1e2035] transition text-xs sm:text-sm">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  <span className="text-xs sm:text-sm">Sing in with Google</span>
+                </button>
+                <button className="flex-1 flex items-center justify-center gap-2 bg-[#0a0b14] border border-[#1e2035] text-gray-300 py-2 sm:py-3 rounded-lg hover:bg-[#1e2035] transition text-xs sm:text-sm">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11.4 2H2v9.4h9.4V2z" fill="#F25022"/>
+                    <path d="M22 2h-9.4v9.4H22V2z" fill="#7FBA00"/>
+                    <path d="M11.4 12.6H2V22h9.4v-9.4z" fill="#00A4EF"/>
+                    <path d="M22 12.6h-9.4V22H22v-9.4z" fill="#FFB900"/>
+                  </svg>
+                  <span className="text-xs sm:text-sm">Sing in with Microsoft</span>
+                </button>
               </div>
 
               <p className="text-gray-400 text-center mt-4 sm:mt-6 text-xs sm:text-sm">
@@ -356,7 +261,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="flex justify-between items-center px-4 sm:px-8 py-4 sm:py-6 relative z-10">
-          <span className="text-gray-500 text-xs sm:text-sm">© 2025 AffiliateHub </span>
+          <span className="text-gray-500 text-xs sm:text-sm">© 2024 Trakr</span>
           <button className="hidden sm:flex items-center gap-2 text-gray-400 hover:text-white transition text-xs sm:text-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
@@ -378,10 +283,10 @@ export default function LoginPage() {
         
         <div className="relative z-10 max-w-lg">
           <h2 className="text-4xl font-bold text-white mb-4 text-center">
-            Get better with AffiliateHub
+            Get better with Trakr
           </h2>
           <p className="text-gray-400 text-center mb-10">
-            Take your affiliate marketing to the next level with AffiliateHub—optimize tracking, boost efficiency, and maximize your earnings effortlessly.
+            Take your affiliate marketing to the next level with Trakr—optimize tracking, boost efficiency, and maximize your earnings effortlessly.
           </p>
 
           {/* Dashboard Preview Card */}
@@ -471,4 +376,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 
 type EmailTemplate = {
   key: string;
@@ -23,12 +23,6 @@ const TEMPLATE_TYPES = [
     name: 'Affiliate Declined',
     description: 'Sent when an affiliate is declined',
     variables: ['{name}', '{email}', '{reason}'],
-  },
-  {
-    key: 'withdrawal_processing',
-    name: 'Withdrawal Processing',
-    description: 'Sent immediately when withdrawal is requested',
-    variables: ['{name}', '{amount}', '{withdrawal_ref}'],
   },
   {
     key: 'withdrawal_approved',
@@ -126,7 +120,7 @@ export default function EmailTemplatesPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
-      <div className="w-full">
+      <div className="mx-auto max-w-6xl">
         <header className="mb-8">
           <Link href="/settings/smtp" className="text-sm text-blue-600 hover:text-blue-700">
             ← Back to SMTP settings
@@ -258,4 +252,3 @@ export default function EmailTemplatesPage() {
     </main>
   );
 }
-

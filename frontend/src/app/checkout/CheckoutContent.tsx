@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from '@/app/components/NoPrefetchLink';
+import Link from 'next/link';
 import Image from 'next/image';
 
 interface Product {
@@ -354,4 +354,3 @@ export default function CheckoutContent() {
     </div>
   );
 }
-
