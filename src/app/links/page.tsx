@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 type Product = {
   id: number;
@@ -25,6 +26,10 @@ type AffiliateLink = {
 };
 
 export default function LinksPage() {
+  const searchParams = useSearchParams();
+  const highlightProductId = searchParams.get('product') ? Number(searchParams.get('product')) : null;
+  const highlightRef = useRef<HTMLDivElement>(null);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [links, setLinks] = useState<AffiliateLink[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +37,13 @@ export default function LinksPage() {
   const [copiedLink, setCopiedLink] = useState('');
   const [query, setQuery] = useState('');
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+
+  // Scroll to highlighted product after links load
+  useEffect(() => {
+    if (!loading && highlightProductId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [loading, highlightProductId]);
 
   // Quick lookup for product details by id
   const productById = useMemo(() => {
@@ -187,7 +199,12 @@ export default function LinksPage() {
               .map((link) => (
               <div
                 key={link.product_id}
-                  className="rounded-lg border border-slate-200 bg-white p-4"
+                ref={link.product_id === highlightProductId ? highlightRef : null}
+                className={`rounded-lg border bg-white p-4 transition-all ${
+                  link.product_id === highlightProductId
+                    ? 'border-green-400 ring-2 ring-green-200 shadow-md'
+                    : 'border-slate-200'
+                }`}
               >
                 <div className="mb-2 flex items-start justify-between">
                   <div className="flex items-center gap-3">
