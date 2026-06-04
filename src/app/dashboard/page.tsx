@@ -109,7 +109,9 @@ export default function DashboardPage() {
 
     const loadSummary = async () => {
       try {
-        const res = await fetch('/api/dashboard/summary', {
+        const parsedForType = JSON.parse(storedUser);
+        const userTypeParam = parsedForType?.user_type?.toLowerCase() || 'vendor';
+        const res = await fetch(`/api/dashboard/summary?user_type=${userTypeParam}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
