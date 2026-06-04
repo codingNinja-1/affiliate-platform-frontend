@@ -71,7 +71,6 @@ export function useVendorCurrencyConversion(refreshTrigger = 0, selectedCurrency
             pending_balance: Number(data.data.pending_balance ?? 0),
             total_earnings: Number(data.data.total_earnings ?? 0),
             total_withdrawn: Number(data.data.total_withdrawn ?? 0),
-            conversion_rate: Number(data.data.conversion_rate ?? 1),
           });
         }
         setRates(rateMap);
