@@ -6,7 +6,8 @@ export async function GET(req: NextRequest) {
   try {
     const auth = req.headers.get('authorization') || '';
 
-    const res = await fetch(`${BACKEND_BASE}/api/affiliate/converted-amounts`, {
+    // Always request NGN from backend — frontend handles conversion client-side
+    const res = await fetch(`${BACKEND_BASE}/api/affiliate/converted-amounts?currency=NGN`, {
       headers: {
         'Content-Type': 'application/json',
         ...(auth ? { Authorization: auth } : {}),
