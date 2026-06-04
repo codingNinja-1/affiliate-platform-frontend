@@ -9,9 +9,12 @@ export type Product = {
   commission_rate: number;
   stock_quantity?: number | null;
   status: string;
+  approval_status?: string;
   slug?: string;
   sales_page_url?: string;
   delivery_link?: string;
+  image?: string | null;
+  images?: string[] | null;
   buy_now_config?: {
     button_text?: string;
     button_color?: string;
