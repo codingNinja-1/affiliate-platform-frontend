@@ -8,11 +8,16 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useRates } from '@/hooks/useRates';
 import { Plus, Package, TrendingUp, ExternalLink, Pencil, Search, ImageOff } from 'lucide-react';
 
-const BACKEND = 'http://localhost:8000';
-
 function normalizeImageUrl(src: string): string {
-  // Backend returns http://127.0.0.1:8000/storage/... — rewrite to localhost for browser
-  return src.replace('http://127.0.0.1:8000', BACKEND);
+  // Replace local backend URLs for local dev
+  if (src.startsWith('http://127.0.0.1:8000') || src.startsWith('http://localhost:8000')) {
+    return src.replace(/http:\/\/(127\.0\.0\.1|localhost):8000/, 'http://localhost:8000');
+  }
+  // Relative path — prefix with Hostinger backend storage URL
+  if (!src.startsWith('http')) {
+    return `https://snow-mantis-616662.hostingersite.com/backend/public/storage/${src}`;
+  }
+  return src;
 }
 
 function ProductImage({ src, name }: { src?: string | null; name: string }) {
