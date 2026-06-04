@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useCurrency } from '@/context/CurrencyContext';
 
 type AnalyticsData = {
   totalRevenue: number;
@@ -26,6 +27,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [period, setPeriod] = useState('7d');
+  const { formatAmount } = useCurrency();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -96,7 +98,7 @@ export default function AnalyticsPage() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Total revenue"
-          value={`₦${(analytics?.totalRevenue || 0).toLocaleString()}`}
+          value={formatAmount(analytics?.totalRevenue || 0)}
           loading={loading}
         />
         <MetricCard
@@ -111,7 +113,7 @@ export default function AnalyticsPage() {
         />
         <MetricCard
           title="Avg order value"
-          value={`₦${(analytics?.avgOrderValue || 0).toLocaleString()}`}
+          value={formatAmount(analytics?.avgOrderValue || 0)}
           loading={loading}
         />
       </section>
