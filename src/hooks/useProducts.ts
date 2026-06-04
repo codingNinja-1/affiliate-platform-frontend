@@ -53,7 +53,12 @@ export function normalizeProduct(item: unknown): Product {
     commission_rate: Number(data?.commission_rate ?? 0),
     stock_quantity: (data?.stock_quantity ?? null) as number | null,
     status: (data?.status ?? data?.approval_status ?? 'draft') as string,
+    approval_status: (data?.approval_status ?? data?.status ?? 'draft') as string,
     slug: data?.slug as string | undefined,
+    image: (data?.image ?? null) as string | null,
+    images: (data?.images ?? null) as string[] | null,
+    sales_page_url: (data?.sales_page_url ?? null) as string | undefined,
+    delivery_link: (data?.delivery_link ?? null) as string | undefined,
   };
 }
 
