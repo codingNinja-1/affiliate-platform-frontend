@@ -5,7 +5,8 @@ const BACKEND_BASE = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
 export async function GET(req: NextRequest) {
   try {
     const auth = req.headers.get('authorization') || '';
-    const res = await fetch(`${BACKEND_BASE}/api/vendor/dashboard/converted`, {
+    // Always request NGN from backend — frontend handles conversion client-side
+    const res = await fetch(`${BACKEND_BASE}/api/vendor/dashboard/converted?currency=NGN`, {
       headers: { Authorization: auth, Accept: 'application/json' },
     });
     const text = await res.text();

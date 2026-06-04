@@ -9,12 +9,12 @@ export async function GET(req: NextRequest) {
     const currency = req.nextUrl.searchParams.get('currency') ?? '';
     const qs = currency ? `?currency=${encodeURIComponent(currency)}` : '';
 
-    // Route to the correct backend endpoint based on user type
+    // Always fetch NGN base amounts — frontend handles conversion client-side
     let endpoint: string;
     if (userType === 'affiliate') {
-      endpoint = `${BACKEND_BASE}/api/affiliate/converted-amounts${qs}`;
+      endpoint = `${BACKEND_BASE}/api/affiliate/converted-amounts?currency=NGN`;
     } else {
-      endpoint = `${BACKEND_BASE}/api/vendor/dashboard/summary${qs}`;
+      endpoint = `${BACKEND_BASE}/api/vendor/dashboard/summary?currency=NGN`;
     }
 
     const res = await fetch(endpoint, {
