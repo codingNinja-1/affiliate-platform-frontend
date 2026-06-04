@@ -7,6 +7,7 @@ import CurrencySelector from '../components/CurrencySelector';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { useVendorCurrencyConversion } from '@/hooks/useVendorCurrencyConversion';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useRates } from '@/hooks/useRates';
 
 type User = {
   id: number;
@@ -555,7 +556,11 @@ function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount
   );
 }
 
-function HotProducts({ currency, formatAmount }: { currency?: string, formatAmount?: (amount: number, currency?: string) => string } = {}) {
+function HotProducts({ currency: _currency, formatAmount: _formatAmount }: { currency?: string, formatAmount?: (amount: number, currency?: string) => string } = {}) {
+  const { currency, formatAmount: ctxFormat, symbol } = useCurrency();
+  const { rates } = useRates();
+  const rate = currency === 'NGN' ? 1 : (rates[`NGN_${currency}`] ?? 1);
+  const fmt = (amount: number) => ctxFormat(amount * rate);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -630,7 +635,7 @@ function HotProducts({ currency, formatAmount }: { currency?: string, formatAmou
                 </h3>
                 <p className="text-xs text-gray-500 mt-2">Commission</p>
                 <p className="text-lg font-semibold text-green-600 mt-1">
-                  {formatAmount ? formatAmount(product.commission_amount || product.commission || 0, currency) : (currencySymbol + (product.commission_amount || product.commission || 0).toLocaleString())}
+                  {fmt(product.commission_amount || product.commission || 0)}
                 </p>
               </div>
             </Link>
