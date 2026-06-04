@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { DollarSign, Check, RefreshCw } from 'lucide-react';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface CurrencySelectorProps {
   onCurrencyChange?: (currency: string) => void;
@@ -10,8 +11,8 @@ interface CurrencySelectorProps {
 }
 
 export default function CurrencySelector({ onCurrencyChange, showLabel = true, isVendor = false }: CurrencySelectorProps) {
+  const { currency: currentCurrency, setCurrency } = useCurrency();
   const [currencies, setCurrencies] = useState<string[]>(['NGN']);
-  const [currentCurrency, setCurrentCurrency] = useState('NGN');
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -19,74 +20,42 @@ export default function CurrencySelector({ onCurrencyChange, showLabel = true, i
     const loadSettings = async () => {
       const token = localStorage.getItem('auth_token');
       if (!token) return;
-
       const endpoint = isVendor ? '/api/vendor/settings' : '/api/affiliate/settings';
-
       try {
-        const res = await fetch(endpoint, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
+        const res = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
-          const availableCurrencies = data.data?.available_currencies || ['NGN'];
-          // Ensure NGN is always available
-          if (!availableCurrencies.includes('NGN')) {
-            availableCurrencies.unshift('NGN');
-          }
-          setCurrencies(availableCurrencies);
-          setCurrentCurrency(data.data?.preferred_currency || 'NGN');
+          const available = data.data?.available_currencies || ['NGN'];
+          if (!available.includes('NGN')) available.unshift('NGN');
+          setCurrencies(available);
         }
       } catch (error) {
         console.error('Failed to load currency settings:', error);
       }
     };
-
     loadSettings();
-  }, [isVendor]); // Only re-run if isVendor changes
+  }, [isVendor]);
 
   const handleCurrencyChange = async (currency: string) => {
     setLoading(true);
     setShowDropdown(false);
     const token = localStorage.getItem('auth_token');
-    
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    if (!token) { setLoading(false); return; }
 
+    // Update context immediately — instant across all pages
+    setCurrency(currency);
+    if (onCurrencyChange) onCurrencyChange(currency);
+
+    // Persist preference to backend in the background
     const endpoint = isVendor ? '/api/vendor/settings/currency' : '/api/affiliate/settings/currency';
-
     try {
-      const res = await fetch(endpoint, {
+      await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ currency }),
       });
-
-      if (res.ok) {
-        const responseData = await res.json();
-        if (responseData.success) {
-          setCurrentCurrency(currency);
-          // Add small delay to ensure DB is updated before fetching converted amounts
-          setTimeout(() => {
-            if (onCurrencyChange) {
-              onCurrencyChange(currency);
-            }
-          }, 300);
-        } else {
-          alert(responseData.message || 'Failed to update currency');
-        }
-      } else {
-        const data = await res.json();
-        alert(data.message || 'Failed to update currency');
-      }
     } catch (error) {
-      console.error('Failed to update currency:', error);
-      alert('Failed to update currency. Please try again.');
+      console.error('Failed to persist currency preference:', error);
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useCurrency } from '@/context/CurrencyContext';
+import { useRates } from '@/hooks/useRates';
+import { ArrowLeft, Save, ImageIcon, DollarSign, Percent, Package, Link2, Truck, ToggleLeft } from 'lucide-react';
 
 type Product = {
   id: number;
@@ -19,11 +22,16 @@ type Product = {
 
 export default function VendorEditProductPage() {
   const params = useParams();
+  const router = useRouter();
   const id = Number(params.id);
+  const { currency, symbol } = useCurrency();
+  const { rates } = useRates();
+
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const [form, setForm] = useState({
     name: '',
@@ -37,14 +45,20 @@ export default function VendorEditProductPage() {
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+
+  const normalizeImage = (src: string | null) =>
+    src ? src.replace('http://127.0.0.1:8000', 'http://localhost:8000') : null;
+
+  // Convert NGN price to selected currency for display
+  const displayRate = currency === 'NGN' ? 1 : (rates[`NGN_${currency}`] ?? 1);
+  const ngnPrice = parseFloat(form.price) || 0;
+  const displayPrice = (ngnPrice * displayRate).toFixed(2);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
-    if (!token) {
-      window.location.href = '/login';
-      return;
-    }
+    if (!token) { window.location.href = '/login'; return; }
 
     const load = async () => {
       try {
@@ -67,7 +81,6 @@ export default function VendorEditProductPage() {
           sales_page_url: p.sales_page_url || '',
           delivery_link: p.delivery_link || '',
         });
-        setError('');
       } catch (err) {
         setError('Unable to load product');
         console.error(err);
@@ -79,128 +92,307 @@ export default function VendorEditProductPage() {
     load();
   }, [id]);
 
-  const updateField = (k: keyof typeof form, v: string) => setForm(prev => ({ ...prev, [k]: v }));
+  const updateField = (k: keyof typeof form, v: string) =>
+    setForm(prev => ({ ...prev, [k]: v }));
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImageFile(file);
+    if (file) setImagePreview(URL.createObjectURL(file));
+  };
 
   const save = async () => {
     const token = localStorage.getItem('auth_token');
-    if (!token) { window.location.href = '/login'; return; }
+    if (!token) { router.push('/login'); return; }
     setSaving(true);
+    setError('');
+    setSuccessMsg('');
     try {
       const formData = new FormData();
+      formData.append('_method', 'PUT'); // Laravel method spoofing — send as POST
       formData.append('name', form.name);
       formData.append('description', form.description);
-      formData.append('price', form.price);
-      formData.append('commission_rate', form.commission_rate);
-      formData.append('stock_quantity', form.stock_quantity);
+      formData.append('price', String(parseFloat(form.price) || 0));
+      formData.append('commission_rate', String(parseFloat(form.commission_rate) || 0));
+      formData.append('stock_quantity', String(parseInt(form.stock_quantity) || 0));
       formData.append('status', form.status);
       formData.append('sales_page_url', form.sales_page_url || '');
       formData.append('delivery_link', form.delivery_link || '');
-      if (imageFile) {
-        formData.append('image', imageFile);
-      }
+      if (imageFile) formData.append('image', imageFile);
 
       const res = await fetch(`/api/vendor/products/${id}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        method: 'POST', // POST + _method=PUT so the proxy passes it through unchanged
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(`Save failed: ${res.status} ${t}`);
-      }
+
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message || `Save failed (${res.status})`);
+
       setCurrentImage(data.data.image || null);
       setImageFile(null);
-      alert('Saved');
+      setImagePreview(null);
+      setSuccessMsg('Product saved successfully!');
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
-      console.error(err);
-      alert(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-500">Loading product...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (error || !product) {
+  if (error && !product) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <p className="text-red-600">{error || 'Product not found'}</p>
-        <Link href="/vendor/products" className="text-blue-600">← Back</Link>
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Link href="/products" className="text-blue-600 hover:underline">← Back to products</Link>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
-      <Link href="/vendor/products" className="text-sm text-blue-600">← Back to products</Link>
-      <h1 className="mt-2 text-2xl font-semibold">Edit Product</h1>
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
 
-      <div className="mt-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
-          {currentImage && (
-            <div className="mb-2">
-              <img src={currentImage} alt="Current product image" className="w-32 h-32 object-cover rounded-md" />
+        {/* Header */}
+        <div className="mb-8">
+          <Link href="/products" className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 mb-4">
+            <ArrowLeft size={16} /> Back to products
+          </Link>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
+              <p className="text-sm text-gray-500 mt-1">Update your product details</p>
             </div>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-            className="w-full rounded-md border px-3 py-2"
-          />
-          <p className="text-sm text-gray-500 mt-1">Upload a new image to replace the current one (max 1MB, JPEG/PNG/GIF)</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-          <input value={form.name} onChange={e=>updateField('name', e.target.value)} className="w-full rounded-md border px-3 py-2" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-          <textarea value={form.description} onChange={e=>updateField('description', e.target.value)} className="w-full rounded-md border px-3 py-2 min-h-[120px]" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Price (₦)</label>
-            <input type="number" value={form.price} onChange={e=>updateField('price', e.target.value)} className="w-full rounded-md border px-3 py-2" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Commission (%)</label>
-            <input type="number" value={form.commission_rate} onChange={e=>updateField('commission_rate', e.target.value)} className="w-full rounded-md border px-3 py-2" />
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              form.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+            }`}>
+              {form.status}
+            </span>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
-            <input type="number" value={form.stock_quantity} onChange={e=>updateField('stock_quantity', e.target.value)} className="w-full rounded-md border px-3 py-2" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select value={form.status} onChange={e=>updateField('status', e.target.value)} className="w-full rounded-md border px-3 py-2">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Sales Page URL</label>
-          <input value={form.sales_page_url} onChange={e=>updateField('sales_page_url', e.target.value)} className="w-full rounded-md border px-3 py-2" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Link</label>
-          <input value={form.delivery_link} onChange={e=>updateField('delivery_link', e.target.value)} className="w-full rounded-md border px-3 py-2" />
-        </div>
-      </div>
 
-      <div className="mt-6 flex gap-3">
-        <button onClick={save} disabled={saving} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:bg-gray-400">{saving ? 'Saving...' : 'Save Changes'}</button>
-        <Link href="/vendor/products" className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300">Cancel</Link>
+        {/* Alerts */}
+        {successMsg && (
+          <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700 font-medium">
+            ✓ {successMsg}
+          </div>
+        )}
+        {error && (
+          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-6">
+
+          {/* Image Card */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <ImageIcon size={18} className="text-gray-400" />
+              <h2 className="font-semibold text-gray-800">Product Image</h2>
+            </div>
+            <div className="flex items-start gap-5">
+              <div className="w-28 h-28 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden shrink-0">
+                {imagePreview || currentImage ? (
+                  <img src={imagePreview || normalizeImage(currentImage)!} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <ImageIcon size={32} className="text-gray-300" />
+                )}
+              </div>
+              <div className="flex-1">
+                <label className="block">
+                  <span className="sr-only">Choose image</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif"
+                    onChange={handleImageChange}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                  />
+                </label>
+                <p className="mt-2 text-xs text-gray-400">JPEG, PNG or GIF · Max 1MB</p>
+                {imageFile && <p className="mt-1 text-xs text-green-600">✓ {imageFile.name} selected</p>}
+              </div>
+            </div>
+          </div>
+
+          {/* Basic Info Card */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
+            <h2 className="font-semibold text-gray-800">Basic Information</h2>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Product Name <span className="text-red-400">*</span></label>
+              <input
+                value={form.name}
+                onChange={e => updateField('name', e.target.value)}
+                placeholder="e.g. Premium Website Template"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+              <textarea
+                value={form.description}
+                onChange={e => updateField('description', e.target.value)}
+                rows={4}
+                placeholder="Describe what your product does..."
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+              />
+            </div>
+          </div>
+
+          {/* Pricing Card */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <DollarSign size={18} className="text-gray-400" />
+              <h2 className="font-semibold text-gray-800">Pricing & Commission</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Price <span className="text-gray-400 font-normal">(stored in ₦)</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₦</span>
+                  <input
+                    type="number"
+                    value={form.price}
+                    onChange={e => updateField('price', e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-8 pr-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+                {currency !== 'NGN' && ngnPrice > 0 && (
+                  <p className="mt-1.5 text-xs text-blue-600 font-medium">
+                    ≈ {symbol}{displayPrice} in {currency}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Commission Rate <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={form.commission_rate}
+                    onChange={e => updateField('commission_rate', e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-4 pr-10 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <Percent size={15} />
+                  </span>
+                </div>
+                {form.price && form.commission_rate && (
+                  <p className="mt-1.5 text-xs text-gray-500">
+                    Affiliate earns ₦{((parseFloat(form.price) * parseFloat(form.commission_rate)) / 100).toLocaleString()} per sale
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Inventory & Status Card */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <Package size={18} className="text-gray-400" />
+              <h2 className="font-semibold text-gray-800">Inventory & Status</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Stock Quantity</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.stock_quantity}
+                  onChange={e => updateField('stock_quantity', e.target.value)}
+                  placeholder="0 = unlimited"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                />
+                <p className="mt-1 text-xs text-gray-400">Leave 0 for unlimited digital products</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <span className="flex items-center gap-1.5"><ToggleLeft size={15} /> Status</span>
+                </label>
+                <select
+                  value={form.status}
+                  onChange={e => updateField('status', e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                >
+                  <option value="active">Active — visible to affiliates</option>
+                  <option value="inactive">Inactive — hidden</option>
+                  <option value="draft">Draft — not published</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Links Card */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
+            <div className="flex items-center gap-2">
+              <Link2 size={18} className="text-gray-400" />
+              <h2 className="font-semibold text-gray-800">Links</h2>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Sales Page URL</label>
+              <input
+                type="url"
+                value={form.sales_page_url}
+                onChange={e => updateField('sales_page_url', e.target.value)}
+                placeholder="https://yoursite.com/product"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <span className="flex items-center gap-1.5"><Truck size={14} /> Delivery Link</span>
+              </label>
+              <input
+                type="url"
+                value={form.delivery_link}
+                onChange={e => updateField('delivery_link', e.target.value)}
+                placeholder="https://yoursite.com/download or delivery URL"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400">Sent to customers after purchase</p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2 pb-8">
+            <button
+              onClick={save}
+              disabled={saving}
+              className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition"
+            >
+              <Save size={16} />
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+            <Link
+              href="/products"
+              className="rounded-xl border border-gray-200 bg-white hover:bg-gray-50 px-6 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition"
+            >
+              Cancel
+            </Link>
+          </div>
+        </div>
       </div>
     </main>
   );

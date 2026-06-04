@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useWithdrawals, useCreateWithdrawal, type Withdrawal } from '@/hooks/useWithdrawals';
+import { useCurrency } from '@/context/CurrencyContext';
 
 const API_BASE = '/api'; // Always use relative path for client-side requests
 
@@ -16,6 +17,7 @@ type BankDetails = {
 
 export default function WithdrawalsPage() {
   const { user, token } = useAuth();
+  const { formatAmount, symbol } = useCurrency();
   const userType = user?.user_type || 'customer';
   
   const { data: withdrawals = [], isLoading, refetch } = useWithdrawals(userType);
@@ -151,7 +153,7 @@ export default function WithdrawalsPage() {
           ) : null}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm text-gray-700 font-medium">Amount (₦)</label>
+              <label className="mb-2 block text-sm text-gray-700 font-medium">Amount ({symbol})</label>
               <input
                 type="number"
                 value={amount}
@@ -163,7 +165,7 @@ export default function WithdrawalsPage() {
                 className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 disabled:opacity-50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="Enter amount"
               />
-              <p className="mt-1 text-xs text-gray-500">Minimum withdrawal: ₦1,000</p>
+              <p className="mt-1 text-xs text-gray-500">Minimum withdrawal: {symbol}1,000</p>
             </div>
 
             {bankDetails && (
@@ -217,7 +219,7 @@ export default function WithdrawalsPage() {
               <tbody>
                 {withdrawals.map((withdrawal: Withdrawal) => (
                   <tr key={withdrawal.id} className="border-b border-gray-100">
-                    <td className="py-4 font-medium text-gray-900">₦{withdrawal.amount.toLocaleString()}</td>
+                    <td className="py-4 font-medium text-gray-900">{formatAmount(withdrawal.amount)}</td>
                     <td className="py-4 text-gray-700">{withdrawal.payment_method}</td>
                     <td className="py-4">
                       <span

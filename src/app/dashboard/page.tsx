@@ -6,6 +6,7 @@ import { Wallet } from 'lucide-react';
 import CurrencySelector from '../components/CurrencySelector';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { useVendorCurrencyConversion } from '@/hooks/useVendorCurrencyConversion';
+import { useCurrency } from '@/context/CurrencyContext';
 
 type User = {
   id: number;
@@ -198,42 +199,11 @@ function RoleSections({
   loading: boolean;
 }) {
   const type = userType?.toLowerCase();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('NGN');
+  const [refreshTrigger] = useState(0);
+  const { currency: selectedCurrency } = useCurrency();
 
-  // Load saved currency preference from backend on mount
-  useEffect(() => {
-    const loadUserCurrencyPreference = async () => {
-      const token = localStorage.getItem('auth_token');
-      if (!token) return;
-
-      try {
-        const endpoint = type === 'vendor' ? '/api/vendor/settings' : '/api/affiliate/settings';
-        const res = await fetch(endpoint, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const preferredCurrency = data.data?.preferred_currency;
-          if (preferredCurrency) {
-            setSelectedCurrency(preferredCurrency);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load currency preference:', error);
-      }
-    };
-
-    loadUserCurrencyPreference();
-  }, [type]);
-
-  const handleCurrencyChange = (currency: string) => {
-    setSelectedCurrency(currency);
-    // Trigger a refetch with a small delay to ensure selectedCurrency state is updated
-    setTimeout(() => {
-      setRefreshTrigger(prev => prev + 1);
-    }, 100);
+  const handleCurrencyChange = (_currency: string) => {
+    // Currency is managed globally via CurrencyContext — no local state needed
   };
 
   const { amounts, loading: conversionLoading, formatAmount } = useCurrencyConversion(refreshTrigger, selectedCurrency);
@@ -264,7 +234,7 @@ function RoleSections({
           </Link>
           {vendorAmounts?.original_currency && vendorAmounts.original_currency !== displayCurrency && (
             <p className="text-xs text-gray-500">
-              Conversion rate: 1 {vendorAmounts.original_currency} = {vendorAmounts.conversion_rate?.toFixed(6)} {displayCurrency}
+              Conversion rate: 1 {vendorAmounts.original_currency} = {Number(vendorAmounts.conversion_rate).toFixed(6)} {displayCurrency}
             </p>
           )}
         </div>
@@ -312,7 +282,7 @@ function RoleSections({
           </Link>
           {amounts?.original_currency && amounts.original_currency !== displayCurrency && (
             <p className="text-xs text-gray-500">
-              Conversion rate: 1 {amounts.original_currency} = {amounts.conversion_rate?.toFixed(6)} {displayCurrency}
+              Conversion rate: 1 {amounts.original_currency} = {Number(amounts.conversion_rate).toFixed(6)} {displayCurrency}
             </p>
           )}
         </div>

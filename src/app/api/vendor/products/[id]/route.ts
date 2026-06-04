@@ -1,0 +1,50 @@
+import type { NextRequest } from 'next/server';
+
+const BACKEND_BASE = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
+
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const auth = _req.headers.get('authorization') || '';
+    const res = await fetch(`${BACKEND_BASE}/api/vendor/products/${id}`, {
+      headers: { Authorization: auth, Accept: 'application/json' },
+    });
+    const text = await res.text();
+    return new Response(text, { status: res.status, headers: { 'Content-Type': 'application/json' } });
+  } catch (err) {
+    return new Response(JSON.stringify({ message: 'Proxy error', error: String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
+}
+
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // Handles PUT via FormData with _method=PUT (Laravel method spoofing)
+  try {
+    const { id } = await params;
+    const auth = req.headers.get('authorization') || '';
+    const formData = await req.formData();
+    const res = await fetch(`${BACKEND_BASE}/api/vendor/products/${id}`, {
+      method: 'POST',
+      headers: { Authorization: auth, Accept: 'application/json' },
+      body: formData,
+    });
+    const text = await res.text();
+    return new Response(text, { status: res.status, headers: { 'Content-Type': 'application/json' } });
+  } catch (err) {
+    return new Response(JSON.stringify({ message: 'Proxy error', error: String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const auth = _req.headers.get('authorization') || '';
+    const res = await fetch(`${BACKEND_BASE}/api/vendor/products/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: auth, Accept: 'application/json' },
+    });
+    const text = await res.text();
+    return new Response(text, { status: res.status, headers: { 'Content-Type': 'application/json' } });
+  } catch (err) {
+    return new Response(JSON.stringify({ message: 'Proxy error', error: String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
+}
