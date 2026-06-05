@@ -145,7 +145,7 @@ export default function EmailPage() {
       
       <div className="flex-1 md:ml-60">
         <div className="p-4 sm:p-6 md:p-8">
-          <div className="mx-auto max-w-4xl">
+          <div className="mr-auto max-w-4xl">
             <header className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900">Email Notification</h1>
               <p className="text-sm text-gray-600">

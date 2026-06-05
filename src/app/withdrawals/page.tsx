@@ -114,7 +114,7 @@ export default function WithdrawalsPage() {
   };
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 bg-gray-50 px-6 py-10">
+    <main className="mr-auto flex max-w-6xl flex-col gap-6 bg-gray-50 px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">

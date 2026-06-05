@@ -119,7 +119,7 @@ export default function SmtpSettingsPage() {
 
   return (
     <main className="bg-gray-50 p-8">
-      <div className="mx-auto max-w-4xl">
+      <div className="mr-auto max-w-4xl">
         <header className="mb-8">
           <Link href="/settings/notifications" className="text-sm text-blue-600 hover:text-blue-700">
             ← Back to notifications

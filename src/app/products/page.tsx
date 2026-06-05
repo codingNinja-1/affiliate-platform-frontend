@@ -70,7 +70,7 @@ export default function ProductsPage() {
 
   return (
     <main className="bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-6xl mr-auto px-4 sm:px-6 py-8">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -136,7 +136,7 @@ export default function ProductsPage() {
         {/* Empty state */}
         {!isLoading && products.length === 0 && (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm py-20 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mr-auto mb-4">
               <Package size={28} className="text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-800 mb-1">No products yet</h3>

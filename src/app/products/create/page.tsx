@@ -221,7 +221,7 @@ export default function CreateProductPage() {
   if (step === 'form') {
     return (
       <main className="bg-gray-50 p-4 sm:p-6 md:p-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mr-auto">
           {/* Back Button */}
           <button
             onClick={() => router.back()}
@@ -501,7 +501,7 @@ export default function CreateProductPage() {
   if (!integrationData) {
     return (
       <div className="bg-gray-50 p-4 sm:p-6 md:p-8">
-        <div className="max-w-2xl mx-auto text-center">
+        <div className="max-w-2xl mr-auto text-center">
           <p>Loading integration details...</p>
         </div>
       </div>
@@ -510,7 +510,7 @@ export default function CreateProductPage() {
 
   return (
     <main className="bg-gray-50 p-4 sm:p-6 md:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mr-auto">
         {/* Back Button */}
         <button
           onClick={() => setStep('form')}

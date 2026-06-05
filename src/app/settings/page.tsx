@@ -212,14 +212,14 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto flex max-w-2xl flex-col items-center justify-center bg-gray-50 px-6 py-10">
+      <main className="mr-auto flex max-w-2xl flex-col items-center justify-center bg-gray-50 px-6 py-10">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 bg-gray-50 px-6 py-10">
+    <main className="mr-auto flex max-w-2xl flex-col gap-6 bg-gray-50 px-6 py-10">
       <header>
         <h1 className="text-3xl font-semibold text-gray-900">Settings</h1>
         <p className="mt-1 text-sm text-gray-600">Manage your account and bank details</p>
