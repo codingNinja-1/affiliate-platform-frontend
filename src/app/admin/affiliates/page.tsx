@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -217,7 +217,7 @@ export default function AdminAffiliatesPage() {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex bg-gray-50">
         <div className="flex-1 p-8">
           <div className="h-screen flex items-center justify-center">
             <p className="text-gray-600">Loading...</p>
@@ -278,7 +278,7 @@ export default function AdminAffiliatesPage() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
                 <p className="text-3xl font-bold text-gray-900">
-                  ₦{stats.total_earnings >= 1000000 
+                  â‚¦{stats.total_earnings >= 1000000 
                     ? `${(stats.total_earnings / 1000000).toFixed(1)}M` 
                     : stats.total_earnings.toLocaleString()}
                 </p>
@@ -375,7 +375,7 @@ export default function AdminAffiliatesPage() {
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{affiliate.total_referrals || 0}</td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      ₦{(affiliate.total_earnings || 0).toLocaleString()}
+                      â‚¦{(affiliate.total_earnings || 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{affiliate.total_clicks || 0}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">
@@ -398,3 +398,4 @@ export default function AdminAffiliatesPage() {
     </div>
   );
 }
+

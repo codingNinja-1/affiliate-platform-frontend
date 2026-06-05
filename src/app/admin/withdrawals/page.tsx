@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -119,7 +119,7 @@ export default function AdminWithdrawalsPage() {
   // Don't render until hydrated on client
   if (!isMounted || !hydrated) {
     return (
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex bg-gray-50">
         <div className="flex-1 p-8">
           <div className="h-screen flex items-center justify-center">
             <p className="text-gray-500">Loading...</p>
@@ -281,7 +281,7 @@ export default function AdminWithdrawalsPage() {
                       : (w.user?.email ?? `#${w.user_id}`);
                     const accountText = [w.account_name, w.bank_name, w.account_number]
                       .filter(Boolean)
-                      .join(' • ');
+                      .join(' â€¢ ');
                     return (
                     <tr key={w.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-4 text-sm text-gray-900">
@@ -293,7 +293,7 @@ export default function AdminWithdrawalsPage() {
                       <td className="py-3 px-4 text-sm text-gray-700">
                         {accountText || <span className="text-gray-400">No account details</span>}
                       </td>
-                      <td className="py-3 px-4 text-sm font-semibold text-gray-900">₦{w.amount.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-sm font-semibold text-gray-900">â‚¦{w.amount.toLocaleString()}</td>
                       <td className="py-3 px-4 text-sm text-gray-600">{w.payment_method || 'bank_transfer'}</td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -340,3 +340,4 @@ export default function AdminWithdrawalsPage() {
     </div>
   );
 }
+
