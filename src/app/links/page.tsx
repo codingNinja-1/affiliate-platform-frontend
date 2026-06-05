@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -26,6 +26,14 @@ type AffiliateLink = {
 };
 
 export default function LinksPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+      <LinksPageInner />
+    </Suspense>
+  );
+}
+
+function LinksPageInner() {
   const searchParams = useSearchParams();
   const highlightProductId = searchParams.get('product') ? Number(searchParams.get('product')) : null;
   const highlightRef = useRef<HTMLDivElement>(null);
