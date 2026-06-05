@@ -7,8 +7,9 @@ import { useCurrency } from '@/context/CurrencyContext';
 type AnalyticsData = {
   totalRevenue: number;
   totalSales: number;
-  conversionRate: number;
+  growthRate: number;
   avgOrderValue: number;
+  clicks?: number;
   topProducts?: Array<{
     product_id: number;
     product_name: string;
@@ -50,15 +51,8 @@ export default function AnalyticsPage() {
         const data = await res.json();
         setAnalytics(data.data || null);
       } catch (err) {
-        setError('Analytics data unavailable. This page will be functional once the API is ready.');
         console.error(err);
-        // Set placeholder data
-        setAnalytics({
-          totalRevenue: 0,
-          totalSales: 0,
-          conversionRate: 0,
-          avgOrderValue: 0,
-        });
+        setError('Failed to load analytics data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -108,7 +102,7 @@ export default function AnalyticsPage() {
         />
         <MetricCard
           title="Growth rate"
-          value={`${(analytics?.conversionRate || 0) > 0 ? '+' : ''}${(analytics?.conversionRate || 0).toFixed(2)}%`}
+          value={`${(analytics?.growthRate || 0) > 0 ? '+' : ''}${(analytics?.growthRate || 0).toFixed(2)}%`}
           loading={loading}
         />
         <MetricCard
@@ -139,7 +133,7 @@ export default function AnalyticsPage() {
                   <tr key={index} className="border-b border-gray-100">
                     <td className="py-3 text-gray-700">{new Date(day.date).toLocaleDateString()}</td>
                     <td className="py-3 text-right font-medium text-gray-900">{day.sales}</td>
-                    <td className="py-3 text-right font-medium text-gray-900">₦{day.revenue.toLocaleString()}</td>
+                    <td className="py-3 text-right font-medium text-gray-900">{formatAmount(day.revenue)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -176,7 +170,7 @@ export default function AnalyticsPage() {
                     <p className="text-sm text-gray-600">{product.sales_count} sales</p>
                   </div>
                 </div>
-                <p className="text-lg font-semibold text-gray-900">₦{product.revenue.toLocaleString()}</p>
+                <p className="text-lg font-semibold text-gray-900">{formatAmount(product.revenue)}</p>
               </div>
             ))}
           </div>
