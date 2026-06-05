@@ -3,6 +3,7 @@
 import { useState, useLayoutEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
+import TopBar from './TopBar';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -63,22 +64,28 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Admin users use responsive Sidebar
   if (state.userType?.toLowerCase() === 'admin' || state.userType?.toLowerCase() === 'superadmin') {
     return (
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
         <Sidebar userType={state.userType} />
-        <main className="flex-1 md:ml-60 bg-gray-50 pt-14 md:pt-0 min-w-0">
-          {children}
-        </main>
+        <div className="flex-1 md:ml-60 min-w-0 flex flex-col">
+          <TopBar />
+          <main className="flex-1 bg-gray-50 dark:bg-gray-950 pt-14 md:pt-0">
+            {children}
+          </main>
+        </div>
       </div>
     );
   }
 
   // Regular users get regular sidebar
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
       <Sidebar userType={state.userType} />
-      <main className="flex-1 md:ml-60 bg-gray-50 pt-14 md:pt-0 min-w-0">
-        {children}
-      </main>
+      <div className="flex-1 md:ml-60 min-w-0 flex flex-col">
+        <TopBar />
+        <main className="flex-1 bg-gray-50 dark:bg-gray-950 pt-14 md:pt-0">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

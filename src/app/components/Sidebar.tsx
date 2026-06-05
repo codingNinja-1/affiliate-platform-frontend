@@ -98,7 +98,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
   return (
     <>
       {/* Mobile toggle button - positioned inline on mobile, hidden on desktop */}
-      <div className="fixed left-0 top-0 right-0 h-14 bg-white border-b border-gray-200 md:hidden z-50 flex items-center px-4">
+      <div className="fixed left-0 top-0 right-0 h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 md:hidden z-50 flex items-center px-4">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700 shadow-sm"
@@ -115,26 +115,26 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-60 bg-white shadow-sm transition-transform duration-300 md:translate-x-0 flex flex-col border-r border-gray-200 z-40 ${
+        className={`fixed left-0 top-0 h-screen w-60 bg-white dark:bg-gray-900 shadow-sm transition-transform duration-300 md:translate-x-0 flex flex-col border-r border-gray-200 dark:border-gray-800 z-40 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Logo */}
-        <div className="p-6 border-b border-gray-100">
+        <div className="p-6 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold">A</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900">AffiliateHub</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">AffiliateHub</h1>
           </div>
-          <p className="text-xs text-gray-500 ml-10">
+          <p className="text-xs text-gray-500 dark:text-gray-400 ml-10">
             {isAdmin ? 'Admin Panel' : isVendor ? 'Vendor Portal' : isAffiliate ? 'Affiliate Portal' : 'Customer'}
           </p>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 mb-3">Menu</p>
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide px-3 mb-3">Menu</p>
           {navItems.map((item) => (
             <div key={item.href}>
               {(item as NavItemWithSubmenu).submenu ? (
@@ -143,8 +143,8 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
                     onClick={() => toggleSubmenu(item.label)}
                     className={`w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 transition-colors ${
                       expandedMenu === item.label || (item as NavItemWithSubmenu).submenu?.some(sub => isActive(sub.href))
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        ? 'bg-blue-50 dark:bg-blue-950 text-blue-600'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -191,11 +191,11 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
                   }}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
                     isActive(item.href)
-                      ? 'bg-blue-50 text-blue-600 font-medium'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-medium'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
                 >
-                  <item.icon size={20} className={isActive(item.href) ? 'text-blue-600' : 'text-gray-500'} />
+                  <item.icon size={20} className={isActive(item.href) ? 'text-blue-600' : 'text-gray-500 dark:text-gray-400'} />
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               )}
@@ -204,7 +204,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-gray-100 p-4 space-y-2">
+        <div className="border-t border-gray-100 dark:border-gray-800 p-4 space-y-2">
           <Link
             href={isAdmin ? '#' : '/settings'}
             onClick={(e) => {
@@ -212,7 +212,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
                 e.preventDefault();
               }
             }}
-            className={isAdmin ? 'opacity-0 pointer-events-none' : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors'}
+            className={isAdmin ? 'opacity-0 pointer-events-none' : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'}
           >
             <SettingsIcon size={20} className="text-gray-500" />
             <span className="text-sm font-medium">Settings</span>
