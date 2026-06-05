@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     if (userType === 'affiliate') {
       endpoint = `${BACKEND_BASE}/api/affiliate/converted-amounts?currency=NGN`;
     } else {
-      endpoint = `${BACKEND_BASE}/api/vendor/dashboard/summary?currency=NGN`;
+      endpoint = `${BACKEND_BASE}/api/vendor/dashboard/converted?currency=NGN`;
     }
 
     const res = await fetch(endpoint, {
