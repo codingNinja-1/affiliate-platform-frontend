@@ -77,38 +77,39 @@ export function useProducts(userType?: string) {
     return `${API_BASE}/products`;
   }, [userType]);
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (retries = 3) => {
     setIsLoading(true);
     setError(null);
 
-    try {
-      const res = await fetch(endpoint, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text().catch(() => '');
-        const errorMessage = `Failed to load products (${res.status}): ${errorText}`;
-        console.error('Products API Error:', {
-          status: res.status,
-          statusText: res.statusText,
-          body: errorText,
-          endpoint,
-          hasToken: !!token,
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const res = await fetch(endpoint, {
+          headers: token
+            ? { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+            : { Accept: 'application/json' },
         });
-        throw new Error(errorMessage);
-      }
 
-      const json = await res.json();
-      const items = Array.isArray(json?.data) ? json.data : Array.isArray(json?.products) ? json.products : [];
-      setData(items.map(normalizeProduct));
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Unable to load products');
-      console.error('Failed to load products:', error);
-      setError(error);
-      setData([]);
-    } finally {
-      setIsLoading(false);
+        if (!res.ok) {
+          const errorText = await res.text().catch(() => '');
+          throw new Error(`Failed to load products (${res.status}): ${errorText}`);
+        }
+
+        const json = await res.json();
+        const items = Array.isArray(json?.data) ? json.data : Array.isArray(json?.products) ? json.products : [];
+        setData(items.map(normalizeProduct));
+        setIsLoading(false);
+        return;
+      } catch (err) {
+        if (attempt === retries) {
+          const error = err instanceof Error ? err : new Error('Unable to load products');
+          console.error('Failed to load products after retries:', error);
+          setError(error);
+          setData([]);
+          setIsLoading(false);
+        } else {
+          await new Promise((r) => setTimeout(r, 500 * attempt));
+        }
+      }
     }
   }, [endpoint, token]);
 

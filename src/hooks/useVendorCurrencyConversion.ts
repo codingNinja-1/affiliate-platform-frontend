@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { fetchRates, getRatesCache } from './ratesCache';
 
 const CURRENCY_SYMBOLS: Record<string, string> = { NGN: '₦', USD: '$', GBP: '£', EUR: '€' };
 
@@ -15,38 +16,15 @@ interface ConvertedAmounts extends BaseAmounts {
   conversion_rate: number;
 }
 
-// Shared module-level cache with useCurrencyConversion
-let ratesCache: Record<string, number> | null = null;
-let ratesFetchPromise: Promise<Record<string, number>> | null = null;
-
-async function fetchRates(token: string): Promise<Record<string, number>> {
-  if (ratesCache) return ratesCache;
-  if (ratesFetchPromise) return ratesFetchPromise;
-  ratesFetchPromise = fetch('/api/currency-rates', {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  })
-    .then((r) => r.json())
-    .then((data) => {
-      const map: Record<string, number> = {};
-      const items: { from_currency: string; to_currency: string; rate: number; is_active: boolean }[] =
-        Array.isArray(data) ? data : data?.data ?? [];
-      items.forEach((r) => { if (r.is_active) map[`${r.from_currency}_${r.to_currency}`] = r.rate; });
-      ratesCache = map;
-      ratesFetchPromise = null;
-      return map;
-    })
-    .catch(() => { ratesFetchPromise = null; return {}; });
-  return ratesFetchPromise;
-}
-
 export function useVendorCurrencyConversion(refreshTrigger = 0, selectedCurrency = 'NGN') {
   const [baseAmounts, setBaseAmounts] = useState<BaseAmounts | null>(null);
-  const [rates, setRates] = useState<Record<string, number>>(ratesCache ?? {});
+  const [rates, setRates] = useState<Record<string, number>>(getRatesCache());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) { setLoading(false); return; }
+
     setLoading(true);
     Promise.all([
       fetch('/api/vendor/dashboard/converted', {
