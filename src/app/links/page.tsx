@@ -161,7 +161,7 @@ function LinksPageInner() {
   };
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 bg-white px-6 py-10 text-slate-900">
+    <main className="mr-auto flex max-w-6xl flex-col gap-6 bg-white px-6 py-10 text-slate-900">
       <header>
         <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-500">
           ← Back to dashboard

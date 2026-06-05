@@ -256,7 +256,7 @@ export default function AdminWithdrawalsPage() {
             </div>
           ) : withdrawals.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
-              <DollarSign size={48} className="mx-auto mb-4 text-gray-300" />
+              <DollarSign size={48} className="mr-auto mb-4 text-gray-300" />
               <p className="text-lg font-medium">No withdrawals found</p>
               <p className="text-sm text-gray-400 mt-1">Withdrawal requests will appear here</p>
             </div>
