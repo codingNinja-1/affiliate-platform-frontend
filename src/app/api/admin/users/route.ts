@@ -5,27 +5,13 @@ const BACKEND_BASE = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
 export async function GET(req: NextRequest) {
   try {
     const auth = req.headers.get('authorization') ?? '';
-
-    const res = await fetch(`${BACKEND_BASE}/api/admin/users`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(auth ? { Authorization: auth } : {}),
-      },
+    const qs = new URL(req.url).searchParams.toString();
+    const res = await fetch(`${BACKEND_BASE}/api/admin/users${qs ? '?' + qs : ''}`, {
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(auth ? { Authorization: auth } : {}) },
     });
-
     const text = await res.text();
-    return new Response(text, {
-      status: res.status,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(text, { status: res.status, headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ message: 'Proxy error', error: String(err) }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ message: 'Proxy error', error: String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
