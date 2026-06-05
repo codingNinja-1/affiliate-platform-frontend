@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -107,7 +107,7 @@ export default function VendorProductsPage() {
     <main className="mx-auto flex max-w-6xl flex-col gap-6 bg-slate-50 px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
-          <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-500">â† Back to dashboard</Link>
+          <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-500">← Back to dashboard</Link>
           <h1 className="mt-2 text-2xl font-semibold">Your Products</h1>
           <p className="text-sm text-slate-600">Edit details and copy your sales page snippet</p>
         </div>
@@ -134,7 +134,7 @@ export default function VendorProductsPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-lg font-medium">{p.name}</h3>
-                    <p className="text-sm text-slate-600">â‚¦{p.price.toLocaleString()} Â· {p.commission_rate}% commission</p>
+                    <p className="text-sm text-slate-600">₦{p.price.toLocaleString()} · {p.commission_rate}% commission</p>
                   </div>
                   <div className="flex gap-2">
                     <Link href={`/vendor/products/${p.id}`} className="rounded-md bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700">Edit</Link>
@@ -196,4 +196,3 @@ export default function VendorProductsPage() {
     </main>
   );
 }
-

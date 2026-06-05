@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
@@ -164,7 +164,7 @@ function LinksPageInner() {
     <main className="mx-auto flex max-w-6xl flex-col gap-6 bg-white px-6 py-10 text-slate-900">
       <header>
         <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-500">
-          â† Back to dashboard
+          ← Back to dashboard
         </Link>
         <h1 className="mt-2 text-3xl font-semibold">Referral links</h1>
         <p className="text-sm text-slate-600">Generate and manage your affiliate links</p>
@@ -299,7 +299,7 @@ function LinksPageInner() {
                 {products.map((product) => (
                   <tr key={product.id} className="border-b border-slate-200/50">
                     <td className="py-4 font-medium text-slate-900">{product.name}</td>
-                    <td className="py-4">â‚¦{product.price.toLocaleString()}</td>
+                    <td className="py-4">₦{product.price.toLocaleString()}</td>
                     <td className="py-4">{product.commission_rate}%</td>
                   </tr>
                 ))}
@@ -311,4 +311,3 @@ function LinksPageInner() {
     </main>
   );
 }
-

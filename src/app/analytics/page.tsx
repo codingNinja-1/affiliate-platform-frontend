@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -72,7 +72,7 @@ export default function AnalyticsPage() {
       <header className="flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
-            â† Back to dashboard
+            ← Back to dashboard
           </Link>
           <h1 className="mt-2 text-3xl font-semibold text-gray-900">Analytics</h1>
           <p className="text-sm text-gray-600">Track your performance metrics</p>
@@ -139,7 +139,7 @@ export default function AnalyticsPage() {
                   <tr key={index} className="border-b border-gray-100">
                     <td className="py-3 text-gray-700">{new Date(day.date).toLocaleDateString()}</td>
                     <td className="py-3 text-right font-medium text-gray-900">{day.sales}</td>
-                    <td className="py-3 text-right font-medium text-gray-900">â‚¦{day.revenue.toLocaleString()}</td>
+                    <td className="py-3 text-right font-medium text-gray-900">₦{day.revenue.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -176,7 +176,7 @@ export default function AnalyticsPage() {
                     <p className="text-sm text-gray-600">{product.sales_count} sales</p>
                   </div>
                 </div>
-                <p className="text-lg font-semibold text-gray-900">â‚¦{product.revenue.toLocaleString()}</p>
+                <p className="text-lg font-semibold text-gray-900">₦{product.revenue.toLocaleString()}</p>
               </div>
             ))}
           </div>
@@ -210,4 +210,3 @@ function MetricCard({
     </div>
   );
 }
-
