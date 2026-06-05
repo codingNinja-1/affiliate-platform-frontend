@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useIdleLogout } from '@/hooks/useIdleLogout';
-import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, Users, ShoppingBag, Mail, FileText, ChevronDown } from 'lucide-react';
+import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, Users, ShoppingBag, Mail, FileText, ChevronDown, Trophy } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
@@ -60,6 +60,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/products', label: 'My Products', icon: Package },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/withdrawals', label: 'Withdrawals', icon: DollarSign },
   ];
 
@@ -68,6 +69,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
     { href: '/products', label: 'Products', icon: ShoppingBag },
     { href: '/links', label: 'Affiliate Links', icon: Link2 },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/withdrawals', label: 'Withdrawals', icon: DollarSign },
   ];
 
