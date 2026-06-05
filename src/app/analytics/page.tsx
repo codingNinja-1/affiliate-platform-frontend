@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold text-gray-900">Performance chart</h2>
         {loading ? (
-          <div className="flex h-64 items-center justify-center">
+          <div className="flex items-center justify-center py-10">
             <div className="h-8 w-32 animate-pulse rounded bg-gray-100" />
           </div>
         ) : analytics?.dailySales && analytics.dailySales.length > 0 ? (
@@ -146,8 +146,8 @@ export default function AnalyticsPage() {
             </table>
           </div>
         ) : (
-          <div className="flex h-64 items-center justify-center text-gray-500">
-            <p>No sales data for this period</p>
+          <div className="flex items-center justify-center py-10 text-gray-400 text-sm">
+            No sales data for this period
           </div>
         )}
       </section>
@@ -181,8 +181,8 @@ export default function AnalyticsPage() {
             ))}
           </div>
         ) : (
-          <div className="py-8 text-center text-gray-500">
-            <p>No product sales data for this period</p>
+          <div className="flex items-center justify-center py-10 text-gray-400 text-sm">
+            No product sales data for this period
           </div>
         )}
       </section>
