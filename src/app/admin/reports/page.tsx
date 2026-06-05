@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -66,7 +66,7 @@ export default function AdminReportsPage() {
       <header className="flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
-            â† Back to dashboard
+            ← Back to dashboard
           </Link>
           <h1 className="mt-2 text-3xl font-semibold text-gray-900">Reports & audits</h1>
           <p className="text-sm text-gray-600">Platform analytics and financial reports</p>
@@ -105,17 +105,17 @@ export default function AdminReportsPage() {
         />
         <MetricCard
           title="Total revenue"
-          value={`â‚¦${(summary?.totalRevenue || 0).toLocaleString()}`}
+          value={`₦${(summary?.totalRevenue || 0).toLocaleString()}`}
           loading={loading}
         />
         <MetricCard
           title="Total commissions"
-          value={`â‚¦${(summary?.totalCommissions || 0).toLocaleString()}`}
+          value={`₦${(summary?.totalCommissions || 0).toLocaleString()}`}
           loading={loading}
         />
         <MetricCard
           title="Total withdrawals"
-          value={`â‚¦${(summary?.totalWithdrawals || 0).toLocaleString()}`}
+          value={`₦${(summary?.totalWithdrawals || 0).toLocaleString()}`}
           loading={loading}
         />
         <MetricCard
@@ -177,4 +177,3 @@ function MetricCard({
     </div>
   );
 }
-

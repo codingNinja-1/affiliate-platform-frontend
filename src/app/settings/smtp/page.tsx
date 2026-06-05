@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -122,7 +122,7 @@ export default function SmtpSettingsPage() {
       <div className="mx-auto max-w-4xl">
         <header className="mb-8">
           <Link href="/settings/notifications" className="text-sm text-blue-600 hover:text-blue-700">
-            â† Back to notifications
+            ← Back to notifications
           </Link>
           <h1 className="mt-2 text-3xl font-bold text-gray-900">SMTP Configuration</h1>
           <p className="text-sm text-gray-600">
@@ -221,7 +221,7 @@ export default function SmtpSettingsPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={settings.mail_password}
                     onChange={(e) => handleChange('mail_password', e.target.value)}
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                    placeholder="••••••••"
                     disabled={loading}
                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
                   />
@@ -341,4 +341,3 @@ export default function SmtpSettingsPage() {
     </main>
   );
 }
-

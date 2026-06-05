@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -206,7 +206,7 @@ function RoleSections({
   const { currency: selectedCurrency } = useCurrency();
 
   const handleCurrencyChange = (_currency: string) => {
-    // Currency is managed globally via CurrencyContext â€” no local state needed
+    // Currency is managed globally via CurrencyContext — no local state needed
   };
 
   const { amounts, loading: conversionLoading, formatAmount } = useCurrencyConversion(refreshTrigger, selectedCurrency);
@@ -217,10 +217,10 @@ function RoleSections({
     const displayEarnings = vendorAmounts?.total_earnings ?? summary?.totalEarnings ?? 0;
     const displayWithdrawn = vendorAmounts?.total_withdrawn ?? summary?.totalWithdrawn ?? 0;
     const displayCurrency = vendorAmounts?.currency || selectedCurrency || 'NGN';
-    const currencySymbol = displayCurrency === 'NGN' ? 'â‚¦' : 
+    const currencySymbol = displayCurrency === 'NGN' ? '₦' : 
                           displayCurrency === 'USD' ? '$' :
-                          displayCurrency === 'GBP' ? 'Â£' :
-                          displayCurrency === 'EUR' ? 'â‚¬' :
+                          displayCurrency === 'GBP' ? '£' :
+                          displayCurrency === 'EUR' ? '€' :
                           displayCurrency + ' ';
 
     return (
@@ -266,10 +266,10 @@ function RoleSections({
     const displayEarnings = amounts?.total_earnings ?? summary?.totalEarnings ?? 0;
     const displayWithdrawn = amounts?.total_withdrawn ?? summary?.totalWithdrawn ?? 0;
     const displayCurrency = amounts?.currency || selectedCurrency || 'NGN';
-    const currencySymbol = displayCurrency === 'NGN' ? 'â‚¦' : 
+    const currencySymbol = displayCurrency === 'NGN' ? '₦' : 
                           displayCurrency === 'USD' ? '$' :
-                          displayCurrency === 'GBP' ? 'Â£' :
-                          displayCurrency === 'EUR' ? 'â‚¬' :
+                          displayCurrency === 'GBP' ? '£' :
+                          displayCurrency === 'EUR' ? '€' :
                           displayCurrency + ' ';
 
     return (
@@ -314,9 +314,9 @@ function RoleSections({
     <>
       <StatsGrid
         items={[
-          { title: 'Platform balance', value: summary?.balance ?? 0, prefix: 'â‚¦' },
-          { title: 'Total payouts', value: summary?.totalWithdrawn ?? 0, prefix: 'â‚¦' },
-          { title: 'Pending liabilities', value: summary?.pendingBalance ?? 0, prefix: 'â‚¦' },
+          { title: 'Platform balance', value: summary?.balance ?? 0, prefix: '₦' },
+          { title: 'Total payouts', value: summary?.totalWithdrawn ?? 0, prefix: '₦' },
+          { title: 'Pending liabilities', value: summary?.pendingBalance ?? 0, prefix: '₦' },
           { title: 'Total sales', value: summary?.totalSales ?? 0 },
           { title: 'Total clicks', value: summary?.totalClicks ?? 0 },
         ]}
@@ -467,7 +467,7 @@ function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Recent Sales</h2>
           <Link href="/products" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-            View all â†’
+            View all →
           </Link>
         </div>
 
@@ -489,7 +489,7 @@ function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount
                 <div>
                   <p className="font-medium text-gray-900">{transaction.product_name}</p>
                   <p className="text-xs text-gray-500">
-                    {transaction.customer_name} â€¢ {transaction.created_at_human}
+                    {transaction.customer_name} • {transaction.created_at_human}
                   </p>
                 </div>
                 <div className="text-right">
@@ -507,7 +507,7 @@ function VendorSalesPayouts({ formatAmount, currency }: { formatAmount?: (amount
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Withdrawals</h2>
           <Link href="/withdrawals" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-            Manage â†’
+            Manage →
           </Link>
         </div>
 
@@ -567,7 +567,7 @@ function HotProducts({ currency: _currency, formatAmount: _formatAmount }: { cur
   const fmt = (amount: number) =>
     rate !== null
       ? ctxFormat(amount * rate)
-      : `â‚¦${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      : `₦${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -595,21 +595,21 @@ function HotProducts({ currency: _currency, formatAmount: _formatAmount }: { cur
     fetchHotProducts();
   }, []);
 
-  const currencySymbol = currency === 'NGN' ? 'â‚¦' : 
+  const currencySymbol = currency === 'NGN' ? '₦' : 
                         currency === 'USD' ? '$' :
-                        currency === 'GBP' ? 'Â£' :
-                        currency === 'EUR' ? 'â‚¬' :
+                        currency === 'GBP' ? '£' :
+                        currency === 'EUR' ? '€' :
                         currency + ' ';
 
   return (
     <section className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm mb-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">ðŸ”¥ Hot Products</h2>
+          <h2 className="text-lg font-semibold text-gray-900">🔥 Hot Products</h2>
           <p className="text-xs text-gray-500 mt-1">Products with highest commissions</p>
         </div>
         <Link href="/products" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-          Browse all â†’
+          Browse all →
         </Link>
       </div>
 
@@ -699,7 +699,7 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Recent Commissions</h2>
           <Link href="/analytics" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-            View analytics â†’
+            View analytics →
           </Link>
         </div>
 
@@ -721,7 +721,7 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
                 <div>
                   <p className="font-medium text-gray-900">{commission.product_name}</p>
                   <p className="text-xs text-gray-500">
-                    {commission.transaction_ref} â€¢ {commission.created_at_human}
+                    {commission.transaction_ref} • {commission.created_at_human}
                   </p>
                 </div>
                 <div className="text-right">
@@ -749,7 +749,7 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Withdrawals</h2>
           <Link href="/withdrawals" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-            Manage â†’
+            Manage →
           </Link>
         </div>
 
@@ -799,4 +799,3 @@ function AffiliatePerformance({ formatAmount, currency }: { formatAmount?: (amou
     </section>
   );
 }
-

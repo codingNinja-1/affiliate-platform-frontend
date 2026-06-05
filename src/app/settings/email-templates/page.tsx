@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -123,7 +123,7 @@ export default function EmailTemplatesPage() {
       <div className="mx-auto max-w-6xl">
         <header className="mb-8">
           <Link href="/settings/smtp" className="text-sm text-blue-600 hover:text-blue-700">
-            â† Back to SMTP settings
+            ← Back to SMTP settings
           </Link>
           <h1 className="mt-2 text-3xl font-bold text-gray-900">Email Templates</h1>
           <p className="text-sm text-gray-600">
@@ -252,4 +252,3 @@ export default function EmailTemplatesPage() {
     </main>
   );
 }
-

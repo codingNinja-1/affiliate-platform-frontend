@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -254,7 +254,7 @@ export default function EmailLogsPage() {
                     {logs.map((log) => (
                       <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-900">{log.to_email}</td>
-                        <td className="px-4 py-3 text-sm text-gray-800">{log.subject || 'â€”'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-800">{log.subject || '—'}</td>
                         <td className="px-4 py-3 text-sm text-gray-700 capitalize">{log.template_key || 'N/A'}</td>
                         <td className="px-4 py-3 text-sm">{statusBadge(log.status)}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{new Date(log.created_at).toLocaleString()}</td>
@@ -294,4 +294,3 @@ export default function EmailLogsPage() {
     </div>
   );
 }
-

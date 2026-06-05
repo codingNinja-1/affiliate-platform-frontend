@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -103,7 +103,7 @@ export default function ProfilePage() {
       <header className="flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
-            â† Back to dashboard
+            ← Back to dashboard
           </Link>
           <h1 className="mt-2 text-3xl font-semibold text-gray-900">Profile</h1>
         </div>
@@ -205,4 +205,3 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
