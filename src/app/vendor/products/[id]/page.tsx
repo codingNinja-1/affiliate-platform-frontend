@@ -223,7 +223,7 @@ export default function VendorEditProductPage() {
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
                   />
                 </label>
-                <p className="mt-2 text-xs text-gray-400">JPEG, PNG or GIF · Max 1MB</p>
+                <p className="mt-2 text-xs text-gray-400">JPEG, PNG or GIF · Max 4MB</p>
                 {imageFile && <p className="mt-1 text-xs text-green-600">✓ {imageFile.name} selected</p>}
               </div>
             </div>
