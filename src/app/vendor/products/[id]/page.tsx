@@ -122,7 +122,7 @@ export default function VendorEditProductPage() {
 
       const res = await fetch(`/api/vendor/products/${id}`, {
         method: 'POST', // POST + _method=PUT so the proxy passes it through unchanged
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
         body: formData,
       });
 
