@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -220,7 +220,7 @@ export default function CreateProductPage() {
 
   if (step === 'form') {
     return (
-      <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
+      <main className="bg-gray-50 p-4 sm:p-6 md:p-8">
         <div className="max-w-2xl mx-auto">
           {/* Back Button */}
           <button
@@ -500,7 +500,7 @@ export default function CreateProductPage() {
   // Integration Step
   if (!integrationData) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
+      <div className="bg-gray-50 p-4 sm:p-6 md:p-8">
         <div className="max-w-2xl mx-auto text-center">
           <p>Loading integration details...</p>
         </div>
@@ -509,7 +509,7 @@ export default function CreateProductPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
+    <main className="bg-gray-50 p-4 sm:p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Back Button */}
         <button
@@ -638,3 +638,4 @@ export default function CreateProductPage() {
     </main>
   );
 }
+

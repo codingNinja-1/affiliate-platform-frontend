@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -62,11 +62,11 @@ export default function AdminReportsPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 bg-gray-50 px-6 py-10">
+    <main className="mx-auto flex max-w-7xl flex-col gap-6 bg-gray-50 px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
           <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
-            ← Back to dashboard
+            â† Back to dashboard
           </Link>
           <h1 className="mt-2 text-3xl font-semibold text-gray-900">Reports & audits</h1>
           <p className="text-sm text-gray-600">Platform analytics and financial reports</p>
@@ -105,17 +105,17 @@ export default function AdminReportsPage() {
         />
         <MetricCard
           title="Total revenue"
-          value={`₦${(summary?.totalRevenue || 0).toLocaleString()}`}
+          value={`â‚¦${(summary?.totalRevenue || 0).toLocaleString()}`}
           loading={loading}
         />
         <MetricCard
           title="Total commissions"
-          value={`₦${(summary?.totalCommissions || 0).toLocaleString()}`}
+          value={`â‚¦${(summary?.totalCommissions || 0).toLocaleString()}`}
           loading={loading}
         />
         <MetricCard
           title="Total withdrawals"
-          value={`₦${(summary?.totalWithdrawals || 0).toLocaleString()}`}
+          value={`â‚¦${(summary?.totalWithdrawals || 0).toLocaleString()}`}
           loading={loading}
         />
         <MetricCard
@@ -177,3 +177,4 @@ function MetricCard({
     </div>
   );
 }
+

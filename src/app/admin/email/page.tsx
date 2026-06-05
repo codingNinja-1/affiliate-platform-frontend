@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Mail, Settings, Home, Users, Package, CreditCard, DollarSign, Building2, TrendingUp, Menu, X } from 'lucide-react';
@@ -140,7 +140,7 @@ export default function EmailPage() {
   );
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex bg-gray-50">
       <Sidebar userType="admin" />
       
       <div className="flex-1 md:ml-60">
@@ -210,28 +210,28 @@ export default function EmailPage() {
                   <h2 className="mb-4 text-sm font-medium text-gray-600">Notifications sent to users</h2>
                   <div className="space-y-4">
                     <NotificationToggle
-                      icon="👤"
+                      icon="ðŸ‘¤"
                       title="Affiliate Approved"
                       description="Send email to affiliate when they are approved"
                       enabled={settings.affiliate_approved ?? true}
                       onChange={() => handleToggle('affiliate_approved')}
                     />
                     <NotificationToggle
-                      icon="👤"
+                      icon="ðŸ‘¤"
                       title="Affiliate Declined"
                       description="Send email to affiliate when they are declined"
                       enabled={settings.affiliate_declined ?? true}
                       onChange={() => handleToggle('affiliate_declined')}
                     />
                     <NotificationToggle
-                      icon="💰"
+                      icon="ðŸ’°"
                       title="Withdrawal Approved"
                       description="Send email when withdrawal request is approved"
                       enabled={settings.withdrawal_approved ?? true}
                       onChange={() => handleToggle('withdrawal_approved')}
                     />
                     <NotificationToggle
-                      icon="💰"
+                      icon="ðŸ’°"
                       title="Withdrawal Rejected"
                       description="Send email when withdrawal request is rejected"
                       enabled={settings.withdrawal_rejected ?? true}
@@ -248,14 +248,14 @@ export default function EmailPage() {
                   {(userType === 'vendor' || userType === 'affiliate') && (
                     <>
                       <NotificationToggle
-                        icon="🔗"
+                        icon="ðŸ”—"
                         title="New referral"
                         description={`Send email to ${userType} when they get a new referral`}
                         enabled={settings.new_referral ?? true}
                         onChange={() => handleToggle('new_referral')}
                       />
                       <NotificationToggle
-                        icon="💵"
+                        icon="ðŸ’µ"
                         title="New Sale"
                         description={`Send email to ${userType} when they get a new Sale`}
                         enabled={settings.new_sale ?? true}
@@ -267,21 +267,21 @@ export default function EmailPage() {
                   {(userType === 'admin' || userType === 'superadmin') && (
                     <>
                       <NotificationToggle
-                        icon="👤"
+                        icon="ðŸ‘¤"
                         title="New Affiliate sign up"
                         description="Receive an email when a new referral is made by an affiliate"
                         enabled={settings.affiliate_approved ?? true}
                         onChange={() => handleToggle('affiliate_approved')}
                       />
                       <NotificationToggle
-                        icon="💰"
+                        icon="ðŸ’°"
                         title="New Withdrawal Request"
                         description="Receive an email when a new withdrawal request is made"
                         enabled={settings.new_withdrawal_request ?? true}
                         onChange={() => handleToggle('new_withdrawal_request')}
                       />
                       <NotificationToggle
-                        icon="💵"
+                        icon="ðŸ’µ"
                         title="New Sale"
                         description="Receive an email when a new sale is made in your affiliate program"
                         enabled={settings.new_sale ?? true}
@@ -291,7 +291,7 @@ export default function EmailPage() {
                   )}
 
                   <NotificationToggle
-                    icon="📊"
+                    icon="ðŸ“Š"
                     title="Weekly summary"
                     description="Receive a weekly email update about how your affiliate program is performing"
                     enabled={settings.weekly_summary ?? true}
@@ -316,3 +316,4 @@ export default function EmailPage() {
     </div>
   );
 }
+

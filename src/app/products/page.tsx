@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -13,7 +13,7 @@ function normalizeImageUrl(src: string): string {
   if (src.startsWith('http://127.0.0.1:8000') || src.startsWith('http://localhost:8000')) {
     return src.replace(/http:\/\/(127\.0\.0\.1|localhost):8000/, 'http://localhost:8000');
   }
-  // Relative path — prefix with Hostinger backend storage URL
+  // Relative path â€” prefix with Hostinger backend storage URL
   if (!src.startsWith('http')) {
     return `https://snow-mantis-616662.hostingersite.com/backend/public/storage/${src}`;
   }
@@ -69,14 +69,14 @@ export default function ProductsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 mb-2">
-              ← Back to dashboard
+              â† Back to dashboard
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">
               {isAffiliate ? 'Browse Products' : 'My Products'}
@@ -203,7 +203,7 @@ export default function ProductsPage() {
                     <div className="text-right">
                       <p className="text-xs text-gray-400">Stock</p>
                       <p className="text-sm font-medium text-gray-700">
-                        {product.stock_quantity != null && product.stock_quantity > 0 ? product.stock_quantity : '∞'}
+                        {product.stock_quantity != null && product.stock_quantity > 0 ? product.stock_quantity : 'âˆž'}
                       </p>
                     </div>
                   </div>
@@ -253,3 +253,4 @@ export default function ProductsPage() {
     </main>
   );
 }
+

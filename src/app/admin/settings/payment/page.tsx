@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -114,7 +114,7 @@ export default function PaymentSettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-gray-100 text-gray-900">
+      <div className="flex bg-gray-100 text-gray-900">
         <Sidebar userType="admin" />
         <main className="w-full md:ml-60 flex-1 p-8">
           <div className="h-screen flex items-center justify-center">
@@ -126,13 +126,13 @@ export default function PaymentSettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100 text-gray-900">
+    <div className="flex bg-gray-100 text-gray-900">
       <Sidebar userType="admin" />
 
       <main className="w-full md:ml-60 flex-1 p-8">
         <div className="mb-8">
           <Link href="/admin" className="text-sm text-blue-600 hover:text-blue-700">
-            ← Back to admin dashboard
+            â† Back to admin dashboard
           </Link>
           <h1 className="mt-2 text-3xl font-bold">Payment Settings</h1>
           <p className="text-gray-600">Configure Paystack payment gateway</p>
@@ -200,7 +200,7 @@ export default function PaymentSettingsPage() {
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-700"
               >
-                Paystack Dashboard → Settings → API Keys & Webhooks
+                Paystack Dashboard â†’ Settings â†’ API Keys & Webhooks
               </a>
             </p>
 
@@ -246,7 +246,7 @@ export default function PaymentSettingsPage() {
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-4">Live API Keys</h2>
             <p className="text-sm text-gray-600 mb-6">
-              ⚠️ Keep these keys secure! Never share them or commit them to version control.
+              âš ï¸ Keep these keys secure! Never share them or commit them to version control.
             </p>
 
             <div className="space-y-4">
@@ -310,3 +310,4 @@ export default function PaymentSettingsPage() {
     </div>
   );
 }
+

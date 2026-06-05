@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -75,10 +75,10 @@ export default function AdminPayoutsPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 bg-gray-50 px-6 py-10">
+    <main className="mx-auto flex max-w-7xl flex-col gap-6 bg-gray-50 px-6 py-10">
       <header>
         <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
-          ← Back to dashboard
+          â† Back to dashboard
         </Link>
         <h1 className="mt-2 text-3xl font-semibold text-gray-900">Payout approvals</h1>
         <p className="text-sm text-gray-600">Review and approve withdrawal requests</p>
@@ -130,7 +130,7 @@ export default function AdminPayoutsPage() {
                         {payout.user_type}
                       </span>
                     </td>
-                    <td className="py-4 font-semibold text-gray-900">₦{payout.amount.toLocaleString()}</td>
+                    <td className="py-4 font-semibold text-gray-900">â‚¦{payout.amount.toLocaleString()}</td>
                     <td className="py-4 text-gray-700">{payout.payment_method}</td>
                     <td className="py-4 text-gray-700">{new Date(payout.created_at).toLocaleDateString()}</td>
                     <td className="py-4 text-right">
@@ -159,3 +159,4 @@ export default function AdminPayoutsPage() {
     </main>
   );
 }
+
