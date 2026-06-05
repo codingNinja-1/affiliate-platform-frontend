@@ -24,6 +24,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [idleMsg, setIdleMsg] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -31,6 +32,9 @@ export default function LoginPage() {
       const user = localStorage.getItem('user');
       if (token && user) {
         window.location.href = '/dashboard';
+      }
+      if (new URLSearchParams(window.location.search).get('reason') === 'idle') {
+        setIdleMsg(true);
       }
     }
   }, []);
@@ -144,6 +148,12 @@ export default function LoginPage() {
                 Sign In to Your Trakr Account
               </h1>
               
+              {idleMsg && (
+                <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3 sm:px-4 py-2 sm:py-3 rounded-lg mb-4 text-xs sm:text-sm">
+                  You were logged out due to 10 minutes of inactivity.
+                </div>
+              )}
+
               {error && (
                 <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 sm:px-4 py-2 sm:py-3 rounded-lg mb-4 sm:mb-6 text-xs sm:text-sm">
                   {error}
