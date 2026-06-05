@@ -4,6 +4,7 @@ import "./globals.css";
 import AppLayout from "./components/AppLayout";
 import ThemeProvider from "./components/ThemeProvider";
 import { CurrencyProvider } from "@/context/CurrencyContext";
+import { ThemeContextProvider } from "@/context/ThemeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,11 +32,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>
-          <CurrencyProvider>
-            <AppLayout>{children}</AppLayout>
-          </CurrencyProvider>
-        </ThemeProvider>
+        <ThemeContextProvider>
+          <ThemeProvider>
+            <CurrencyProvider>
+              <AppLayout>{children}</AppLayout>
+            </CurrencyProvider>
+          </ThemeProvider>
+        </ThemeContextProvider>
       </body>
     </html>
   );
