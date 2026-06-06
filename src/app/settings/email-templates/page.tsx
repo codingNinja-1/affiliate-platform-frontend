@@ -59,6 +59,21 @@ export default function EmailTemplatesPage() {
 
   const currentTemplateInfo = TEMPLATE_TYPES.find((t) => t.key === selectedTemplate);
 
+  // Admin-only guard
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) { window.location.href = '/login'; return; }
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const role = user?.user_type?.toLowerCase();
+      if (role !== 'admin' && role !== 'superadmin') {
+        window.location.href = '/dashboard';
+      }
+    } catch {
+      window.location.href = '/dashboard';
+    }
+  }, []);
+
   useEffect(() => {
     loadTemplate(selectedTemplate);
   }, [selectedTemplate]);

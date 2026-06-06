@@ -39,6 +39,19 @@ export default function SmtpSettingsPage() {
       return;
     }
 
+    // Admin-only page — redirect everyone else
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const role = user?.user_type?.toLowerCase();
+      if (role !== 'admin' && role !== 'superadmin') {
+        window.location.href = '/dashboard';
+        return;
+      }
+    } catch {
+      window.location.href = '/dashboard';
+      return;
+    }
+
     fetch('/api/settings/smtp', {
       headers: { Authorization: `Bearer ${token}` },
     })
