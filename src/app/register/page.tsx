@@ -5,14 +5,14 @@ import Link from 'next/link';
 import {
   Eye, EyeOff, Zap, TrendingUp, Users, ShoppingBag,
   ArrowRight, ArrowLeft, Check, Star, ArrowUpRight,
-  Link2, Package, User,
+  Link2, Package,
 } from 'lucide-react';
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type Step = 1 | 2 | 3;
 
 type FormData = {
-  user_type: 'affiliate' | 'vendor' | 'customer';
+  user_type: 'affiliate' | 'vendor';
   first_name: string;
   last_name: string;
   email: string;
@@ -387,9 +387,8 @@ export default function RegisterPage() {
             {step === 1 && (
               <div className="space-y-3">
                 {([
-                  { value: 'affiliate', icon: Link2,   label: 'Affiliate',  desc: 'Promote products and earn commissions on every sale you drive.' },
-                  { value: 'vendor',    icon: Package,  label: 'Vendor',     desc: 'List your digital products and build an affiliate sales network.' },
-                  { value: 'customer',  icon: User,     label: 'Customer',   desc: 'Browse and purchase digital products from verified vendors.' },
+                  { value: 'affiliate', icon: Link2,  label: 'Affiliate', desc: 'Promote products and earn commissions on every sale you drive.' },
+                  { value: 'vendor',    icon: Package, label: 'Vendor',   desc: 'List your digital products and build an affiliate sales network.' },
                 ] as const).map(({ value, icon: Icon, label, desc }) => (
                   <button
                     key={value}
