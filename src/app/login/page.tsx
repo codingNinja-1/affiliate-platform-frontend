@@ -373,18 +373,18 @@ export default function LoginPage() {
 
             {/* Bar chart */}
             <div className="bg-black/20 rounded-xl px-4 pt-4 pb-3 border border-white/[0.04]">
-              <div className="flex items-end gap-1.5 h-16 mb-2">
+              <div className="flex items-end gap-1.5 h-20 mb-2">
                 {bars.map((h, i) => {
                   const isActive = i === 10;
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center justify-end">
                       <div
-                        className="w-full rounded-sm"
+                        className="w-full rounded-t-sm"
                         style={{
                           height: `${h}%`,
                           background: isActive
                             ? 'linear-gradient(to top, #6366f1, #a78bfa)'
-                            : 'rgba(99,102,241,0.25)',
+                            : 'rgba(139, 120, 240, 0.55)',
                         }}
                       />
                     </div>
@@ -421,7 +421,7 @@ export default function LoginPage() {
 
           {/* Feature pills */}
           <div className="flex flex-wrap gap-2 justify-center">
-            {['Real-time analytics', 'Multi-currency', 'Instant withdrawals', 'Affiliate tracking', 'Dark mode'].map((f) => (
+            {['Real-time analytics', 'Multi-currency', 'Instant withdrawals', 'Affiliate tracking'].map((f) => (
               <span key={f} className="flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.07] rounded-full px-3 py-1 text-[11px] text-gray-500 font-medium">
                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/70" />
                 {f}
