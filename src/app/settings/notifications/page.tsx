@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 
 type NotificationSettings = {
   affiliate_approved?: boolean;
@@ -114,9 +113,9 @@ export default function NotificationSettingsPage() {
     <main className="bg-gray-50 p-8">
       <div className="mr-auto max-w-4xl">
         <header className="mb-8">
-          <Link href="/dashboard" className="text-sm text-blue-600 hover:text-blue-700">
-            ← Back to dashboard
-          </Link>
+          <a href="/settings" className="text-sm text-blue-600 hover:text-blue-700">
+            ← Back to settings
+          </a>
           <h1 className="mt-2 text-3xl font-bold text-gray-900">Email Notification</h1>
           <p className="text-sm text-gray-600">
             Edit the email notifications that are sent to your email address when certain events occur.
@@ -134,45 +133,6 @@ export default function NotificationSettingsPage() {
             {message}
           </div>
         )}
-
-        <div className="mb-6 grid gap-4 md:grid-cols-2">
-          <Link
-            href="/settings/smtp"
-            className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600">SMTP Settings</h3>
-              <p className="text-xs text-gray-500">Configure email server</p>
-            </div>
-            <svg className="h-5 w-5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-
-          <Link
-            href="/settings/email-templates"
-            className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-50 text-purple-600">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-gray-900 group-hover:text-purple-600">Email Templates</h3>
-              <p className="text-xs text-gray-500">Customize email content</p>
-            </div>
-            <svg className="h-5 w-5 text-gray-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        </div>
 
         <div className="space-y-6">
           {/* Notifications sent to others */}
