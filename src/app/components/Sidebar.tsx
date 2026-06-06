@@ -216,15 +216,14 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
             <span className="text-sm font-medium">Profile</span>
           </Link>
           <Link
-            href={isAdmin ? '#' : '/settings'}
-            onClick={(e) => {
-              if (isAdmin) {
-                e.preventDefault();
-              }
-            }}
-            className={isAdmin ? 'opacity-0 pointer-events-none' : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'}
+            href="/settings"
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
+              isActive('/settings')
+                ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-medium'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
           >
-            <SettingsIcon size={20} className="text-gray-500" />
+            <SettingsIcon size={20} className={isActive('/settings') ? 'text-blue-600' : 'text-gray-500'} />
             <span className="text-sm font-medium">Settings</span>
           </Link>
           <button

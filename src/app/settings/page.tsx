@@ -2,399 +2,286 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { africanBanks, countries, banksByCountry } from '@/data/africanBanks';
+import Link from 'next/link';
+import {
+  Bell,
+  UserCircle,
+  ShieldCheck,
+  CreditCard,
+  Globe,
+  Mail,
+  FileText,
+  Settings2,
+  ChevronRight,
+  CheckCircle2,
+} from 'lucide-react';
 
-type BankDetails = {
-  bank_name: string;
-  account_name: string;
-  account_number: string;
-  bank_code?: string;
+type User = {
+  id: number;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  user_type: string;
 };
+
+type CurrencyOption = { code: string; symbol: string; name: string };
+
+const CURRENCIES: CurrencyOption[] = [
+  { code: 'NGN', symbol: '₦', name: 'Nigerian Naira' },
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GHS', symbol: '₵', name: 'Ghanaian Cedi' },
+  { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling' },
+  { code: 'ZAR', symbol: 'R', name: 'South African Rand' },
+];
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [bankDetails, setBankDetails] = useState<BankDetails>({
-    bank_name: '',
-    account_name: '',
-    account_number: '',
-    bank_code: '',
-  });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [verifying, setVerifying] = useState(false);
-  const [verificationMessage, setVerificationMessage] = useState('');
-  const [verificationError, setVerificationError] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+  const [currency, setCurrency] = useState('NGN');
+  const [savingCurrency, setSavingCurrency] = useState(false);
+  const [currencySaved, setCurrencySaved] = useState(false);
+  const [currencyError, setCurrencyError] = useState('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('auth_token');
+    if (!storedUser || !token) { router.push('/login'); return; }
 
-    if (!storedUser || !token) {
-      router.push('/login');
-      return;
+    let parsed: User;
+    try { parsed = JSON.parse(storedUser); } catch { router.push('/login'); return; }
+    setUser(parsed);
+
+    // Load existing currency preference for vendor/affiliate
+    if (parsed.user_type === 'vendor' || parsed.user_type === 'affiliate') {
+      const endpoint =
+        parsed.user_type === 'vendor'
+          ? '/api/vendor/settings'
+          : '/api/affiliate/settings';
+      fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((data) => {
+          const saved =
+            data?.data?.preferred_currency ||
+            data?.data?.currency ||
+            null;
+          if (saved) setCurrency(saved);
+        })
+        .catch(() => {});
     }
-
-    try {
-      JSON.parse(storedUser);
-    } catch (err) {
-      console.error('Failed to parse stored user', err);
-      router.push('/login');
-      return;
-    }
-
-    loadSettings(token);
   }, [router]);
 
-  const loadSettings = async (token: string) => {
+  const handleCurrencySave = async () => {
+    if (!user) return;
+    setSavingCurrency(true);
+    setCurrencyError('');
+    setCurrencySaved(false);
+    const token = localStorage.getItem('auth_token');
+    const endpoint =
+      user.user_type === 'vendor'
+        ? '/api/vendor/settings/currency'
+        : '/api/affiliate/settings/currency';
     try {
-      const res = await fetch('/api/settings', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to load settings');
-      }
-
-      const data = await res.json();
-
-      if (data.success && data.data.bank_details) {
-        setBankDetails({
-          bank_name: data.data.bank_details.bank_name || '',
-          account_name: data.data.bank_details.account_name || '',
-          account_number: data.data.bank_details.account_number || '',
-          bank_code: data.data.bank_details.bank_code || '',
-        });
-      }
-    } catch (err) {
-      console.error('Failed to load settings', err);
-      setError('Failed to load settings');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setMessage('');
-
-    if (!bankDetails.bank_name || !bankDetails.account_name || !bankDetails.account_number) {
-      setError('Please fill in all required fields');
-      return;
-    }
-
-    if (!bankDetails.bank_code) {
-      setError('Please select a bank from the list');
-      return;
-    }
-
-    if (bankDetails.account_number.length < 10) {
-      setError('Account number must be at least 10 digits');
-      return;
-    }
-
-    setSaving(true);
-
-    try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/settings/bank-details', {
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(bankDetails),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currency }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to save bank details');
-      }
-
-      setMessage('Bank details saved successfully!');
-      
-      // Redirect to dashboard after 1.5 seconds
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1500);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to save bank details';
-      setError(message);
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to save');
+      setCurrencySaved(true);
+      setTimeout(() => setCurrencySaved(false), 3000);
+    } catch (e: unknown) {
+      setCurrencyError(e instanceof Error ? e.message : 'Failed to save currency');
     } finally {
-      setSaving(false);
+      setSavingCurrency(false);
     }
   };
 
-  const handleChange = (field: keyof BankDetails, value: string) => {
-    setBankDetails((prev) => ({ ...prev, [field]: value }));
-    if (field === 'account_name') {
-      setVerificationMessage('');
-      setVerificationError('');
-    }
-  };
+  const isAdmin = user?.user_type === 'admin' || user?.user_type === 'superadmin';
+  const isVendorOrAffiliate = user?.user_type === 'vendor' || user?.user_type === 'affiliate';
 
-  const handleBankSelect = (bankName: string, bankCode: string) => {
-    setBankDetails((prev) => ({
-      ...prev,
-      bank_name: bankName,
-      bank_code: bankCode,
-      account_name: '',
-    }));
-    setVerificationMessage('');
-    setVerificationError('');
-  };
+  /* ─── Card definitions ─── */
+  const generalCards = [
+    {
+      href: '/settings/notifications',
+      icon: Bell,
+      iconBg: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+      title: 'Notifications',
+      desc: 'Control which email alerts you receive',
+    },
+    {
+      href: '/profile',
+      icon: UserCircle,
+      iconBg: 'bg-violet-50',
+      iconColor: 'text-violet-600',
+      title: 'Profile & Bank Details',
+      desc: 'Update your name, photo, and payout account',
+    },
+    {
+      href: '/profile',
+      icon: ShieldCheck,
+      iconBg: 'bg-green-50',
+      iconColor: 'text-green-600',
+      title: 'Security',
+      desc: 'Change your password with OTP verification',
+    },
+  ];
 
-  // Filter banks based on selected country
-  const filteredBanks = (selectedCountry
-    ? banksByCountry[selectedCountry] || []
-    : africanBanks
-  ).slice().sort((a, b) => a.name.localeCompare(b.name));
-
-  const verifyAccountName = async () => {
-    setVerificationMessage('');
-    setVerificationError('');
-
-    if (!bankDetails.bank_code) {
-      setVerificationError('Select a bank first.');
-      return;
-    }
-
-    if (!bankDetails.account_number || bankDetails.account_number.length < 10) {
-      setVerificationError('Enter a valid account number (min 10 digits).');
-      return;
-    }
-
-    setVerifying(true);
-
-    try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/settings/resolve-account', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          bank_code: bankDetails.bank_code,
-          account_number: bankDetails.account_number,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Unable to verify account');
-      }
-
-      const resolvedName = data.data?.account_name || '';
-      setBankDetails((prev) => ({ ...prev, account_name: resolvedName }));
-      setVerificationMessage(`Account verified: ${resolvedName}`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unable to verify account';
-      setVerificationError(msg);
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  // Clear verification state when bank or account number changes
-  useEffect(() => {
-    setVerificationMessage('');
-    setVerificationError('');
-    setBankDetails((prev) => ({ ...prev, account_name: '' }));
-  }, [bankDetails.bank_code, bankDetails.account_number]);
-
-  if (loading) {
-    return (
-      <main className="mr-auto flex max-w-2xl flex-col items-center justify-center bg-gray-50 px-6 py-10">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-      </main>
-    );
-  }
+  const adminCards = [
+    {
+      href: '/settings/smtp',
+      icon: Mail,
+      iconBg: 'bg-orange-50',
+      iconColor: 'text-orange-600',
+      title: 'SMTP Settings',
+      desc: 'Configure your outbound email server',
+    },
+    {
+      href: '/settings/email-templates',
+      icon: FileText,
+      iconBg: 'bg-purple-50',
+      iconColor: 'text-purple-600',
+      title: 'Email Templates',
+      desc: 'Customise the content of system emails',
+    },
+    {
+      href: '/admin/settings/payment',
+      icon: CreditCard,
+      iconBg: 'bg-teal-50',
+      iconColor: 'text-teal-600',
+      title: 'Payment Settings',
+      desc: 'Manage Paystack keys and payment config',
+    },
+    {
+      href: '/admin/settings/subscriptions',
+      icon: Settings2,
+      iconBg: 'bg-rose-50',
+      iconColor: 'text-rose-600',
+      title: 'Subscription Pricing',
+      desc: 'Set monthly prices for vendors and affiliates',
+    },
+  ];
 
   return (
-    <main className="mr-auto flex max-w-2xl flex-col gap-6 bg-gray-50 px-6 py-10">
-      <header>
-        <h1 className="text-3xl font-semibold text-gray-900">Settings</h1>
-        <p className="mt-1 text-sm text-gray-600">Manage your account and bank details</p>
-      </header>
-
-      {message && (
-        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {message}
+    <main className="min-h-screen bg-gray-50 px-4 py-8 sm:px-8">
+      <div className="mx-auto max-w-3xl">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage your account preferences and platform configuration
+          </p>
         </div>
-      )}
 
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
-      )}
-
-      <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-900">Bank Details</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          These details will be used for processing your withdrawals
-        </p>
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <label htmlFor="country" className="block text-sm font-medium text-gray-700">
-              Country
-            </label>
-            <select
-              id="country"
-              value={selectedCountry}
-              onChange={(e) => {
-                setSelectedCountry(e.target.value);
-                setBankDetails(prev => ({ ...prev, bank_name: '', bank_code: '' }));
-              }}
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">All African Countries</option>
-              {countries.map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="bank_name" className="block text-sm font-medium text-gray-700">
-              Bank Name <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="bank_name"
-              value={bankDetails.bank_name}
-              onChange={(e) => {
-                const bank = filteredBanks.find(b => b.name === e.target.value);
-                if (bank) {
-                  handleBankSelect(bank.name, bank.code);
-                } else {
-                  handleBankSelect('', '');
-                }
-              }}
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select your bank</option>
-              {filteredBanks.map((bank) => (
-                <option key={`${bank.country}-${bank.code}`} value={bank.name}>
-                  {bank.name} ({bank.country})
-                </option>
-              ))}
-            </select>
-            {bankDetails.bank_code && (
-              <p className="mt-1 text-xs text-gray-500">Bank code: {bankDetails.bank_code}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="bank_name" className="block text-sm font-medium text-gray-700">
-              Bank Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="bank_name"
-              value={bankDetails.bank_name}
-              onChange={(e) => handleChange('bank_name', e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="e.g., Access Bank, GTBank, First Bank"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="account_number" className="block text-sm font-medium text-gray-700">
-              Account Number <span className="text-red-500">*</span>
-            </label>
-            <div className="mt-1 flex gap-3">
-              <input
-                type="text"
-                id="account_number"
-                value={bankDetails.account_number}
-                onChange={(e) => handleChange('account_number', e.target.value)}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="10-digit account number"
-                minLength={10}
-                maxLength={20}
-                required
-              />
-              <button
-                type="button"
-                onClick={verifyAccountName}
-                disabled={verifying}
-                className="whitespace-nowrap rounded-md border border-blue-600 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+        {/* ── General settings ── */}
+        <section className="mb-8">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+            Account
+          </h2>
+          <div className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            {generalCards.map(({ href, icon: Icon, iconBg, iconColor, title, desc }) => (
+              <Link
+                key={href + title}
+                href={href}
+                className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-gray-50"
               >
-                {verifying ? 'Verifying...' : 'Verify name'}
-              </button>
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
+                  <Icon size={20} className={iconColor} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-600">
+                    {title}
+                  </p>
+                  <p className="text-xs text-gray-500">{desc}</p>
+                </div>
+                <ChevronRight size={16} className="shrink-0 text-gray-400 group-hover:text-blue-500" />
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Currency preference (vendor / affiliate only) ── */}
+        {isVendorOrAffiliate && (
+          <section className="mb-8">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              Display Currency
+            </h2>
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-50">
+                  <Globe size={20} className="text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-900">Preferred Currency</p>
+                  <p className="mb-3 text-xs text-gray-500">
+                    Amounts on your dashboard will be shown in this currency
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <select
+                      value={currency}
+                      onChange={(e) => { setCurrency(e.target.value); setCurrencySaved(false); }}
+                      className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      {CURRENCIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.symbol} — {c.name} ({c.code})
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleCurrencySave}
+                      disabled={savingCurrency}
+                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {savingCurrency ? 'Saving…' : 'Save'}
+                    </button>
+                    {currencySaved && (
+                      <span className="flex items-center gap-1 text-xs text-green-600">
+                        <CheckCircle2 size={14} /> Saved
+                      </span>
+                    )}
+                    {currencyError && (
+                      <span className="text-xs text-red-600">{currencyError}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="mt-1 text-xs text-gray-500">
-              Verification works for Nigerian banks (numeric bank codes) and auto-fills the account name.
-            </p>
-          </div>
+          </section>
+        )}
 
-          <div>
-            <label htmlFor="account_name" className="block text-sm font-medium text-gray-700">
-              Account Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="account_name"
-              value={bankDetails.account_name}
-              onChange={(e) => handleChange('account_name', e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="Will auto-fill after verification"
-              required
-            />
-            {verificationMessage && (
-              <p className="mt-1 text-xs text-green-700">{verificationMessage}</p>
-            )}
-            {verificationError && (
-              <p className="mt-1 text-xs text-red-600">{verificationError}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="bank_code" className="block text-sm font-medium text-gray-700">
-              Bank Code <span className="text-gray-500">(Auto-filled)</span>
-            </label>
-            <input
-              type="text"
-              id="bank_code"
-              value={bankDetails.bank_code}
-              onChange={(e) => handleChange('bank_code', e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-900 placeholder-gray-400"
-              placeholder="Automatically filled when you select a bank"
-              readOnly
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-md bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save Bank Details'}
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push('/dashboard')}
-              className="rounded-md border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </section>
+        {/* ── Admin-only settings ── */}
+        {isAdmin && (
+          <section>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              Platform Configuration
+            </h2>
+            <div className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+              {adminCards.map(({ href, icon: Icon, iconBg, iconColor, title, desc }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-gray-50"
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
+                    <Icon size={20} className={iconColor} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-600">
+                      {title}
+                    </p>
+                    <p className="text-xs text-gray-500">{desc}</p>
+                  </div>
+                  <ChevronRight size={16} className="shrink-0 text-gray-400 group-hover:text-blue-500" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </main>
   );
 }
