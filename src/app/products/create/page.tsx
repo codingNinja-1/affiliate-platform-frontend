@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Camera, ChevronLeft } from 'lucide-react';
 
@@ -61,6 +61,20 @@ export default function CreateProductPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [selectedButton, setSelectedButton] = useState<string | null>(null);
+
+  // Vendor-only guard
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) { router.push('/login'); return; }
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user?.user_type?.toLowerCase() !== 'vendor') {
+        router.push('/dashboard');
+      }
+    } catch {
+      router.push('/dashboard');
+    }
+  }, [router]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

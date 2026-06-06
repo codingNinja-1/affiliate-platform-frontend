@@ -34,8 +34,17 @@ export default function EmailPage() {
       return;
     }
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    try {
+      const parsed = JSON.parse(storedUser);
+      const role = parsed?.user_type?.toLowerCase();
+      if (role !== 'admin' && role !== 'superadmin') {
+        router.push('/dashboard');
+        return;
+      }
+      setUser(parsed);
+    } catch {
+      router.push('/dashboard');
+      return;
     }
 
     // Load settings
