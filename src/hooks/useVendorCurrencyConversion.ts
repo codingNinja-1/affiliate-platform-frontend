@@ -62,10 +62,16 @@ export function useVendorCurrencyConversion(refreshTrigger = 0, selectedCurrency
     };
   }, [baseAmounts, rates, selectedCurrency]);
 
-  const formatAmount = (amount: number, currency?: string) => {
-    const curr = currency || amounts?.currency || 'NGN';
+  const formatAmount = (amount: number, targetCurrency?: string) => {
+    const curr = targetCurrency || amounts?.currency || 'NGN';
     const symbol = CURRENCY_SYMBOLS[curr] ?? curr + ' ';
-    return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    // amounts coming in are always in NGN — apply the rate if a foreign currency is selected
+    let converted = amount;
+    if (curr !== 'NGN') {
+      const rate = rates[`NGN_${curr}`] ?? null;
+      if (rate) converted = amount * rate;
+    }
+    return `${symbol}${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   return { amounts, loading, formatAmount };
