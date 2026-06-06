@@ -136,3 +136,36 @@ input, textarea, select {
 .dark .bg-gray-200 { background-color: rgb(31 41 55) !important; }
 
 /* Keep coloured status badges untouched — only neutral grays are overridden above */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LANDING PAGE — always render in light mode regardless of OS/user theme.
+   #landing-root ID has higher specificity than .dark class selectors above,
+   so these rules win over all the .dark .* overrides.
+   ══════════════════════════════════════════════════════════════════════════ */
+body:has(#landing-root)          { background-color: #ffffff !important; }
+main:has(#landing-root)          { background-color: #ffffff !important; }
+#landing-root                    { background-color: #ffffff !important; color: #111827 !important; }
+
+.dark #landing-root .bg-white    { background-color: #ffffff !important; }
+.dark #landing-root .bg-gray-50  { background-color: #f9fafb !important; }
+.dark #landing-root .bg-gray-100 { background-color: #f3f4f6 !important; }
+.dark #landing-root .bg-gray-200 { background-color: #e5e7eb !important; }
+
+.dark #landing-root .text-gray-900,
+.dark #landing-root .text-gray-800 { color: #111827 !important; }
+.dark #landing-root .text-gray-700 { color: #374151 !important; }
+.dark #landing-root .text-gray-600,
+.dark #landing-root .text-gray-500 { color: #6b7280 !important; }
+.dark #landing-root .text-gray-400 { color: #9ca3af !important; }
+
+.dark #landing-root .border-gray-50,
+.dark #landing-root .border-gray-100,
+.dark #landing-root .border-gray-200,
+.dark #landing-root .border-gray-300 { border-color: #e5e7eb !important; }
+
+.dark #landing-root .hover\:bg-gray-50:hover  { background-color: #f9fafb !important; }
+.dark #landing-root .hover\:bg-gray-100:hover { background-color: #f3f4f6 !important; }
+
+/* Dark sections inside landing (features panel, footer) keep their dark bg */
+.dark #landing-root .bg-gray-950 { background-color: #030712 !important; }
+.dark #landing-root .bg-gray-900 { background-color: #111827 !important; }
