@@ -96,3 +96,43 @@ input, textarea, select {
   color: var(--muted-foreground) !important;
   opacity: 1 !important; /* Override browser default low opacity */
 }
+
+/* ============================================================
+   GLOBAL DARK MODE AUTO-OVERRIDES
+   These replace all hardcoded light-theme Tailwind classes
+   across every page without needing per-file dark: variants.
+   ============================================================ */
+
+/* Page & layout backgrounds */
+.dark main,
+.dark .bg-gray-50 { background-color: rgb(3 7 18) !important; }        /* gray-950 */
+
+/* Card / panel surfaces */
+.dark .bg-white      { background-color: rgb(17 24 39) !important; }   /* gray-900 */
+.dark .bg-gray-100   { background-color: rgb(31 41 55) !important; }   /* gray-800 */
+
+/* Borders */
+.dark .border-gray-50,
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300 { border-color: rgb(31 41 55) !important; }     /* gray-800 */
+
+/* Text — headings */
+.dark .text-gray-900,
+.dark .text-gray-800 { color: rgb(248 250 252) !important; }            /* gray-50  */
+
+/* Text — body */
+.dark .text-gray-700 { color: rgb(203 213 225) !important; }            /* gray-300 */
+
+/* Text — secondary / muted */
+.dark .text-gray-600,
+.dark .text-gray-500 { color: rgb(148 163 184) !important; }            /* gray-400 */
+
+/* Hover backgrounds */
+.dark .hover\:bg-gray-50:hover  { background-color: rgb(17 24 39) !important; }
+.dark .hover\:bg-gray-100:hover { background-color: rgb(31 41 55) !important; }
+
+/* Skeleton / loading pulses */
+.dark .bg-gray-200 { background-color: rgb(31 41 55) !important; }
+
+/* Keep coloured status badges untouched — only neutral grays are overridden above */
