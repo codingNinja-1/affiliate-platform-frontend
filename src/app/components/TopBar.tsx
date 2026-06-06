@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Sun, Moon, Bell } from 'lucide-react';
+import { Sun, Moon, Bell, ChevronDown, UserCircle, Settings, LogOut } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 type User = {
@@ -31,12 +31,25 @@ function Avatar({ name }: { name: string }) {
 export default function TopBar() {
   const { theme, toggle } = useTheme();
   const [user, setUser] = useState<User | null>(null);
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem('user');
       if (stored) setUser(JSON.parse(stored));
     } catch {}
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const name = user
@@ -52,44 +65,101 @@ export default function TopBar() {
       ? 'Admin'
       : '';
 
+  const isAdmin = user?.user_type === 'admin' || user?.user_type === 'superadmin';
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  };
+
   return (
-    <header className="hidden md:flex sticky top-0 z-30 h-16 w-full items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 shadow-sm">
-      {/* Left — user info (clickable → profile) */}
-      <Link href="/profile" className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
-        <Avatar name={name} />
-        <div className="leading-tight">
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{name || '—'}</p>
-          {roleLabel && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">{roleLabel}</p>
-          )}
-        </div>
-      </Link>
+    <header className="hidden md:flex sticky top-0 z-30 h-16 w-full items-center justify-end border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 shadow-sm gap-2">
 
-      {/* Right — actions */}
-      <div className="flex items-center gap-2">
-        {/* Bell */}
-        <button className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors">
-          <Bell size={18} />
-        </button>
+      {/* Bell */}
+      <button className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors">
+        <Bell size={18} />
+      </button>
 
-        {/* Theme toggle */}
+      {/* Theme toggle */}
+      <button
+        onClick={toggle}
+        aria-label="Toggle theme"
+        className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+      >
+        {theme === 'dark' ? (
+          <>
+            <Sun size={15} className="text-yellow-400" />
+            <span>Light</span>
+          </>
+        ) : (
+          <>
+            <Moon size={15} className="text-indigo-500" />
+            <span>Dark</span>
+          </>
+        )}
+      </button>
+
+      {/* User dropdown */}
+      <div className="relative" ref={dropdownRef}>
         <button
-          onClick={toggle}
-          aria-label="Toggle theme"
-          className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
-          {theme === 'dark' ? (
-            <>
-              <Sun size={15} className="text-yellow-400" />
-              <span>Light</span>
-            </>
-          ) : (
-            <>
-              <Moon size={15} className="text-indigo-500" />
-              <span>Dark</span>
-            </>
-          )}
+          <Avatar name={name} />
+          <div className="leading-tight text-left">
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{name || '—'}</p>
+            {roleLabel && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">{roleLabel}</p>
+            )}
+          </div>
+          <ChevronDown
+            size={15}
+            className={`text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          />
         </button>
+
+        {open && (
+          <div className="absolute right-0 top-full mt-2 w-52 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg py-1 z-50">
+            {/* User info header */}
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{name || '—'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+            </div>
+
+            <div className="py-1">
+              <Link
+                href="/profile"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <UserCircle size={16} className="text-gray-400" />
+                View Profile
+              </Link>
+
+              {!isAdmin && (
+                <Link
+                  href="/settings"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <Settings size={16} className="text-gray-400" />
+                  Settings
+                </Link>
+              )}
+            </div>
+
+            <div className="border-t border-gray-100 dark:border-gray-800 py-1">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              >
+                <LogOut size={16} />
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
