@@ -47,6 +47,7 @@ export default function VendorEditProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [subscriptionRequired, setSubscriptionRequired] = useState(false);
 
   const normalizeImage = (src: string | null) =>
     src ? src.replace('http://127.0.0.1:8000', 'http://localhost:8000') : null;
@@ -70,6 +71,18 @@ export default function VendorEditProductPage() {
       window.location.href = '/dashboard';
       return;
     }
+
+    // Check subscription status
+    fetch('/api/subscriptions', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && data.data?.status && data.data.status !== 'active') {
+          setSubscriptionRequired(true);
+        }
+      })
+      .catch(() => {});
 
     const load = async () => {
       try {
@@ -151,6 +164,30 @@ export default function VendorEditProductPage() {
       setSaving(false);
     }
   };
+
+  if (subscriptionRequired) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14M12 2a10 10 0 100 20A10 10 0 0012 2z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Subscription Required</h2>
+          <p className="text-gray-600 mb-6 text-sm">
+            You need an active subscription to edit products. Subscribe to unlock full access to your vendor account.
+          </p>
+          <a
+            href="/subscriptions"
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+          >
+            View Subscription Plans
+          </a>
+        </div>
+      </main>
+    );
+  }
 
   if (loading) {
     return (

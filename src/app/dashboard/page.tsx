@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Wallet, TrendingUp, ArrowDownLeft, DollarSign, ShoppingCart, MousePointerClick, Clock } from 'lucide-react';
+import { Wallet, TrendingUp, ArrowDownLeft, DollarSign, ShoppingCart, MousePointerClick, Clock, AlertTriangle } from 'lucide-react';
 import CurrencySelector from '../components/CurrencySelector';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { useVendorCurrencyConversion } from '@/hooks/useVendorCurrencyConversion';
@@ -57,6 +57,7 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'active' | 'past_due' | 'suspended' | null>(null);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -101,6 +102,20 @@ export default function DashboardPage() {
           .catch((err) => {
             console.warn('Failed to check bank details', err);
           });
+
+        // Fetch subscription status for vendors and affiliates
+        if (userType === 'vendor' || userType === 'affiliate') {
+          fetch('/api/subscriptions', {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.success && data.data) {
+                setSubscriptionStatus(data.data.status);
+              }
+            })
+            .catch(() => {});
+        }
       }
     } catch (err) {
       console.error('Failed to parse stored user', err);
@@ -171,6 +186,23 @@ export default function DashboardPage() {
       {error && (
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 px-4 py-3 text-sm text-amber-800 dark:text-amber-400">
           {error}
+        </div>
+      )}
+
+      {subscriptionStatus && subscriptionStatus !== 'active' && (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm text-red-800 dark:text-red-300">
+            <AlertTriangle size={16} className="flex-shrink-0" />
+            <span>
+              Your subscription has expired. Withdrawals{user?.user_type === 'vendor' ? ' and product management' : ''} are locked.
+            </span>
+          </div>
+          <Link
+            href="/subscriptions"
+            className="flex-shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+          >
+            Subscribe Now
+          </Link>
         </div>
       )}
 

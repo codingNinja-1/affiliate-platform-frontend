@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useIdleLogout } from '@/hooks/useIdleLogout';
-import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, Users, ShoppingBag, Mail, FileText, ChevronDown, Trophy } from 'lucide-react';
+import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, Users, ShoppingBag, Mail, FileText, ChevronDown, Trophy, CreditCard } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
@@ -49,6 +49,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
       icon: SettingsIcon,
       submenu: [
         { href: '/admin/settings/payment', label: 'Payment Settings' },
+        { href: '/admin/settings/subscriptions', label: 'Subscription Pricing' },
         { href: '/admin/currency-rates', label: 'Currency Rates' },
       ],
     },
@@ -62,6 +63,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/withdrawals', label: 'Withdrawals', icon: DollarSign },
+    { href: '/subscriptions', label: 'Subscription', icon: CreditCard },
   ];
 
   const affiliateNav: NavItem[] = [
@@ -71,6 +73,7 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/withdrawals', label: 'Withdrawals', icon: DollarSign },
+    { href: '/subscriptions', label: 'Subscription', icon: CreditCard },
   ];
 
   const customerNav: NavItem[] = [
