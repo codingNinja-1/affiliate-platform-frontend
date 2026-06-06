@@ -137,13 +137,12 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white font-sans text-gray-900">
+    <div id="landing-root" className="min-h-screen bg-white font-sans text-gray-900">
 
       {/* ══════════════════════ NAVBAR ══════════════════════════════════════ */}
       <nav
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-          scrolled ? 'bg-white/95 shadow-sm backdrop-blur-md' : 'bg-white'
-        } border-b border-gray-100`}
+        className="fixed inset-x-0 top-0 z-50 border-b border-gray-100 bg-white shadow-sm"
+        style={{ backgroundColor: '#ffffff' }}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
