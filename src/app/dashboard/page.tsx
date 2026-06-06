@@ -581,12 +581,6 @@ function HotProducts({ currency: _currency, formatAmount: _formatAmount }: { cur
     fetchHotProducts();
   }, []);
 
-  const currencySymbol = currency === 'NGN' ? '₦' : 
-                        currency === 'USD' ? '$' :
-                        currency === 'GBP' ? '£' :
-                        currency === 'EUR' ? '€' :
-                        currency + ' ';
-
   return (
     <section className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm mb-6">
       <div className="flex items-center justify-between mb-6">
