@@ -7,7 +7,6 @@ import CurrencySelector from '../components/CurrencySelector';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { useVendorCurrencyConversion } from '@/hooks/useVendorCurrencyConversion';
 import { useCurrency } from '@/context/CurrencyContext';
-import { useRates } from '@/hooks/useRates';
 
 type User = {
   id: number;
@@ -552,15 +551,9 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function HotProducts({ currency: _currency, formatAmount: _formatAmount }: { currency?: string, formatAmount?: (amount: number, currency?: string) => string } = {}) {
-  const { currency, formatAmount: ctxFormat } = useCurrency();
-  const { rates } = useRates();
-  const rateKey = `NGN_${currency}`;
-  const rate = currency === 'NGN' ? 1 : (rates[rateKey] ?? null);
-  // If rate not found, fall back to NGN display
-  const fmt = (amount: number) =>
-    rate !== null
-      ? ctxFormat(amount * rate)
-      : `₦${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const { formatAmount: ctxFormat } = useCurrency();
+  // CurrencyContext.formatAmount handles NGN→selected currency conversion automatically
+  const fmt = (amount: number) => ctxFormat(amount);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

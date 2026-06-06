@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProducts, type Product } from '@/hooks/useProducts';
 import { useCurrency } from '@/context/CurrencyContext';
-import { useRates } from '@/hooks/useRates';
 import { Plus, Package, TrendingUp, ExternalLink, Pencil, Search, ImageOff } from 'lucide-react';
 
 function normalizeImageUrl(src: string): string {
@@ -53,16 +52,13 @@ function StatusBadge({ status, approval }: { status?: string; approval?: string 
 export default function ProductsPage() {
   const { user } = useAuth();
   const { data: products = [], isLoading, error: queryError } = useProducts(user?.user_type);
-  const { currency, formatAmount } = useCurrency();
-  const { rates } = useRates();
+  const { formatAmount } = useCurrency();
   const [search, setSearch] = useState('');
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const isAffiliate = mounted && user?.user_type === 'affiliate';
   const isVendor = mounted && user?.user_type === 'vendor';
-
-  const rate = currency === 'NGN' ? 1 : (rates[`NGN_${currency}`] ?? 1);
 
   const filtered = products.filter((p: Product) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -193,7 +189,7 @@ export default function ProductsPage() {
                   <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
                     <div>
                       <p className="text-lg font-bold text-gray-900">
-                        {formatAmount(product.price * rate)}
+                        {formatAmount(product.price)}
                       </p>
                       <div className="flex items-center gap-1 mt-0.5">
                         <TrendingUp size={12} className="text-green-500" />
