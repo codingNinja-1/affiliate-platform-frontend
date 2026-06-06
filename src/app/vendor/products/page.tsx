@@ -27,6 +27,17 @@ export default function VendorProductsPage() {
       return;
     }
 
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user?.user_type?.toLowerCase() !== 'vendor') {
+        window.location.href = '/dashboard';
+        return;
+      }
+    } catch {
+      window.location.href = '/dashboard';
+      return;
+    }
+
     const load = async () => {
       try {
         setLoading(true);

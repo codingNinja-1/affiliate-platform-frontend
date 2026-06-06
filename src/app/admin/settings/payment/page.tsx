@@ -42,6 +42,18 @@ export default function PaymentSettingsPage() {
       return;
     }
 
+    try {
+      const parsed = JSON.parse(user);
+      const role = parsed?.user_type?.toLowerCase();
+      if (role !== 'admin' && role !== 'superadmin') {
+        router.push('/dashboard');
+        return;
+      }
+    } catch {
+      router.push('/dashboard');
+      return;
+    }
+
     const loadSettings = async () => {
       try {
         const res = await fetch(`${API_BASE}/admin/settings/payment`, {

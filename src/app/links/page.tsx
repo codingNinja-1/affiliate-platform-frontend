@@ -67,6 +67,17 @@ function LinksPageInner() {
       return;
     }
 
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user?.user_type?.toLowerCase() !== 'affiliate') {
+        window.location.href = '/dashboard';
+        return;
+      }
+    } catch {
+      window.location.href = '/dashboard';
+      return;
+    }
+
     loadData();
   }, []);
 
