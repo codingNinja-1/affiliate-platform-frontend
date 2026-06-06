@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Sun, Moon, Bell } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -53,16 +54,16 @@ export default function TopBar() {
 
   return (
     <header className="hidden md:flex sticky top-0 z-30 h-16 w-full items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 shadow-sm">
-      {/* Left — user info */}
-      <div className="flex items-center gap-3">
+      {/* Left — user info (clickable → profile) */}
+      <Link href="/profile" className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
         <Avatar name={name} />
         <div className="leading-tight">
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{name || '—'}</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{name || '—'}</p>
           {roleLabel && (
             <p className="text-xs text-gray-500 dark:text-gray-400">{roleLabel}</p>
           )}
         </div>
-      </div>
+      </Link>
 
       {/* Right — actions */}
       <div className="flex items-center gap-2">

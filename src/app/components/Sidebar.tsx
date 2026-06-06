@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useIdleLogout } from '@/hooks/useIdleLogout';
-import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, Users, ShoppingBag, Mail, FileText, ChevronDown, Trophy, CreditCard } from 'lucide-react';
+import { Home, Package, DollarSign, BarChart3, Link2, Settings as SettingsIcon, LogOut, Menu, Users, ShoppingBag, Mail, FileText, ChevronDown, Trophy, CreditCard, UserCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
@@ -208,6 +208,13 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
 
         {/* Footer */}
         <div className="border-t border-gray-100 dark:border-gray-800 p-4 space-y-2">
+          <Link
+            href="/profile"
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            <UserCircle size={20} className="text-gray-500" />
+            <span className="text-sm font-medium">Profile</span>
+          </Link>
           <Link
             href={isAdmin ? '#' : '/settings'}
             onClick={(e) => {
