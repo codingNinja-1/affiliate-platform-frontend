@@ -68,7 +68,10 @@ export default function LoginPage() {
   };
 
   const bars = [35, 55, 40, 70, 50, 85, 60, 90, 65, 100, 75, 88];
-  const months = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const revenues = ['₦1.2M','₦1.9M','₦1.4M','₦2.4M','₦1.7M','₦2.9M','₦2.1M','₦3.1M','₦2.2M','₦3.4M','₦2.6M','₦3.0M'];
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+  const CHART_H = 120; // px
 
   return (
     <div className="min-h-screen flex">
@@ -371,30 +374,62 @@ export default function LoginPage() {
               })}
             </div>
 
-            {/* Bar chart */}
-            <div className="bg-black/20 rounded-xl px-4 pt-4 pb-3 border border-white/[0.04]">
-              <div className="flex items-end gap-1.5 h-20 mb-2">
+            {/* Interactive bar chart */}
+            <div className="bg-black/30 rounded-xl px-4 pt-4 pb-3 border border-white/[0.06]">
+              <div
+                className="flex items-end gap-1"
+                style={{ height: `${CHART_H}px`, marginBottom: '8px' }}
+              >
                 {bars.map((h, i) => {
                   const isActive = i === 10;
+                  const isHovered = hoveredBar === i;
+                  const barH = Math.round((h / 100) * CHART_H);
                   return (
-                    <div key={i} className="flex-1 flex flex-col items-center justify-end">
+                    <div
+                      key={i}
+                      className="relative flex-1 group cursor-pointer"
+                      style={{ height: `${CHART_H}px`, display: 'flex', alignItems: 'flex-end' }}
+                      onMouseEnter={() => setHoveredBar(i)}
+                      onMouseLeave={() => setHoveredBar(null)}
+                    >
+                      {/* Tooltip */}
+                      {isHovered && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 pointer-events-none">
+                          <div className="bg-[#1e1f3a] border border-indigo-500/30 rounded-lg px-2.5 py-1.5 shadow-xl whitespace-nowrap">
+                            <p className="text-[10px] text-gray-400 font-medium">{months[i]}</p>
+                            <p className="text-xs text-white font-bold">{revenues[i]}</p>
+                          </div>
+                          <div className="w-2 h-2 bg-[#1e1f3a] border-r border-b border-indigo-500/30 rotate-45 mx-auto -mt-1" />
+                        </div>
+                      )}
+                      {/* Bar */}
                       <div
-                        className="w-full rounded-t-sm"
+                        className="w-full rounded-t-sm transition-all duration-150"
                         style={{
-                          height: `${h}%`,
-                          background: isActive
+                          height: `${barH}px`,
+                          background: isActive || isHovered
                             ? 'linear-gradient(to top, #6366f1, #a78bfa)'
-                            : 'rgba(139, 120, 240, 0.55)',
+                            : 'rgba(139,120,240,0.45)',
+                          opacity: isHovered && !isActive ? 0.85 : 1,
+                          boxShadow: isActive ? '0 0 12px rgba(99,102,241,0.5)' : isHovered ? '0 0 8px rgba(139,120,240,0.4)' : 'none',
                         }}
                       />
                     </div>
                   );
                 })}
               </div>
-              <div className="flex justify-between">
+              <div className="flex gap-1">
                 {months.map((m, i) => (
-                  <span key={i} className={`flex-1 text-center text-[9px] font-medium ${i === 10 ? 'text-indigo-400' : 'text-gray-700'}`}>
-                    {m}
+                  <span
+                    key={i}
+                    className="flex-1 text-center transition-colors duration-150"
+                    style={{
+                      fontSize: '9px',
+                      fontWeight: hoveredBar === i || i === 10 ? 700 : 500,
+                      color: hoveredBar === i ? '#a78bfa' : i === 10 ? '#818cf8' : '#374151',
+                    }}
+                  >
+                    {m.slice(0, 1)}
                   </span>
                 ))}
               </div>
