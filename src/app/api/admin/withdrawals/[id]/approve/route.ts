@@ -6,12 +6,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const { id } = await params;
     const auth = req.headers.get('authorization') ?? '';
+    const body = await req.json().catch(() => ({}));
     const res = await fetch(`${BACKEND_BASE}/api/admin/withdrawals/${id}/approve`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(auth ? { Authorization: auth } : {}),
       },
+      body: JSON.stringify(body),
     });
 
     const text = await res.text();

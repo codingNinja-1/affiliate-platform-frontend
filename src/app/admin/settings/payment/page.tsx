@@ -14,6 +14,13 @@ type PaymentSettings = {
   paystack_live_public_key: string;
   paystack_live_secret_key: string;
   paystack_mode: 'test' | 'live';
+  korapay_test_public_key: string;
+  korapay_test_secret_key: string;
+  korapay_live_public_key: string;
+  korapay_live_secret_key: string;
+  korapay_mode: 'test' | 'live';
+  payout_provider: 'paystack' | 'korapay';
+  enable_automatic_withdrawals: boolean;
 };
 
 export default function PaymentSettingsPage() {
@@ -24,6 +31,8 @@ export default function PaymentSettingsPage() {
   const [error, setError] = useState('');
   const [showTestSecret, setShowTestSecret] = useState(false);
   const [showLiveSecret, setShowLiveSecret] = useState(false);
+  const [showKoraTestSecret, setShowKoraTestSecret] = useState(false);
+  const [showKoraLiveSecret, setShowKoraLiveSecret] = useState(false);
 
   const [settings, setSettings] = useState<PaymentSettings>({
     paystack_test_public_key: '',
@@ -31,6 +40,13 @@ export default function PaymentSettingsPage() {
     paystack_live_public_key: '',
     paystack_live_secret_key: '',
     paystack_mode: 'test',
+    korapay_test_public_key: '',
+    korapay_test_secret_key: '',
+    korapay_live_public_key: '',
+    korapay_live_secret_key: '',
+    korapay_mode: 'test',
+    payout_provider: 'paystack',
+    enable_automatic_withdrawals: true,
   });
 
   useEffect(() => {
@@ -74,6 +90,15 @@ export default function PaymentSettingsPage() {
             paystack_live_public_key: data.data.paystack_live_public_key || '',
             paystack_live_secret_key: data.data.paystack_live_secret_key || '',
             paystack_mode: data.data.paystack_mode || 'test',
+            korapay_test_public_key: data.data.korapay_test_public_key || '',
+            korapay_test_secret_key: data.data.korapay_test_secret_key || '',
+            korapay_live_public_key: data.data.korapay_live_public_key || '',
+            korapay_live_secret_key: data.data.korapay_live_secret_key || '',
+            korapay_mode: data.data.korapay_mode || 'test',
+            payout_provider: data.data.payout_provider || 'paystack',
+            enable_automatic_withdrawals: data.data.enable_automatic_withdrawals !== undefined
+              ? Boolean(data.data.enable_automatic_withdrawals)
+              : true,
           });
         }
       } catch (err) {
@@ -120,7 +145,7 @@ export default function PaymentSettingsPage() {
     }
   };
 
-  const handleChange = (field: keyof PaymentSettings, value: string) => {
+  const handleChange = (field: keyof PaymentSettings, value: string | boolean) => {
     setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -163,9 +188,80 @@ export default function PaymentSettingsPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Payout Provider */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Payout Provider</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Which gateway sends withdrawal payouts to vendors and affiliates.
+              Customer payments (checkout, subscriptions) always use Paystack.
+            </p>
+
+            <div className="flex gap-4 flex-wrap">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  value="paystack"
+                  checked={settings.payout_provider === 'paystack'}
+                  onChange={(e) => handleChange('payout_provider', e.target.value as 'paystack')}
+                  className="w-4 h-4 text-blue-600 bg-white border-gray-300 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="font-medium">Paystack</span>
+                  <p className="text-xs text-gray-500">Requires Registered Business (CAC) for transfers</p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  value="korapay"
+                  checked={settings.payout_provider === 'korapay'}
+                  onChange={(e) => handleChange('payout_provider', e.target.value as 'korapay')}
+                  className="w-4 h-4 text-blue-600 bg-white border-gray-300 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="font-medium">Korapay</span>
+                  <p className="text-xs text-gray-500">Uses the Korapay keys configured below</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Instant Payouts toggle */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold">Instant Payouts</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Pay out withdrawals automatically the moment a user requests them.
+                  When off, requests stay <span className="font-medium">pending</span> until you approve them on the Withdrawals page.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleChange('enable_automatic_withdrawals', !settings.enable_automatic_withdrawals)}
+                className={`relative inline-flex h-7 w-13 min-w-[3.25rem] items-center rounded-full transition-colors ${
+                  settings.enable_automatic_withdrawals ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+                aria-pressed={settings.enable_automatic_withdrawals}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                    settings.enable_automatic_withdrawals ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            <p className={`mt-3 text-xs font-medium ${settings.enable_automatic_withdrawals ? 'text-green-600' : 'text-amber-600'}`}>
+              {settings.enable_automatic_withdrawals
+                ? '✓ ON — withdrawals are paid instantly via the selected provider'
+                : '⏸ OFF — withdrawals require manual admin approval'}
+            </p>
+          </div>
+
           {/* Environment Mode */}
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Environment Mode</h2>
+            <h2 className="text-xl font-semibold mb-4">Paystack Environment Mode</h2>
             <p className="text-sm text-gray-600 mb-4">
               Select which Paystack environment to use
             </p>
@@ -293,6 +389,125 @@ export default function PaymentSettingsPage() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
                     {showLiveSecret ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Korapay */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-2">Korapay Settings</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Get your keys from{' '}
+              <a
+                href="https://merchant.korapay.com/settings/api-configuration"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700"
+              >
+                Korapay Dashboard → Settings → API Configuration
+              </a>
+              . Used for withdrawal payouts when Korapay is the payout provider.
+            </p>
+
+            {/* Korapay mode */}
+            <div className="flex gap-4 mb-6">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  value="test"
+                  checked={settings.korapay_mode === 'test'}
+                  onChange={(e) => handleChange('korapay_mode', e.target.value as 'test')}
+                  className="w-4 h-4 text-blue-600 bg-white border-gray-300 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="font-medium">Test Mode</span>
+                  <p className="text-xs text-gray-500">Simulated payouts, no real money</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  value="live"
+                  checked={settings.korapay_mode === 'live'}
+                  onChange={(e) => handleChange('korapay_mode', e.target.value as 'live')}
+                  className="w-4 h-4 text-blue-600 bg-white border-gray-300 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="font-medium">Live Mode</span>
+                  <p className="text-xs text-gray-500">Real bank transfers</p>
+                </div>
+              </label>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Test Public Key
+                </label>
+                <input
+                  type="text"
+                  value={settings.korapay_test_public_key}
+                  onChange={(e) => handleChange('korapay_test_public_key', e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="pk_test_..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Test Secret Key
+                </label>
+                <div className="relative">
+                  <input
+                    type={showKoraTestSecret ? 'text' : 'password'}
+                    value={settings.korapay_test_secret_key}
+                    onChange={(e) => handleChange('korapay_test_secret_key', e.target.value)}
+                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 pr-12 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="sk_test_..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKoraTestSecret(!showKoraTestSecret)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showKoraTestSecret ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Live Public Key
+                </label>
+                <input
+                  type="text"
+                  value={settings.korapay_live_public_key}
+                  onChange={(e) => handleChange('korapay_live_public_key', e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="pk_live_..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Live Secret Key
+                </label>
+                <div className="relative">
+                  <input
+                    type={showKoraLiveSecret ? 'text' : 'password'}
+                    value={settings.korapay_live_secret_key}
+                    onChange={(e) => handleChange('korapay_live_secret_key', e.target.value)}
+                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 pr-12 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="sk_live_..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKoraLiveSecret(!showKoraLiveSecret)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showKoraLiveSecret ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
