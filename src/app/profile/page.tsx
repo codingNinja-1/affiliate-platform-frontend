@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   User, Mail, Phone, Globe, Calendar, ShieldCheck, ShieldOff,
@@ -167,12 +167,17 @@ export default function ProfilePage() {
   const [bank, setBank] = useState<BankDetails>({ bank_name: '', bank_code: '', account_name: '', account_number: '' });
   const [selectedCountry, setSelectedCountry] = useState('');
   const [loading, setLoading] = useState(true);
+  // Live Paystack bank list — codes guaranteed to match Paystack's /bank/resolve API
+  const [liveBanks, setLiveBanks] = useState<{ name: string; code: string }[]>([]);
 
   // Avatar
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Prevents the bank reset effect from wiping account_name on initial API load
+  const isInitialBankLoad = useRef(true);
 
   // Profile edit
   const [editing, setEditing] = useState(false);
@@ -188,6 +193,14 @@ export default function ProfilePage() {
   const [bankSaving, setBankSaving] = useState(false);
   const [bankMsg, setBankMsg] = useState('');
   const [bankErr, setBankErr] = useState('');
+  // true when both Paystack + Korapay resolve APIs are unavailable (rate-limit / test mode)
+  const [bankManualEntry, setBankManualEntry] = useState(false);
+
+  // Auto-payout
+  const [autopayoutEnabled, setAutopayoutEnabled] = useState(false);
+  const [autopayoutLoading, setAutopayoutLoading] = useState(false);
+  const [autopayoutMsg, setAutopayoutMsg] = useState('');
+  const [autopayoutErr, setAutopayoutErr] = useState('');
 
   // Password
   const [pwForm, setPwForm] = useState({ current_password: '', password: '', password_confirmation: '' });
@@ -197,10 +210,52 @@ export default function ProfilePage() {
   const [pwMsg, setPwMsg] = useState('');
   const [pwErr, setPwErr] = useState('');
 
-  // Reset account_name when bank or account_number changes
+  // When bank or account number changes (after initial load):
+  //   1. Reset the verified account_name so the user must re-verify
+  //   2. Auto-verify when account number reaches 10 digits
   useEffect(() => {
+    if (isInitialBankLoad.current) {
+      // Skip the first fire (triggered by API data loading in) so we don't
+      // wipe the account_name that was just fetched from the server.
+      isInitialBankLoad.current = false;
+      return;
+    }
     setBankMsg(''); setBankErr('');
+    setBankManualEntry(false);
     setBank(prev => ({ ...prev, account_name: '' }));
+
+    if (!bank.bank_code || bank.account_number.length < 10) return;
+
+    // Capture current values so the async callback uses the right ones
+    const bCode = bank.bank_code;
+    const bNum  = bank.account_number;
+
+    const timer = setTimeout(async () => {
+      setBankVerifying(true);
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${API_BASE}/settings/resolve-account`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ bank_code: bCode, account_number: bNum }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Cannot verify account');
+        setBank(prev => ({ ...prev, account_name: data.data?.account_name || '' }));
+        setBankMsg(`Verified: ${data.data?.account_name}`);
+        setBankManualEntry(false);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Cannot verify account';
+        setBankErr(msg);
+        // Both Paystack + Korapay failed — let user type the account name manually
+        if (msg.includes('Korapay fallback:')) setBankManualEntry(true);
+      } finally {
+        setBankVerifying(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bank.bank_code, bank.account_number]);
 
   useEffect(() => {
@@ -211,20 +266,29 @@ export default function ProfilePage() {
       fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
       fetch(`${API_BASE}/settings`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
       fetch(`${API_BASE}/subscriptions`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null),
-    ]).then(([me, settings, sub]) => {
+      // Load live bank list from Paystack so codes match /bank/resolve exactly
+      fetch(`${API_BASE}/banks`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => null),
+    ]).then(([me, settings, sub, banksRes]) => {
       if (me.data) {
         setUser(me.data);
         setProfileForm({ first_name: me.data.first_name || '', last_name: me.data.last_name || '', phone: me.data.phone || '' });
         if (me.data.avatar) {
-          const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-          setAvatarUrl(`${base}/storage/${me.data.avatar}`);
+          // Backend returns full URL via asset(); use it directly
+          setAvatarUrl(me.data.avatar);
         }
       }
       if (settings?.data?.bank_details) {
         const bd = settings.data.bank_details;
         setBank({ bank_name: bd.bank_name || '', bank_code: bd.bank_code || '', account_name: bd.account_name || '', account_number: bd.account_number || '' });
       }
+      if (settings?.data?.autopayout_enabled !== undefined) {
+        setAutopayoutEnabled(!!settings.data.autopayout_enabled);
+      }
       if (sub?.data) setSubscription(sub.data);
+      // Use live Paystack bank codes (correct for account verification)
+      if (banksRes?.success && Array.isArray(banksRes.data) && banksRes.data.length > 0) {
+        setLiveBanks(banksRes.data.map((b: any) => ({ name: b.name, code: b.code })));
+      }
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
@@ -250,7 +314,22 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message || 'Upload failed');
-      setAvatarUrl(data.data.avatar_url);
+      const newAvatarUrl = data.data.avatar_url;
+      setAvatarUrl(newAvatarUrl);
+
+      // Sync localStorage so TopBar (and any other component) picks up the
+      // new avatar immediately without requiring a page reload.
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const userObj = JSON.parse(storedUser);
+          userObj.avatar = newAvatarUrl;
+          localStorage.setItem('user', JSON.stringify(userObj));
+          // 'storage' events don't fire in the same tab, so dispatch a
+          // custom event that TopBar listens for.
+          window.dispatchEvent(new Event('user-updated'));
+        }
+      } catch {}
     } catch (err) {
       setProfileErr(err instanceof Error ? err.message : 'Avatar upload failed');
       setAvatarPreview(null);
@@ -272,6 +351,7 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error(data.message || 'Update failed');
       setUser(data.data);
       localStorage.setItem('user', JSON.stringify(data.data));
+      window.dispatchEvent(new Event('user-updated'));
       setEditing(false); setProfileOtp(false);
       setProfileMsg('Profile updated successfully.');
       setTimeout(() => setProfileMsg(''), 4000);
@@ -284,6 +364,7 @@ export default function ProfilePage() {
 
   const verifyAccount = async () => {
     setBankErr(''); setBankMsg('');
+    setBankManualEntry(false);
     if (!bank.bank_code) { setBankErr('Select a bank first.'); return; }
     if (bank.account_number.length < 10) { setBankErr('Enter a valid 10-digit account number.'); return; }
     setBankVerifying(true);
@@ -298,8 +379,11 @@ export default function ProfilePage() {
       if (!res.ok || !data.success) throw new Error(data.message || 'Cannot verify account');
       setBank(prev => ({ ...prev, account_name: data.data?.account_name || '' }));
       setBankMsg(`Verified: ${data.data?.account_name}`);
+      setBankManualEntry(false);
     } catch (err) {
-      setBankErr(err instanceof Error ? err.message : 'Cannot verify account');
+      const msg = err instanceof Error ? err.message : 'Cannot verify account';
+      setBankErr(msg);
+      if (msg.includes('Korapay fallback:')) setBankManualEntry(true);
     } finally {
       setBankVerifying(false);
     }
@@ -323,6 +407,27 @@ export default function ProfilePage() {
       setBankErr(err instanceof Error ? err.message : 'Save failed');
     } finally {
       setBankSaving(false);
+    }
+  };
+
+  const handleAutopayoutToggle = async (next: boolean) => {
+    setAutopayoutLoading(true); setAutopayoutErr(''); setAutopayoutMsg('');
+    const token = localStorage.getItem('auth_token');
+    try {
+      const res = await fetch(`${API_BASE}/settings/autopayout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Toggle failed');
+      setAutopayoutEnabled(next);
+      setAutopayoutMsg(next ? 'Auto-payout enabled. You will be paid out automatically when your balance meets the minimum.' : 'Auto-payout disabled.');
+      setTimeout(() => setAutopayoutMsg(''), 5000);
+    } catch (err) {
+      setAutopayoutErr(err instanceof Error ? err.message : 'Toggle failed');
+    } finally {
+      setAutopayoutLoading(false);
     }
   };
 
@@ -356,8 +461,18 @@ export default function ProfilePage() {
     }
   };
 
-  const filteredBanks = (selectedCountry ? banksByCountry[selectedCountry] || [] : africanBanks)
-    .slice().sort((a, b) => a.name.localeCompare(b.name));
+  // For Nigeria (or no filter): use live Paystack banks — codes are guaranteed to
+  // match what Paystack's /bank/resolve endpoint accepts.
+  // For other countries: fall back to the static list (Paystack only supports Nigeria).
+  const filteredBanks = useMemo(() => {
+    let source: { name: string; code: string }[];
+    if (selectedCountry && selectedCountry !== 'Nigeria') {
+      source = banksByCountry[selectedCountry] || [];
+    } else {
+      source = liveBanks.length > 0 ? liveBanks : africanBanks;
+    }
+    return [...source].sort((a, b) => a.name.localeCompare(b.name));
+  }, [selectedCountry, liveBanks]);
 
   const displayAvatar = avatarPreview || avatarUrl;
   const fullName = user ? `${user.first_name} ${user.last_name}`.trim() : '';
@@ -599,16 +714,36 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Account Name</label>
-                  <input readOnly value={bank.account_name} placeholder="Auto-filled after verification"
-                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-500 dark:text-gray-400 cursor-default focus:outline-none" />
-                  <p className="mt-1 text-xs text-gray-400">Auto-filled when account number and bank are verified</p>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                    Account Name
+                    {bankVerifying && (
+                      <span className="ml-2 text-blue-500 text-xs font-normal animate-pulse">Verifying…</span>
+                    )}
+                    {bankManualEntry && !bankVerifying && (
+                      <span className="ml-2 text-amber-500 text-xs font-normal">— type manually below</span>
+                    )}
+                  </label>
+                  <input
+                    readOnly={!bankManualEntry}
+                    value={bank.account_name}
+                    onChange={e => bankManualEntry && setBank(prev => ({ ...prev, account_name: e.target.value }))}
+                    placeholder={bankVerifying ? 'Verifying account…' : bankManualEntry ? 'Type your account name…' : 'Auto-filled after verification'}
+                    className={`w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none transition-colors
+                      ${bankManualEntry
+                        ? 'border-amber-400 dark:border-amber-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-amber-500 cursor-text'
+                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-default'}`}
+                  />
+                  <p className="mt-1 text-xs text-gray-400">
+                    {bankManualEntry
+                      ? 'Verification unavailable — enter the exact account name on your bank card.'
+                      : 'Fills automatically when you enter a valid 10-digit account number'}
+                  </p>
                 </div>
 
                 {!bankOtp ? (
                   <div className="flex justify-end">
                     <button
-                      onClick={() => { if (!bank.account_name) { setBankErr('Verify your account first.'); return; } setBankErr(''); setBankOtp(true); }}
+                      onClick={() => { if (!bank.account_name) { setBankErr('Verify your account first, or enter the account name manually.'); return; } setBankErr(''); setBankOtp(true); }}
                       disabled={bankSaving || !bank.account_name}
                       className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors disabled:opacity-50"
                     >
@@ -618,6 +753,73 @@ export default function ProfilePage() {
                 ) : (
                   <OtpStep purpose="bank_details_update" onVerified={handleBankSave} onCancel={() => setBankOtp(false)} />
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Auto-Payout Toggle — only for affiliates and vendors */}
+          {!isAdmin && (
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900">
+              <SectionHeader icon={RefreshCw} title="Auto-Payout" />
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 px-4 py-2.5">
+                  <RefreshCw size={14} className="text-blue-500 flex-shrink-0" />
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    When enabled, your balance will be automatically paid to your bank account on the platform&apos;s payout schedule — no need to request manually.
+                  </p>
+                </div>
+
+                {autopayoutMsg && (
+                  <div className="flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 px-4 py-2.5 text-sm text-green-700 dark:text-green-300">
+                    <CheckCircle size={14} className="flex-shrink-0" />{autopayoutMsg}
+                  </div>
+                )}
+                {autopayoutErr && (
+                  <div className="flex items-center gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 px-4 py-2.5 text-sm text-red-700 dark:text-red-300">
+                    <AlertTriangle size={14} className="flex-shrink-0" />{autopayoutErr}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {autopayoutEnabled ? 'Auto-Payout is ON' : 'Auto-Payout is OFF'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {autopayoutEnabled
+                        ? 'Your balance will be sent automatically on the next payout cycle.'
+                        : 'Enable to receive automatic payouts when your balance reaches the minimum threshold.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAutopayoutToggle(!autopayoutEnabled)}
+                    disabled={autopayoutLoading || !bank.account_number}
+                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed
+                      ${autopayoutEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                  >
+                    <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform
+                      ${autopayoutEnabled ? 'translate-x-8' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                {!bank.account_number && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <AlertTriangle size={12} />
+                    Add your bank details above to enable auto-payout.
+                  </p>
+                )}
+
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                  <p className="font-medium text-gray-700 dark:text-gray-300">Requirements for auto-payout:</p>
+                  <p className={`flex items-center gap-1.5 ${bank.account_number ? 'text-green-600 dark:text-green-400' : ''}`}>
+                    {bank.account_number ? <CheckCircle size={11} /> : '○'} Bank details saved
+                  </p>
+                  <p className={`flex items-center gap-1.5 ${isSubActive ? 'text-green-600 dark:text-green-400' : ''}`}>
+                    {isSubActive ? <CheckCircle size={11} /> : '○'} Active subscription
+                  </p>
+                  <p className="flex items-center gap-1.5">○ Balance meets platform minimum (set by admin)</p>
+                </div>
               </div>
             </div>
           )}

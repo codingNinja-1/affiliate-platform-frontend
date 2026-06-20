@@ -38,11 +38,14 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
   const isAffiliate = userType === 'affiliate';
 
   const adminNav: NavItemWithSubmenu[] = [
-    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/admin', label: 'Dashboard', icon: Home },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/products', label: 'Products', icon: Package },
-    { href: '/admin/payouts', label: 'Payouts', icon: DollarSign },
-    { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
+    { href: '/admin/transactions', label: 'Transactions', icon: CreditCard },
+    { href: '/admin/withdrawals', label: 'Withdrawals', icon: DollarSign },
+    { href: '/admin/affiliates', label: 'Affiliates', icon: BarChart3 },
+    { href: '/admin/vendors', label: 'Vendors', icon: ShoppingBag },
+    { href: '/admin/reports', label: 'Reports', icon: FileText },
     {
       href: '/admin/settings/payment',
       label: 'Settings',
@@ -86,7 +89,8 @@ export default function Sidebar({ userType = 'customer' }: SidebarProps) {
   else if (isVendor) navItems = vendorNav;
   else if (isAffiliate) navItems = affiliateNav;
 
-  const isActive = (href: string) => pathname === href;
+  const isActive = (href: string) =>
+    href === '/admin' ? pathname === '/admin' : pathname === href || pathname.startsWith(href + '/');
 
   const toggleSubmenu = (label: string) => {
     setExpandedMenu(expandedMenu === label ? null : label);

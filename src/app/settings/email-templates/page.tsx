@@ -25,9 +25,21 @@ const TEMPLATE_TYPES = [
     variables: ['{name}', '{email}', '{reason}'],
   },
   {
+    key: 'withdrawal_processing',
+    name: 'Withdrawal Received',
+    description: 'Sent when a withdrawal request is submitted (pending review)',
+    variables: ['{name}', '{amount}', '{withdrawal_ref}', '{bank_name}', '{account_number}'],
+  },
+  {
+    key: 'withdrawal_successful',
+    name: 'Withdrawal Successful (Auto-Payout)',
+    description: 'Sent when an instant/automatic payout completes and money is sent',
+    variables: ['{name}', '{amount}', '{withdrawal_ref}', '{bank_name}', '{account_number}'],
+  },
+  {
     key: 'withdrawal_approved',
     name: 'Withdrawal Approved',
-    description: 'Sent when withdrawal is approved',
+    description: 'Sent when an admin approves a withdrawal (manual payment)',
     variables: ['{name}', '{amount}', '{withdrawal_ref}', '{bank_name}', '{account_number}'],
   },
   {
@@ -47,6 +59,12 @@ const TEMPLATE_TYPES = [
     name: 'Password Reset',
     description: 'Password reset email',
     variables: ['{name}', '{reset_url}', '{expiry_time}'],
+  },
+  {
+    key: 'otp_verification',
+    name: 'OTP Verification Code',
+    description: 'Sent for withdrawals, password resets and other confirmations',
+    variables: ['{name}', '{code}', '{purpose}', '{expiry_time}'],
   },
 ];
 

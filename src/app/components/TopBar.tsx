@@ -10,9 +10,10 @@ type User = {
   last_name?: string;
   email: string;
   user_type?: string;
+  avatar?: string | null;
 };
 
-function Avatar({ name }: { name: string }) {
+function Avatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
   const initials = name
     .split(' ')
     .filter(Boolean)
@@ -20,6 +21,16 @@ function Avatar({ name }: { name: string }) {
     .join('')
     .slice(0, 2)
     .toUpperCase();
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        className="w-8 h-8 rounded-full object-cover ring-1 ring-gray-200 dark:ring-gray-700 flex-shrink-0"
+      />
+    );
+  }
 
   return (
     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -35,10 +46,21 @@ export default function TopBar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('user');
-      if (stored) setUser(JSON.parse(stored));
-    } catch {}
+    const load = () => {
+      try {
+        const stored = localStorage.getItem('user');
+        if (stored) setUser(JSON.parse(stored));
+      } catch {}
+    };
+    load();
+    // 'storage' fires in OTHER tabs; 'user-updated' fires in the SAME tab
+    // (dispatched by the profile page after avatar upload / profile save)
+    window.addEventListener('storage', load);
+    window.addEventListener('user-updated', load);
+    return () => {
+      window.removeEventListener('storage', load);
+      window.removeEventListener('user-updated', load);
+    };
   }, []);
 
   // Close dropdown when clicking outside
@@ -106,7 +128,7 @@ export default function TopBar() {
           onClick={() => setOpen((o) => !o)}
           className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
-          <Avatar name={name} />
+          <Avatar name={name} avatarUrl={user?.avatar} />
           <div className="leading-tight text-left">
             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{name || '—'}</p>
             {roleLabel && (
